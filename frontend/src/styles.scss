@@ -1,0 +1,100 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f2f5;
+  color: #1c1e21;
+}
+
+nav {
+  background: #c0392b;
+  padding: 12px 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+
+  a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    &:hover { text-decoration: underline; }
+  }
+
+  button {
+    margin-left: auto;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid white;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+}
+
+.feed, .login-container, .register-container {
+  max-width: 680px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.post {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+form {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+
+  input, textarea, select {
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  button {
+    background: #c0392b;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    &:disabled { background: #aaa; cursor: not-allowed; }
+  }
+}
+
+.error { color: red; margin-top: 8px; font-size: 13px; }
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+
+  button {
+    background: none;
+    border: 1px solid #ddd;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+}
+
+h2 {
+  margin-bottom: 16px;
+  font-size: 22px;
+}
