@@ -12,47 +12,45 @@ spring:
           lower-case-service-id: true
       routes:
         - id: auth-service
-          uri: lb://auth-service
+          uri: ${AUTH_SERVICE_URI:http://localhost:8081}
           predicates:
             - Path=/api/auth/**
 
         - id: post-service
-          uri: lb://post-service
+          uri: ${POST_SERVICE_URI:http://localhost:8082}
           predicates:
             - Path=/api/posts/**
 
         - id: event-service
-          uri: lb://event-service
+          uri: ${EVENT_SERVICE_URI:http://localhost:8083}
           predicates:
             - Path=/api/events/**, /api/clubs/**
 
         - id: job-service
-          uri: lb://job-service
+          uri: ${JOB_SERVICE_URI:http://localhost:8084}
           predicates:
             - Path=/api/jobs/**, /api/applications/**, /api/mentoring/**
 
         - id: message-service
-          uri: lb://message-service
+          uri: ${MESSAGE_SERVICE_URI:http://localhost:8085}
           predicates:
             - Path=/api/messages/**, /api/conversations/**, /api/notifications/**
-
-        - id: foyer-service
-          uri: lb://foyer-service
-          predicates:
-            - Path=/api/foyer/**
 
       globalcors:
         corsConfigurations:
           '[/**]':
             allowedOrigins:
               - "http://localhost:4200"
+              - "http://localhost:4201"
             allowedMethods:
               - GET
               - POST
               - PUT
+              - PATCH
               - DELETE
               - OPTIONS
-            allowedHeaders: "*"
+            allowedHeaders:
+              - "*"
             allowCredentials: true
 
 eureka:

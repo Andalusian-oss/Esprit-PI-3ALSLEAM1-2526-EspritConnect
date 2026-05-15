@@ -1,0 +1,40 @@
+# Force LF line endings for files that run inside Linux containers or must not have BOM
+# Without this, git on Windows (core.autocrlf=true) converts to CRLF and breaks Docker builds
+
+# Default: auto (Windows <-> Linux normalization)
+* text=auto
+
+# Docker and shell — MUST be LF inside Linux containers
+Dockerfile       text eol=lf
+*.sh             text eol=lf
+*.sql            text eol=lf
+.env             text eol=lf
+.env.example     text eol=lf
+
+# Config files
+*.yml            text eol=lf
+*.yaml           text eol=lf
+*.xml            text eol=lf
+*.json           text eol=lf
+*.properties     text eol=lf
+
+# Angular / frontend
+*.ts             text eol=lf
+*.html           text eol=lf
+*.scss           text eol=lf
+*.css            text eol=lf
+
+# Windows scripts — keep CRLF on Windows
+*.ps1            text eol=crlf
+*.bat            text eol=crlf
+*.cmd            text eol=crlf
+
+# Binary files — no conversion
+*.jar            binary
+*.png            binary
+*.jpg            binary
+*.ico            binary
+*.gif            binary
+*.woff           binary
+*.woff2          binary
+*.ttf            binary

@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,5 +32,15 @@ public class AuthController {
     @Operation(summary = "Login and receive JWT token")
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
         return ResponseEntity.ok(userService.login(dto));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout — sets the current user offline")
+    public ResponseEntity<Void> logout(Authentication authentication) {
+        if (authentication != null) {
+            UserDetails principal = (UserDetails) authentication.getPrincipal();
+            userService.logout(principal.getUsername());
+        }
+        return ResponseEntity.noContent().build();
     }
 }

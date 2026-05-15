@@ -12,6 +12,9 @@ public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "online", ignore = true)
+    @Mapping(target = "approved", ignore = true)
+    @Mapping(target = "lastLoginAt", ignore = true)
     User toEntity(RegisterRequestDTO dto);
 
     UserResponseDTO toResponseDTO(User user);

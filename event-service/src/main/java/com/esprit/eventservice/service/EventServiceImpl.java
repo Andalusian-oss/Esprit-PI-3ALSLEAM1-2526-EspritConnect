@@ -44,11 +44,13 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ClubResponseDTO> getAllClubs() {
         return clubRepository.findAll().stream().map(this::toClubDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ClubResponseDTO getClubById(Long id) {
         return toClubDTO(findClub(id));
     }
@@ -106,18 +108,21 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EventResponseDTO> getAllEvents() {
         return eventRepository.findAllByOrderByDateAsc().stream()
                 .map(this::toEventDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EventResponseDTO> getEventsByClub(Long clubId) {
         return eventRepository.findByClubIdOrderByDateAsc(clubId).stream()
                 .map(this::toEventDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public EventResponseDTO getEventById(Long id) {
         return toEventDTO(findEvent(id));
     }

@@ -8,4 +8,6 @@ public class CommentRequestDTO {
 
     @NotBlank(message = "Comment text is required")
     private String texte;
+
+    private String userName;
 }

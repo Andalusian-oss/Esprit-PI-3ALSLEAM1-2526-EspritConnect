@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "event_registrations",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"event_id", "userId"}))
+       uniqueConstraints = @UniqueConstraint(columnNames = {"event_id", "user_id"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class EventRegistration {
 
@@ -13,7 +13,7 @@ public class EventRegistration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -13,6 +13,7 @@ public class PostResponseDTO {
     private String contenu;
     private Long userId;
     private LocalDateTime createdAt;
+    private String userName;
     private int likeCount;
     private int commentCount;
     private List<String> photoUrls;

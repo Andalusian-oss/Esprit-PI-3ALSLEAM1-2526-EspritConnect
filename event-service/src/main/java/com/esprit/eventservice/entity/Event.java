@@ -31,7 +31,7 @@ public class Event {
     @JoinColumn(name = "club_id")
     private Club club;
 
-    @Column(nullable = false)
+    @Column(name = "creator_user_id", nullable = false)
     private Long creatorUserId;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)

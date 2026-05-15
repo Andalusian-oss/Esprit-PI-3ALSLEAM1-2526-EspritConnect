@@ -12,4 +12,6 @@ public class PostRequestDTO {
     private String contenu;
 
     private List<String> photoUrls;
+
+    private String userName;
 }

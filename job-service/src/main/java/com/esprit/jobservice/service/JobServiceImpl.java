@@ -32,11 +32,13 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<JobResponseDTO> getAllJobs() {
         return jobRepository.findAll().stream().map(this::toJobDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public JobResponseDTO getJobById(Long id) { return toJobDTO(findJob(id)); }
 
     @Override @Transactional
@@ -69,11 +71,13 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ApplicationResponseDTO> getApplicationsByJob(Long jobId) {
         return applicationRepository.findByJobId(jobId).stream().map(this::toAppDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ApplicationResponseDTO> getApplicationsByUser(Long userId) {
         return applicationRepository.findByApplicantUserId(userId).stream().map(this::toAppDTO).collect(Collectors.toList());
     }
@@ -103,12 +107,14 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MentoringResponseDTO> getMentoringAsMentor(Long userId) {
         return mentoringRepository.findByMentorUserId(userId).stream()
                 .map(this::toMentoringDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MentoringResponseDTO> getMentoringAsMentore(Long userId) {
         return mentoringRepository.findByMentoreUserId(userId).stream()
                 .map(this::toMentoringDTO).collect(Collectors.toList());
@@ -135,6 +141,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MentoringSessionResponseDTO> getSessionsByMentoring(Long mentoringId) {
         return sessionRepository.findByMentoringId(mentoringId).stream()
                 .map(this::toSessionDTO).collect(Collectors.toList());

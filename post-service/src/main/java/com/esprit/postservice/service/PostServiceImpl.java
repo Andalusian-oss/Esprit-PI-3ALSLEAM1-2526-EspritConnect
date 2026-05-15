@@ -34,6 +34,7 @@ public class PostServiceImpl implements PostService {
         Post post = Post.builder()
                 .contenu(dto.getContenu())
                 .userId(userId)
+                .userName(dto.getUserName())
                 .build();
 
         if (dto.getPhotoUrls() != null) {
@@ -91,6 +92,7 @@ public class PostServiceImpl implements PostService {
         Comment comment = Comment.builder()
                 .post(post)
                 .userId(userId)
+                .userName(dto.getUserName())
                 .texte(dto.getTexte())
                 .build();
         return toCommentDTO(commentRepository.save(comment));
@@ -136,6 +138,7 @@ public class PostServiceImpl implements PostService {
                 .id(post.getId())
                 .contenu(post.getContenu())
                 .userId(post.getUserId())
+                .userName(post.getUserName() != null ? post.getUserName() : "User #" + post.getUserId())
                 .createdAt(post.getCreatedAt())
                 .likeCount(post.getLikes().size())
                 .commentCount(post.getComments().size())
@@ -148,6 +151,7 @@ public class PostServiceImpl implements PostService {
                 .id(comment.getId())
                 .postId(comment.getPost().getId())
                 .userId(comment.getUserId())
+                .userName(comment.getUserName() != null ? comment.getUserName() : "User #" + comment.getUserId())
                 .texte(comment.getTexte())
                 .createdAt(comment.getCreatedAt())
                 .build();

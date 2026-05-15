@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EspritConnect — Design Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap');
+
+  :root {
+    --red: #e11d2e; --red-dark: #8f1020; --red-light: #ff4a5b;
+    --red-glow: rgba(225,29,46,0.18); --accent-cyan: #38d6c7;
+    --accent-green: #3ddc84; --accent-amber: #ffbd59;
+    --black: #07080c; --dark: #0d1017;
+    --dark2: rgba(22,26,36,0.92); --dark3: #242b38;
+    --border: rgba(255,255,255,0.10); --border-hover: rgba(56,214,199,0.42);
+    --text: #f5f7fb; --text-muted: #aab1bf; --text-dim: #747d8f;
+    --white: #ffffff; --radius: 10px; --radius-lg: 18px;
+    --shadow: 0 18px 55px rgba(0,0,0,0.38);
+    --shadow-red: 0 18px 45px rgba(225,29,46,0.24);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background:
+      radial-gradient(circle at 18% 10%, rgba(225,29,46,0.17), transparent 26rem),
+      radial-gradient(circle at 86% 18%, rgba(56,214,199,0.12), transparent 24rem),
+      linear-gradient(180deg, #080a10 0%, #0d111a 46%, #07080c 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85), transparent 72%);
+  }
+
+  /* ── TABS ── */
+  .tabs { display:flex; gap:8px; padding:20px 24px 0; position:relative; z-index:10; flex-wrap:wrap; }
+  .tab {
+    padding:8px 18px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.04); color:var(--text-muted); cursor:pointer;
+    font-size:13px; font-family:'DM Sans',sans-serif; transition:all 0.15s;
+  }
+  .tab:hover { background:rgba(255,255,255,0.08); color:var(--text); }
+  .tab.active { background:rgba(225,29,46,0.18); border-color:var(--red); color:var(--white); }
+
+  .screen { display:none; }
+  .screen.active { display:block; }
+
+  /* ════════════════════════════════════
+     APP SHELL — sidebar layout
+  ════════════════════════════════════ */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: linear-gradient(180deg, rgba(13,16,23,0.98) 0%, rgba(9,12,18,0.98) 100%);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0 0 20px;
+    position: sticky; top: 0; height: calc(100vh - 64px);
+  }
+  .sidebar-brand {
+    display: flex; align-items: center; gap: 12px;
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-mark {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--red), #ff7a59);
+    box-shadow: var(--shadow-red);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; color: white;
+  }
+  .brand-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+  .brand-text span { color: var(--accent-cyan); }
+
+  .sidebar-user {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.025);
+  }
+  .avatar-wrap { position: relative; flex-shrink: 0; }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--red), var(--accent-cyan));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: white;
+  }
+  .online-dot {
+    position: absolute; bottom: 1px; right: 1px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--accent-green); border: 2px solid var(--dark);
+  }
+  .user-info strong { display: block; font-size: 14px; font-weight: 600; }
+  .role-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; margin-top: 3px;
+  }
+  .role-badge-student { background:rgba(56,214,199,0.15); color:var(--accent-cyan); }
+  .role-badge-admin { background:rgba(255,189,89,0.15); color:var(--accent-amber); }
+  .role-badge-company { background:rgba(225,29,46,0.15); color:var(--red-light); }
+  .role-badge-enseignant { background:rgba(61,220,132,0.15); color:var(--accent-green); }
+  .role-badge-alumni { background:rgba(255,255,255,0.1); color:var(--text-muted); }
+
+  .sidebar-nav { flex: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 9px; cursor: pointer;
+    color: var(--text-muted); font-size: 14px; transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(225,29,46,0.18), rgba(56,214,199,0.08));
+    border-color: rgba(225,29,46,0.28); color: var(--white);
+  }
+  .nav-dot {
+    width: 28px; height: 28px; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.06); font-size: 14px; flex-shrink: 0;
+  }
+  .nav-item.active .nav-dot { background: var(--red); }
+  .sidebar-logout {
+    margin: 8px 12px 0; display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 9px; cursor: pointer;
+    color: var(--text-dim); font-size: 14px; background: none; border: none;
+    width: calc(100% - 24px); transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .sidebar-logout:hover { background: rgba(225,29,46,0.1); color: var(--red-light); }
+
+  /* ── MAIN CONTENT ── */
+  .main-content { padding: 28px 32px; overflow-y: auto; }
+
+  /* ── CARDS / PANELS ── */
+  .card, .panel, .post-card, .compose {
+    background: linear-gradient(180deg, rgba(28,33,45,0.94), rgba(17,21,31,0.92));
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .card::before, .panel::before, .post-card::before {
+    content: ''; position: absolute; inset: 0 0 auto 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  }
+  .card { padding: 20px; }
+  .panel { padding: 20px; margin-bottom: 16px; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .panel-header h2 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: var(--radius); border: 1px solid transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer;
+    font-weight: 500; transition: all 0.15s;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--red), #ff6b55); color: white; box-shadow: var(--shadow-red); }
+  .btn-ghost { background: rgba(255,255,255,0.04); border-color: var(--border); color: var(--text); }
+  .btn-danger { background: rgba(225,29,46,0.1); border-color: rgba(225,29,46,0.3); color: var(--red-light); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn-success { background: rgba(61,220,132,0.12); border-color: rgba(61,220,132,0.3); color: var(--accent-green); }
+
+  /* ── BADGES ── */
+  .badge {
+    padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    display: inline-block;
+  }
+  .badge-red { background:rgba(225,29,46,0.15); color:var(--red-light); }
+  .badge-gray { background:rgba(255,255,255,0.08); color:var(--text-muted); }
+  .badge-green { background:rgba(61,220,132,0.13); color:var(--accent-green); }
+  .badge-danger { background:var(--red); color:white; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { margin-bottom: 24px; }
+  .page-header h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1; }
+  .page-header p { color: var(--text-muted); margin-top: 6px; }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+  /* ── FORM ── */
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; }
+  input, textarea, select {
+    padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border);
+    background: rgba(7,9,14,0.56); color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; width: 100%;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 4px rgba(56,214,199,0.14); }
+
+  /* ── EMPTY ── */
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--text-muted);
+    border: 1px dashed rgba(255,255,255,0.1); border-radius: var(--radius-lg);
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* ── POST CARDS ── */
+  .post-card { padding: 0; margin-bottom: 12px; }
+  .post-header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 0; }
+  .post-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--red-dark), var(--red));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .post-author { font-weight: 600; font-size: 14px; }
+  .post-time { font-size: 12px; color: var(--text-muted); }
+  .post-body { padding: 12px 16px; font-size: 14px; line-height: 1.6; }
+  .post-actions {
+    display: flex; gap: 8px; padding: 10px 16px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .btn-icon {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 13px; padding: 6px 12px; border-radius: 8px;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-icon:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+
+  /* ── COMPOSE ── */
+  .compose { padding: 16px; margin-bottom: 20px; }
+  .compose textarea { min-height: 72px; resize: none; }
+  .compose-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+  /* ── AUTH ── */
+  .auth-wrapper {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(225,29,46,0.28), transparent 24rem),
+      radial-gradient(circle at 82% 12%, rgba(56,214,199,0.18), transparent 22rem),
+      linear-gradient(145deg, #07080c 0%, #141824 100%);
+  }
+  .auth-card {
+    width: 440px; padding: 42px;
+    background: linear-gradient(180deg, rgba(28,33,45,0.94), rgba(17,21,31,0.92));
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .auth-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--accent-cyan), var(--accent-amber));
+  }
+  .auth-logo { text-align: center; margin-bottom: 28px; }
+  .logo-mark { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; }
+  .logo-mark span { color: var(--accent-cyan); }
+  .logo-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .auth-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; margin-bottom: 6px; }
+  .auth-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+  .auth-link { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-muted); }
+  .auth-link a { color: var(--accent-cyan); text-decoration: none; }
+
+  /* ── ROLE GRID ── */
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .role-card {
+    padding: 16px; border-radius: 12px; border: 2px solid var(--border);
+    background: rgba(255,255,255,0.03); cursor: pointer; text-align: left;
+    transition: all 0.15s; display: flex; flex-direction: column; gap: 4px;
+  }
+  .role-card:hover { border-color: rgba(56,214,199,0.4); background: rgba(56,214,199,0.06); }
+  .role-card.selected { border-color: var(--red); background: rgba(225,29,46,0.1); }
+  .role-card-icon { font-size: 24px; margin-bottom: 4px; }
+  .role-card strong { font-size: 14px; font-weight: 600; }
+  .role-card small { font-size: 12px; color: var(--text-muted); }
+
+  /* ── STEPS INDICATOR ── */
+  .steps-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 24px; justify-content: center; }
+  .step-dot {
+    width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--text-muted); background: var(--dark2);
+  }
+  .step-dot.active { border-color: var(--red); color: white; background: var(--red); }
+  .step-dot.done { border-color: var(--accent-green); color: var(--accent-green); }
+  .step-line { flex: 1; height: 2px; background: var(--border); max-width: 60px; margin: 0 6px; }
+  .step-line.active { background: var(--red); }
+
+  /* ── INFO BANNER ── */
+  .info-banner {
+    display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px;
+    border-radius: var(--radius); border: 1px solid rgba(56,214,199,0.25);
+    background: rgba(56,214,199,0.07); font-size: 13px; color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .info-banner-success { border-color: rgba(61,220,132,0.25); background: rgba(61,220,132,0.07); }
+
+  /* ── MESSAGES ── */
+  .messages-layout { display: grid; grid-template-columns: 280px 1fr; height: 520px; overflow: hidden; }
+  .conversations-panel {
+    background: rgba(13,16,23,0.95); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+  }
+  .conv-list { flex: 1; overflow-y: auto; }
+  .conv-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s;
+  }
+  .conv-item:hover, .conv-item.active-conv { background: rgba(255,255,255,0.06); }
+  .conv-avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--red);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: white; flex-shrink: 0;
+  }
+  .conv-name { font-size: 14px; font-weight: 600; }
+  .conv-preview { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .message-thread { display: flex; flex-direction: column; }
+  .thread-header {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    border-bottom: 1px solid var(--border); background: var(--dark2);
+  }
+  .thread-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .message-bubble { display: flex; flex-direction: column; max-width: 65%; }
+  .message-bubble.mine { align-self: flex-end; align-items: flex-end; }
+  .message-bubble.theirs { align-self: flex-start; }
+  .bubble-content { padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+  .mine .bubble-content { background: var(--red); color: white; border-bottom-right-radius: 4px; }
+  .theirs .bubble-content { background: var(--dark3); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .bubble-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .thread-input {
+    display: flex; gap: 10px; padding: 14px 16px;
+    border-top: 1px solid var(--border); background: var(--dark2);
+  }
+  .thread-input input { border-radius: 24px; }
+
+  /* ── ADMIN TILES ── */
+  .admin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+  .admin-tile {
+    padding: 24px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(28,33,45,0.94), rgba(17,21,31,0.92));
+    display: flex; flex-direction: column; gap: 8px; cursor: pointer; text-decoration: none; color: var(--text);
+    transition: all 0.15s; position: relative; overflow: hidden;
+  }
+  .admin-tile::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  }
+  .admin-tile:hover { border-color: rgba(56,214,199,0.3); transform: translateY(-2px); }
+  .tile-icon { font-size: 28px; margin-bottom: 4px; }
+  .admin-tile strong { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .admin-tile small { font-size: 12px; color: var(--text-muted); }
+
+  /* ── PROFILE ── */
+  .profile-header {
+    display: flex; align-items: center; gap: 20px; padding: 24px;
+    background: linear-gradient(180deg, rgba(28,33,45,0.94), rgba(17,21,31,0.92));
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    margin-bottom: 16px; position: relative; overflow: hidden;
+  }
+  .profile-header::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  }
+  .profile-avatar-lg {
+    width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--red), var(--accent-cyan));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; color: white;
+    box-shadow: 0 8px 24px rgba(225,29,46,0.3);
+  }
+  .profile-info h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .profile-info p { color: var(--text-muted); margin-top: 4px; font-size: 14px; }
+  .detail-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 4px; }
+  .detail-value { font-size: 15px; }
+
+  /* ── TOAST ── */
+  .toast-stack { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 999; }
+  .toast {
+    display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+    border-radius: 12px; border: 1px solid; cursor: pointer; font-size: 14px;
+    font-family: 'DM Sans', sans-serif; animation: slideUp 0.3s ease;
+  }
+  .toast-success { background: rgba(61,220,132,0.15); border-color: rgba(61,220,132,0.35); color: var(--accent-green); }
+  .toast-error { background: rgba(225,29,46,0.15); border-color: rgba(225,29,46,0.35); color: var(--red-light); }
+  .toast-info { background: rgba(56,214,199,0.12); border-color: rgba(56,214,199,0.3); color: var(--accent-cyan); }
+  @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── ITEM CARDS ── */
+  .item-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+  .item-head h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .item-head p { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .muted { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+  .card-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .meta-row { display: flex; gap: 16px; font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+
+  /* ── APPLICANT CARD ── */
+  .applicant-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .applicant-info strong { font-size: 14px; font-weight: 600; display: block; }
+  .applicant-info small { font-size: 12px; color: var(--text-muted); }
+  .applicant-actions { display: flex; gap: 8px; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px;
+    margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    background: rgba(255,255,255,0.03); border-radius: var(--radius); border: 1px solid var(--border);
+    margin-top: 12px; font-size: 13px; color: var(--text-muted);
+  }
+  .status-dot-online { width:9px; height:9px; border-radius:50%; background:var(--accent-green); flex-shrink:0; }
+
+  /* company badge */
+  .role-badge-company2 { background:rgba(255,189,89,0.12); color:var(--accent-amber); }
+</style>
+</head>
+<body>
+
+<!-- ── TABS ── -->
+<div class="tabs">
+  <button class="tab active" onclick="show('feed')">📰 Feed</button>
+  <button class="tab" onclick="show('events')">📅 Events</button>
+  <button class="tab" onclick="show('jobs')">💼 Jobs</button>
+  <button class="tab" onclick="show('messages')">💬 Messages</button>
+  <button class="tab" onclick="show('profile')">👤 Profile</button>
+  <button class="tab" onclick="show('admin')">🛡 Admin</button>
+  <button class="tab" onclick="show('company')">🏢 Company</button>
+  <button class="tab" onclick="show('login')">🔑 Login</button>
+  <button class="tab" onclick="show('register')">📝 Register</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: FEED
+══════════════════════════════════════════ -->
+<div id="feed" class="screen active">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">EC</div>
+        <div class="brand-text">Esprit<span>Connect</span></div>
+      </div>
+      <div class="sidebar-user">
+        <div class="avatar-wrap">
+          <div class="avatar">AB</div>
+          <span class="online-dot"></span>
+        </div>
+        <div class="user-info">
+          <strong>Amine Ben Salem</strong>
+          <span class="role-badge role-badge-student">Étudiant</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active"><div class="nav-dot">🏠</div><span>Feed</span></div>
+        <div class="nav-item"><div class="nav-dot">📅</div><span>Events</span></div>
+        <div class="nav-item"><div class="nav-dot">💼</div><span>Jobs</span></div>
+        <div class="nav-item"><div class="nav-dot">💬</div><span>Messages</span></div>
+        <div class="nav-item"><div class="nav-dot">👤</div><span>Profile</span></div>
+      </nav>
+      <button class="sidebar-logout"><span>⬅</span><span>Sign out</span></button>
+    </aside>
+    <div class="main-content">
+      <div class="page-header">
+        <h1>Feed</h1>
+        <p>What's happening at ESPRIT</p>
+      </div>
+      <div class="compose">
+        <textarea placeholder="Share something with your campus..."></textarea>
+        <div class="compose-footer">
+          <button class="btn btn-primary btn-sm">Publish</button>
+        </div>
+      </div>
+      <div class="post-card">
+        <div class="post-header">
+          <div class="post-avatar">SA</div>
+          <div>
+            <div class="post-author">Sami Amara</div>
+            <div class="post-time">May 14, 2026 · 09:42</div>
+          </div>
+          <span class="badge badge-red" style="margin-left:auto">STUDENT</span>
+        </div>
+        <div class="post-body">Vient de passer la soutenance PFE — merci à tous pour le soutien ! 🎓 Prochain niveau : chercher un CDI dans la data science.</div>
+        <div class="post-actions">
+          <button class="btn-icon">❤ 12</button>
+          <button class="btn-icon">💬 4</button>
+        </div>
+      </div>
+      <div class="post-card">
+        <div class="post-header">
+          <div class="post-avatar" style="background:linear-gradient(135deg,#3ddc84,#38d6c7)">NA</div>
+          <div>
+            <div class="post-author">Nadia Ayari</div>
+            <div class="post-time">May 14, 2026 · 08:15</div>
+          </div>
+          <span class="badge badge-green" style="margin-left:auto">ENSEIGNANT</span>
+        </div>
+        <div class="post-body">Rappel : le TP de cryptographie est reporté au jeudi 16. Les groupes pairs passent le matin, impairs l'après-midi.</div>
+        <div class="post-actions">
+          <button class="btn-icon">❤ 7</button>
+          <button class="btn-icon">💬 2</button>
+        </div>
+      </div>
+      <div class="post-card">
+        <div class="post-header">
+          <div class="post-avatar" style="background:linear-gradient(135deg,#ffbd59,#ff6b55)">MB</div>
+          <div>
+            <div class="post-author">Mehdi Baccouche</div>
+            <div class="post-time">May 13, 2026 · 17:30</div>
+          </div>
+          <span class="badge badge-gray" style="margin-left:auto">ALUMNI</span>
+        </div>
+        <div class="post-body">Notre startup vient d'être sélectionnée pour l'incubateur Flat6Labs 🚀 Recrutement ouvert : 2 dev React/Node, 1 designer UX. DM pour postuler !</div>
+        <div class="post-actions">
+          <button class="btn-icon">❤ 31</button>
+          <button class="btn-icon">💬 9</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: EVENTS
+══════════════════════════════════════════ -->
+<div id="events" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">EC</div><div class="brand-text">Esprit<span>Connect</span></div></div>
+      <div class="sidebar-user">
+        <div class="avatar-wrap"><div class="avatar">AB</div><span class="online-dot"></span></div>
+        <div class="user-info"><strong>Amine Ben Salem</strong><span class="role-badge role-badge-student">Étudiant</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item"><div class="nav-dot">🏠</div><span>Feed</span></div>
+        <div class="nav-item active"><div class="nav-dot">📅</div><span>Events</span></div>
+        <div class="nav-item"><div class="nav-dot">💼</div><span>Jobs</span></div>
+        <div class="nav-item"><div class="nav-dot">💬</div><span>Messages</span></div>
+        <div class="nav-item"><div class="nav-dot">👤</div><span>Profile</span></div>
+      </nav>
+      <button class="sidebar-logout"><span>⬅</span><span>Sign out</span></button>
+    </aside>
+    <div class="main-content">
+      <div class="page-header"><h1>Events &amp; Clubs</h1><p>Manage campus events and student clubs</p></div>
+      <div class="section-title">Events</div>
+      <div class="list-grid">
+        <div class="card">
+          <div class="item-head">
+            <div><h3>Hackathon IA 2026</h3><p>Sat Jun 7 · 08:00</p></div>
+            <span class="badge badge-red">48 registered</span>
+          </div>
+          <p class="muted">48h de code, 3 défis IA/ML, 5 000 DT de prix. Tous niveaux bienvenus.</p>
+          <div class="meta-row"><span>📍 Amphithéâtre A</span><span>🏛 Club IA</span></div>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm">✓ Register</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="item-head">
+            <div><h3>Journée Portes Ouvertes</h3><p>Fri May 23 · 10:00</p></div>
+            <span class="badge badge-green">120 registered</span>
+          </div>
+          <p class="muted">Présentation des filières, rencontres avec les enseignants et anciens étudiants.</p>
+          <div class="meta-row"><span>📍 Campus Principal</span></div>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm">✓ Register</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="item-head">
+            <div><h3>Conférence DevSecOps</h3><p>Thu May 22 · 14:00</p></div>
+            <span class="badge badge-gray">23 registered</span>
+          </div>
+          <p class="muted">Bonnes pratiques CI/CD, sécurité applicative et déploiement cloud.</p>
+          <div class="meta-row"><span>📍 Salle B12</span><span>🏛 Club Dev</span></div>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm">✓ Register</button>
+          </div>
+        </div>
+      </div>
+      <div class="section-title">Clubs</div>
+      <div class="list-grid">
+        <div class="card">
+          <div class="item-head"><div><h3>Club Intelligence Artificielle</h3><p>142 members</p></div><span class="badge badge-gray">Club</span></div>
+          <p class="muted">Ateliers hebdomadaires ML/DL, compétitions Kaggle, veille techno.</p>
+          <div class="card-actions"><button class="btn btn-ghost btn-sm">+ Join</button></div>
+        </div>
+        <div class="card">
+          <div class="item-head"><div><h3>Club Robotique</h3><p>87 members</p></div><span class="badge badge-gray">Club</span></div>
+          <p class="muted">Conception et programmation de robots, participation aux compétitions nationales.</p>
+          <div class="card-actions"><button class="btn btn-ghost btn-sm">+ Join</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: JOBS
+══════════════════════════════════════════ -->
+<div id="jobs" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">EC</div><div class="brand-text">Esprit<span>Connect</span></div></div>
+      <div class="sidebar-user">
+        <div class="avatar-wrap"><div class="avatar">AB</div><span class="online-dot"></span></div>
+        <div class="user-info"><strong>Amine Ben Salem</strong><span class="role-badge role-badge-student">Étudiant</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item"><div class="nav-dot">🏠</div><span>Feed</span></div>
+        <div class="nav-item"><div class="nav-dot">📅</div><span>Events</span></div>
+        <div class="nav-item active"><div class="nav-dot">💼</div><span>Jobs</span></div>
+        <div class="nav-item"><div class="nav-dot">💬</div><span>Messages</span></div>
+        <div class="nav-item"><div class="nav-dot">👤</div><span>Profile</span></div>
+      </nav>
+      <button class="sidebar-logout"><span>⬅</span><span>Sign out</span></button>
+    </aside>
+    <div class="main-content">
+      <div class="page-header"><h1>Jobs &amp; Mentoring</h1><p>Internships, job offers, applications and mentoring</p></div>
+      <div class="list-grid">
+        <div class="card">
+          <div class="item-head">
+            <div><h3>Développeur Full Stack</h3><p style="color:var(--accent-cyan)">Acme Corp</p></div>
+            <span class="badge badge-green">CDI</span>
+          </div>
+          <p class="muted">React, Node.js, PostgreSQL — 3 ans d'expérience ou récent diplômé avec projet solide.</p>
+          <div class="meta-row"><span>📍 Tunis</span><span>👥 12 candidats</span></div>
+          <div class="card-actions"><button class="btn btn-primary btn-sm">Apply</button></div>
+        </div>
+        <div class="card">
+          <div class="item-head">
+            <div><h3>Stage Data Analyst</h3><p style="color:var(--accent-cyan)">Banque de Tunisie</p></div>
+            <span class="badge badge-gray">STAGE</span>
+          </div>
+          <p class="muted">Python, SQL, Power BI — stage PFE 6 mois avec possibilité de CDI.</p>
+          <div class="meta-row"><span>📍 Tunis Centre</span><span>👥 8 candidats</span></div>
+          <div class="card-actions"><button class="btn btn-primary btn-sm">Apply</button></div>
+        </div>
+        <div class="card">
+          <div class="item-head">
+            <div><h3>Ingénieur DevOps</h3><p style="color:var(--accent-cyan)">TechVision</p></div>
+            <span class="badge badge-red">CDD</span>
+          </div>
+          <p class="muted">Docker, Kubernetes, CI/CD GitLab — mission 12 mois renouvelable.</p>
+          <div class="meta-row"><span>📍 Lac 2</span><span>👥 5 candidats</span></div>
+          <div class="card-actions"><button class="btn btn-primary btn-sm">Apply</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: MESSAGES
+══════════════════════════════════════════ -->
+<div id="messages" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">EC</div><div class="brand-text">Esprit<span>Connect</span></div></div>
+      <div class="sidebar-user">
+        <div class="avatar-wrap"><div class="avatar">AB</div><span class="online-dot"></span></div>
+        <div class="user-info"><strong>Amine Ben Salem</strong><span class="role-badge role-badge-student">Étudiant</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item"><div class="nav-dot">🏠</div><span>Feed</span></div>
+        <div class="nav-item"><div class="nav-dot">📅</div><span>Events</span></div>
+        <div class="nav-item"><div class="nav-dot">💼</div><span>Jobs</span></div>
+        <div class="nav-item active"><div class="nav-dot">💬</div><span>Messages</span></div>
+        <div class="nav-item"><div class="nav-dot">👤</div><span>Profile</span></div>
+      </nav>
+      <button class="sidebar-logout"><span>⬅</span><span>Sign out</span></button>
+    </aside>
+    <div class="main-content" style="padding:0">
+      <div class="messages-layout" style="height:calc(100vh - 64px)">
+        <div class="conversations-panel">
+          <div class="panel-header" style="padding:16px 14px 12px;border-bottom:1px solid var(--border)">
+            <h2 style="font-size:15px">Messages</h2>
+          </div>
+          <div style="display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)">
+            <input placeholder="User ID to message..." style="font-size:12px;padding:7px 10px;border-radius:8px" />
+            <button class="btn btn-primary btn-sm">✏</button>
+          </div>
+          <div class="conv-list">
+            <div class="conv-item active-conv">
+              <div class="conv-avatar">NA</div>
+              <div>
+                <div class="conv-name">Nadia Ayari</div>
+                <div class="conv-preview">Merci pour le cours 👍</div>
+              </div>
+              <span class="badge badge-danger" style="font-size:10px;margin-left:auto">2</span>
+            </div>
+            <div class="conv-item">
+              <div class="conv-avatar" style="background:linear-gradient(135deg,#3ddc84,#38d6c7)">MB</div>
+              <div>
+                <div class="conv-name">Mehdi Baccouche</div>
+                <div class="conv-preview">Tu es disponible demain ?</div>
+              </div>
+            </div>
+            <div class="conv-item">
+              <div class="conv-avatar" style="background:linear-gradient(135deg,#ffbd59,#ff6b55)">KT</div>
+              <div>
+                <div class="conv-name">Karim Trabelsi</div>
+                <div class="conv-preview">L'offre t'intéresse ?</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="message-thread">
+          <div class="thread-header">
+            <div class="conv-avatar" style="width:36px;height:36px;font-size:13px">NA</div>
+            <div><div style="font-weight:600;font-size:14px">Nadia Ayari</div><div style="font-size:12px;color:var(--accent-green)">● Online</div></div>
+          </div>
+          <div class="thread-messages">
+            <div class="message-bubble theirs">
+              <div class="bubble-content">Bonjour Amine, vous avez rendu le TP hier ?</div>
+              <div class="bubble-time">09:14</div>
+            </div>
+            <div class="message-bubble mine">
+              <div class="bubble-content">Oui Madame, je l'ai soumis via Moodle à 22h.</div>
+              <div class="bubble-time">09:18</div>
+            </div>
+            <div class="message-bubble theirs">
+              <div class="bubble-content">Parfait, je corrige ce soir. Le cours de jeudi est maintenu.</div>
+              <div class="bubble-time">09:20</div>
+            </div>
+            <div class="message-bubble mine">
+              <div class="bubble-content">Merci pour le cours 👍</div>
+              <div class="bubble-time">09:22</div>
+            </div>
+          </div>
+          <div class="thread-input">
+            <input placeholder="Type a message..." style="border-radius:24px" />
+            <button class="btn btn-primary btn-sm">Send ➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: PROFILE
+══════════════════════════════════════════ -->
+<div id="profile" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">EC</div><div class="brand-text">Esprit<span>Connect</span></div></div>
+      <div class="sidebar-user">
+        <div class="avatar-wrap"><div class="avatar">AB</div><span class="online-dot"></span></div>
+        <div class="user-info"><strong>Amine Ben Salem</strong><span class="role-badge role-badge-student">Étudiant</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item"><div class="nav-dot">🏠</div><span>Feed</span></div>
+        <div class="nav-item"><div class="nav-dot">📅</div><span>Events</span></div>
+        <div class="nav-item"><div class="nav-dot">💼</div><span>Jobs</span></div>
+        <div class="nav-item"><div class="nav-dot">💬</div><span>Messages</span></div>
+        <div class="nav-item active"><div class="nav-dot">👤</div><span>Profile</span></div>
+      </nav>
+      <button class="sidebar-logout"><span>⬅</span><span>Sign out</span></button>
+    </aside>
+    <div class="main-content">
+      <div class="profile-header">
+        <div class="profile-avatar-lg">AB</div>
+        <div class="profile-info">
+          <h2>Amine Ben Salem</h2>
+          <p>amine.bensalem@esprit.tn</p>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <span class="badge badge-red">STUDENT</span>
+            <span class="badge badge-gray">4DS1</span>
+            <span class="badge badge-gray">Informatique</span>
+            <span class="badge badge-gray">GL</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto">✏ Edit profile</button>
+      </div>
+      <div class="card">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:18px">Account Details</div>
+        <div class="grid-2" style="gap:20px">
+          <div><div class="detail-label">First Name</div><div class="detail-value">Amine</div></div>
+          <div><div class="detail-label">Last Name</div><div class="detail-value">Ben Salem</div></div>
+          <div><div class="detail-label">Email</div><div class="detail-value">amine.bensalem@esprit.tn</div></div>
+          <div><div class="detail-label">Member Since</div><div class="detail-value">Sep 15, 2022</div></div>
+          <div><div class="detail-label">Esprit ID</div><div class="detail-value">ESP-2022-04512</div></div>
+          <div><div class="detail-label">Spécialité</div><div class="detail-value">Informatique — GL</div></div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot-online"></div>
+        <span>Currently online · Last login May 14, 2026 at 08:30</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: ADMIN
+══════════════════════════════════════════ -->
+<div id="admin" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">EC</div><div class="brand-text">Esprit<span>Connect</span></div></div>
+      <div class="sidebar-user">
+        <div class="avatar-wrap"><div class="avatar" style="background:linear-gradient(135deg,#ffbd59,#ff6b55)">AD</div><span class="online-dot"></span></div>
+        <div class="user-info"><strong>Admin EspritConnect</strong><span class="role-badge role-badge-admin">Admin</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item"><div class="nav-dot">🏠</div><span>Feed</span></div>
+        <div class="nav-item"><div class="nav-dot">📅</div><span>Events</span></div>
+        <div class="nav-item"><div class="nav-dot">💼</div><span>Jobs</span></div>
+        <div class="nav-item"><div class="nav-dot">💬</div><span>Messages</span></div>
+        <div class="nav-item"><div class="nav-dot">👤</div><span>Profile</span></div>
+        <div class="nav-item active"><div class="nav-dot">🛡</div><span>Admin</span></div>
+      </nav>
+      <button class="sidebar-logout"><span>⬅</span><span>Sign out</span></button>
+    </aside>
+    <div class="main-content">
+      <div class="page-header"><h1>Admin Dashboard</h1><p>Platform overview and management</p></div>
+      <div class="admin-grid">
+        <div class="admin-tile"><div class="tile-icon">🏠</div><strong>Feed</strong><small>Moderate posts, comments and engagement.</small></div>
+        <div class="admin-tile"><div class="tile-icon">📅</div><strong>Events &amp; Clubs</strong><small>Manage events, clubs and registrations.</small></div>
+        <div class="admin-tile"><div class="tile-icon">💼</div><strong>Jobs &amp; Mentoring</strong><small>Track offers and mentoring workflows.</small></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Pending Company Approvals</h2>
+          <span class="badge badge-danger">3</span>
+        </div>
+        <div class="applicant-card">
+          <div class="applicant-info"><strong>Acme Corp SA</strong><small>acme@acmecorp.tn · registered 2h ago</small></div>
+          <div class="applicant-actions">
+            <button class="btn btn-success btn-sm">✓ Approve</button>
+            <button class="btn btn-danger btn-sm">✗ Reject</button>
+          </div>
+        </div>
+        <div class="applicant-card">
+          <div class="applicant-info"><strong>TechVision SARL</strong><small>hr@techvision.tn · registered 5h ago</small></div>
+          <div class="applicant-actions">
+            <button class="btn btn-success btn-sm">✓ Approve</button>
+            <button class="btn btn-danger btn-sm">✗ Reject</button>
+          </div>
+        </div>
+        <div class="applicant-card" style="border-bottom:none">
+          <div class="applicant-info"><strong>DataMinds Tunisia</strong><small>contact@dataminds.tn · registered 1d ago</small></div>
+          <div class="applicant-actions">
+            <button class="btn btn-success btn-sm">✓ Approve</button>
+            <button class="btn btn-danger btn-sm">✗ Reject</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Esprit Reference Table</h2></div>
+        <div class="info-banner">
+          🛡 Only users whose espritId + CIN matches an entry here can register (except companies).
+        </div>
+        <button class="btn btn-ghost btn-sm">View via API (Swagger) ↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: COMPANY
+══════════════════════════════════════════ -->
+<div id="company" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">EC</div><div class="brand-text">Esprit<span>Connect</span></div></div>
+      <div class="sidebar-user">
+        <div class="avatar-wrap"><div class="avatar" style="background:linear-gradient(135deg,#ffbd59,#38d6c7)">AC</div></div>
+        <div class="user-info"><strong>Acme Corp SA</strong><span class="role-badge role-badge-company">Entreprise</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item"><div class="nav-dot">💬</div><span>Messages</span></div>
+        <div class="nav-item active"><div class="nav-dot">🏢</div><span>My Recruits</span></div>
+        <div class="nav-item"><div class="nav-dot">👤</div><span>Profile</span></div>
+      </nav>
+      <button class="sidebar-logout"><span>⬅</span><span>Sign out</span></button>
+    </aside>
+    <div class="main-content">
+      <div class="page-header"><h1>Recruiter Dashboard</h1><p>Manage your job offers and review ranked applicants</p></div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2>My Job Offers</h2>
+          <button class="btn btn-primary btn-sm">+ New offer</button>
+        </div>
+        <div class="list-grid">
+          <div class="card">
+            <div class="item-head"><div><h3>Développeur Full Stack</h3><p>CDI · Tunis</p></div><span class="badge badge-green">12 applicants</span></div>
+            <p class="muted">React, Node.js, PostgreSQL — poste à pourvoir immédiatement.</p>
+            <div class="card-actions">
+              <button class="btn btn-ghost btn-sm">👁 View applicants</button>
+              <button class="btn btn-danger btn-sm">🗑 Delete</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="item-head"><div><h3>Stage Data Analyst</h3><p>Stage · Tunis</p></div><span class="badge badge-gray">5 applicants</span></div>
+            <p class="muted">Python, SQL, Power BI — PFE 6 mois avec possibilité d'embauche.</p>
+            <div class="card-actions">
+              <button class="btn btn-ghost btn-sm">👁 View applicants</button>
+              <button class="btn btn-danger btn-sm">🗑 Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Top Applicants — Développeur Full Stack</h2><span class="badge badge-gray">Ranked by CV match</span></div>
+        <div class="applicant-card">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="conv-avatar" style="width:36px;height:36px;font-size:13px">AB</div>
+            <div class="applicant-info"><strong>Amine Ben Salem</strong><small>amine@esprit.tn · Score: 94%</small></div>
+          </div>
+          <div class="applicant-actions">
+            <span class="badge badge-green">Match 94%</span>
+            <button class="btn btn-success btn-sm">Accept</button>
+            <button class="btn btn-danger btn-sm">Reject</button>
+          </div>
+        </div>
+        <div class="applicant-card" style="border-bottom:none">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="conv-avatar" style="width:36px;height:36px;font-size:13px;background:var(--accent-green)">SK</div>
+            <div class="applicant-info"><strong>Sara Khemiri</strong><small>sara@esprit.tn · Score: 87%</small></div>
+          </div>
+          <div class="applicant-actions">
+            <span class="badge badge-gray">Match 87%</span>
+            <button class="btn btn-success btn-sm">Accept</button>
+            <button class="btn btn-danger btn-sm">Reject</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: LOGIN
+══════════════════════════════════════════ -->
+<div id="login" class="screen">
+  <div class="auth-wrapper" style="min-height:calc(100vh - 64px)">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-mark">Esprit<span>Connect</span></div>
+        <div class="logo-sub">Welcome back</div>
+      </div>
+      <h2 class="auth-title">Sign in</h2>
+      <p class="auth-subtitle">Enter your credentials to access your campus network</p>
+      <div class="field"><label>Email</label><input placeholder="you@esprit.tn" type="email" /></div>
+      <div class="field"><label>Password</label><input placeholder="••••••" type="password" /></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px">Sign in</button>
+      <div class="auth-link">No account yet? <a href="#">Create one</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: REGISTER
+══════════════════════════════════════════ -->
+<div id="register" class="screen">
+  <div class="auth-wrapper" style="min-height:calc(100vh - 64px)">
+    <div class="auth-card" style="max-width:560px;padding:38px">
+      <div class="auth-logo">
+        <div class="logo-mark">Esprit<span>Connect</span></div>
+        <div class="logo-sub">Create your account</div>
+      </div>
+      <div class="steps-indicator">
+        <div class="step-dot done">✓</div>
+        <div class="step-line active"></div>
+        <div class="step-dot active">2</div>
+      </div>
+      <h2 class="auth-title">Your details</h2>
+      <p class="auth-subtitle" style="margin-bottom:20px">
+        Registering as <span class="role-badge role-badge-student">Étudiant</span>
+      </p>
+      <div class="grid-2">
+        <div class="field"><label>First Name</label><input placeholder="Amine" /></div>
+        <div class="field"><label>Last Name</label><input placeholder="Ben Salem" /></div>
+      </div>
+      <div class="field"><label>Email</label><input placeholder="you@esprit.tn" type="email" /></div>
+      <div class="field"><label>Password</label><input placeholder="min. 6 characters" type="password" /></div>
+      <div class="grid-2">
+        <div class="field"><label>Esprit ID <span style="color:var(--red)">*</span></label><input placeholder="ESP-2024-00123" /></div>
+        <div class="field"><label>CIN <span style="color:var(--red)">*</span></label><input placeholder="12345678" /></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Spécialité</label>
+          <select><option>Informatique</option><option>Finance</option><option>Télécom</option></select>
+        </div>
+        <div class="field"><label>Parcours</label><input placeholder="GL, DS, BI…" /></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center">← Back</button>
+        <button class="btn btn-primary" style="flex:2;justify-content:center">Create account</button>
+      </div>
+      <div class="auth-link">Already have an account? <a href="#">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST DEMO ── -->
+<div class="toast-stack">
+  <div class="toast toast-success">✓ &nbsp;Profile updated successfully</div>
+  <div class="toast toast-info">💬 &nbsp;New message from Nadia Ayari</div>
+</div>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>

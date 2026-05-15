@@ -21,9 +21,10 @@ public class Club {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "logo_url")
     private String logoUrl;
 
-    @Column(nullable = false)
+    @Column(name = "creator_user_id", nullable = false)
     private Long creatorUserId;
 
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -18,7 +18,7 @@ public class Message {
     @JoinColumn(name = "conversation_id", nullable = false)
     private Conversation conversation;
 
-    @Column(nullable = false)
+    @Column(name = "sender_user_id", nullable = false)
     private Long senderUserId;
 
     @Column(nullable = false, columnDefinition = "TEXT")

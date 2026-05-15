@@ -42,4 +42,32 @@ public class User {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    /** School-issued identifier (carte étudiant / matricule RH). Unique when not null. */
+    @Column(unique = true)
+    private String espritId;
+
+    /** National ID card number. */
+    private String cin;
+
+    /** Timestamp of last successful login. */
+    private LocalDateTime lastLoginAt;
+
+    /** Real-time online presence flag. */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean online = false;
+
+    /**
+     * Approval flag. Always true except for COMPANY accounts which require admin approval.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean approved = true;
+
+    /** Academic speciality (e.g. "Informatique", "Finance"). */
+    private String specialite;
+
+    /** Academic track / curriculum (e.g. "GL", "DS", "BI"). */
+    private String parcours;
 }

@@ -32,18 +32,35 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/online")
+    @Operation(summary = "List online users")
+    public ResponseEntity<List<UserResponseDTO>> getOnlineUsers() {
+        return ResponseEntity.ok(userService.getOnlineUsers());
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Search users by name or email")
+    public ResponseEntity<List<UserResponseDTO>> searchUsers(@RequestParam String q) {
+        return ResponseEntity.ok(userService.searchUsers(q));
+    }
+
+    @GetMapping("/bulk")
+    @Operation(summary = "Get multiple users by IDs")
+    public ResponseEntity<List<UserResponseDTO>> getUsersByIds(@RequestParam List<Long> ids) {
+        return ResponseEntity.ok(userService.getUsersByIds(ids));
+    }
+
+    @GetMapping("/{id:[0-9]+}")
     @Operation(summary = "Get user by ID")
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:[0-9]+}")
     @Operation(summary = "Update own profile (ADMIN can update any user)")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id,
                                                       @Valid @RequestBody UpdateUserRequestDTO dto,
                                                       Authentication authentication) {
-        // Ownership check: a user can only update themselves unless they are ADMIN
         UserDetails principal = (UserDetails) authentication.getPrincipal();
         boolean isAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
@@ -51,14 +68,43 @@ public class UserController {
         if (!isAdmin && !current.getId().equals(id)) {
             throw new org.springframework.security.access.AccessDeniedException("Cannot update another user's profile");
         }
+        // Only admins can change the role field — clear it for non-admins
+        if (!isAdmin) {
+            dto.setRole(null);
+        }
         return ResponseEntity.ok(userService.updateUser(id, dto));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:[0-9]+}")
     @Operation(summary = "Delete user (ADMIN only)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    // ── Company approval ────────────────────────────────────────────────────
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "List company accounts pending approval (ADMIN only)")
+    public ResponseEntity<List<UserResponseDTO>> getPendingCompanies() {
+        return ResponseEntity.ok(userService.getPendingCompanies());
+    }
+
+    @PatchMapping("/{id:[0-9]+}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Approve a company account (ADMIN only)")
+    public ResponseEntity<UserResponseDTO> approveUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.approveUser(id));
+    }
+
+    @DeleteMapping("/{id:[0-9]+}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reject and delete a company account (ADMIN only)")
+    public ResponseEntity<Void> rejectUser(@PathVariable Long id) {
+        userService.rejectUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }

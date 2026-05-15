@@ -17,4 +17,11 @@ public class UserResponseDTO {
     private String promo;
     private String avatarUrl;
     private LocalDateTime createdAt;
+    private String espritId;
+    private String cin;
+    private LocalDateTime lastLoginAt;
+    private boolean online;
+    private boolean approved;
+    private String specialite;
+    private String parcours;
 }

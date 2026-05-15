@@ -8,7 +8,12 @@ import java.security.Key;
 public class JwtUtil {
     @Value("${jwt.secret}") private String secret;
     private Key getSigningKey() { return Keys.hmacShaKeyFor(secret.getBytes()); }
-    public Long extractUserId(String token) { return getClaims(token).get("userId", Long.class); }
+    public Long extractUserId(String token) {
+        Object userId = getClaims(token).get("userId");
+        if (userId instanceof Integer) return ((Integer) userId).longValue();
+        if (userId instanceof Long) return (Long) userId;
+        return null;
+    }
     public String extractEmail(String token) { return getClaims(token).getSubject(); }
     public String extractRole(String token) { return getClaims(token).get("role", String.class); }
     public boolean isTokenValid(String token) {

@@ -19,4 +19,8 @@ public class UpdateUserRequestDTO {
     private String promo;
 
     private String avatarUrl;
+
+    private String specialite;
+
+    private String parcours;
 }

@@ -28,6 +28,17 @@ public class RegisterRequestDTO {
     private Role role;
 
     private String promo;
-
     private String avatarUrl;
+
+    /** School-issued identifier. Required for all roles except COMPANY. */
+    private String espritId;
+
+    /** National ID card number. Required for all roles except COMPANY. */
+    private String cin;
+
+    /** Academic speciality (e.g. \"Informatique\", \"Finance\"). */
+    private String specialite;
+
+    /** Academic track / curriculum (e.g. \"GL\", \"DS\"). */
+    private String parcours;
 }

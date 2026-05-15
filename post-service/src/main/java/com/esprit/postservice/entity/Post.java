@@ -23,6 +23,9 @@ public class Post {
     @Column(nullable = false)
     private Long userId;
 
+    @Column(nullable = false)
+    private String userName;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

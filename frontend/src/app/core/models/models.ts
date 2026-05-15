@@ -1,12 +1,21 @@
+export type UserRole = 'STUDENT' | 'ADMIN' | 'MENTOR' | 'ENSEIGNANT' | 'ALUMNI' | 'EMPLOYE' | 'COMPANY';
+
 export interface User {
   id: number;
   email: string;
   prenom: string;
   nom: string;
-  role: 'STUDENT' | 'ADMIN' | 'MENTOR';
+  role: UserRole;
   promo?: string;
   avatarUrl?: string;
   createdAt: string;
+  espritId?: string;
+  cin?: string;
+  lastLoginAt?: string;
+  online?: boolean;
+  approved?: boolean;
+  specialite?: string;
+  parcours?: string;
 }
 
 export interface AuthResponse {
@@ -23,6 +32,7 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   photoUrls: string[];
+  userName: string;
 }
 
 export interface Comment {
@@ -31,6 +41,7 @@ export interface Comment {
   userId: number;
   texte: string;
   createdAt: string;
+  userName: string;
 }
 
 export interface Event {
@@ -43,6 +54,16 @@ export interface Event {
   clubNom?: string;
   creatorUserId: number;
   registrationCount: number;
+  categorie?: 'SPORTIF' | 'ACADEMIQUE' | 'CULTUREL' | 'TECHNOLOGIQUE' | 'AUTRE';
+}
+
+export interface EventRequest {
+  titre: string;
+  description?: string;
+  date: string;
+  lieu?: string;
+  clubId?: number | null;
+  categorie?: 'SPORTIF' | 'ACADEMIQUE' | 'CULTUREL' | 'TECHNOLOGIQUE' | 'AUTRE';
 }
 
 export interface Club {
@@ -52,6 +73,12 @@ export interface Club {
   logoUrl?: string;
   creatorUserId: number;
   memberCount: number;
+}
+
+export interface ClubRequest {
+  nom: string;
+  description?: string;
+  logoUrl?: string;
 }
 
 export interface Job {
@@ -65,12 +92,60 @@ export interface Job {
   applicationCount: number;
 }
 
+export interface JobRequest {
+  titre: string;
+  entreprise: string;
+  description?: string;
+  type: 'CDI' | 'CDD' | 'STAGE';
+  lieu?: string;
+}
+
+export interface Application {
+  id: number;
+  jobId: number;
+  jobTitre: string;
+  applicantUserId: number;
+  statut: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  cvUrl?: string;
+  matchScore?: number;
+}
+
+export interface EspritReference {
+  id?: number;
+  espritId: string;
+  cin: string;
+  expectedRole: UserRole;
+  nom?: string;
+  prenom?: string;
+}
+
+export interface Mentoring {
+  id: number;
+  mentorUserId: number;
+  mentoreUserId: number;
+  domaine: string;
+  statut: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  sessionCount: number;
+}
+
+export interface MentoringSession {
+  id: number;
+  mentoringId: number;
+  date: string;
+  dureeMinutes: number;
+  statut: 'PLANNED' | 'DONE' | 'CANCELLED';
+}
+
 export interface Conversation {
   id: number;
   participant1UserId: number;
+  participant1Name?: string;
   participant2UserId: number;
+  participant2Name?: string;
   messageCount: number;
   unreadCount: number;
+  lastMessage?: string;
+  lastMessageAt?: string;
 }
 
 export interface Message {
@@ -89,21 +164,4 @@ export interface Notification {
   message: string;
   lu: boolean;
   createdAt: string;
-}
-
-export interface Residence {
-  id: number;
-  nom: string;
-  adresse: string;
-  capaciteTotale: number;
-  chambreCount: number;
-}
-
-export interface Chambre {
-  id: number;
-  residenceId: number;
-  residenceNom: string;
-  numero: string;
-  type: 'SIMPLE' | 'DOUBLE' | 'STUDIO';
-  statut: 'DISPONIBLE' | 'OCCUPEE' | 'EN_MAINTENANCE';
 }

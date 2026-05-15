@@ -22,6 +22,9 @@ public class Comment {
     @Column(nullable = false)
     private Long userId;
 
+    @Column(nullable = false)
+    private String userName;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String texte;
 

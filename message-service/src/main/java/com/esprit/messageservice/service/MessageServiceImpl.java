@@ -10,8 +10,11 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,16 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RestTemplate restTemplate;
+
+    // Internal DTO for mapping auth-service response
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    private static class AuthUserDTO {
+        private Long id;
+        private String prenom;
+        private String nom;
+    }
 
     @Override
     @Transactional
@@ -62,8 +75,59 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public List<ConversationResponseDTO> getMyConversations(Long userId) {
-        return conversationRepository.findByParticipant1UserIdOrParticipant2UserId(userId, userId)
-                .stream().map(c -> toConversationDTO(c, userId)).collect(Collectors.toList());
+        List<Conversation> conversations = conversationRepository.findByParticipant1UserIdOrParticipant2UserId(userId, userId);
+        
+        // Collect all participant IDs for bulk resolution
+        Set<Long> ids = new HashSet<>();
+        conversations.forEach(c -> {
+            ids.add(c.getParticipant1UserId());
+            ids.add(c.getParticipant2UserId());
+        });
+        
+        Map<Long, String> nameMap = resolveNames(ids);
+
+        return conversations.stream()
+                .map(c -> {
+                    ConversationResponseDTO dto = toConversationDTO(c, userId);
+                    dto.setParticipant1Name(nameMap.getOrDefault(dto.getParticipant1UserId(), "User #" + dto.getParticipant1UserId()));
+                    dto.setParticipant2Name(nameMap.getOrDefault(dto.getParticipant2UserId(), "User #" + dto.getParticipant2UserId()));
+                    return dto;
+                })
+                .sorted((c1, c2) -> {
+                    if (c1.getLastMessageAt() == null) return 1;
+                    if (c2.getLastMessageAt() == null) return -1;
+                    return c2.getLastMessageAt().compareTo(c1.getLastMessageAt());
+                })
+                .collect(Collectors.toList());
+    }
+
+    private Map<Long, String> resolveNames(Set<Long> ids) {
+        if (ids == null || ids.isEmpty()) return Collections.emptyMap();
+        try {
+            String query = ids.stream()
+                .map(id -> "ids=" + id)
+                .collect(Collectors.joining("&"));
+            String url = "http://auth-service:8081/api/auth/users/bulk?" + query;
+            
+            ResponseEntity<List<AuthUserDTO>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<AuthUserDTO>>() {}
+            );
+            
+            if (response.getBody() != null) {
+                return response.getBody().stream()
+                    .collect(Collectors.toMap(
+                        AuthUserDTO::getId,
+                        u -> u.getPrenom() + " " + u.getNom(),
+                        (v1, v2) -> v1 // handle duplicates
+                    ));
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to resolve user names: " + e.getMessage());
+        }
+        return Collections.emptyMap();
     }
 
     @Override
@@ -117,11 +181,21 @@ public class MessageServiceImpl implements MessageService {
 
     private ConversationResponseDTO toConversationDTO(Conversation c, Long userId) {
         long unread = messageRepository.countByConversationIdAndLuFalseAndSenderUserIdNot(c.getId(), userId);
+        
+        // Get last message info
+        Message last = null;
+        if (c.getMessages() != null && !c.getMessages().isEmpty()) {
+            last = c.getMessages().get(c.getMessages().size() - 1);
+        }
+
         return ConversationResponseDTO.builder().id(c.getId())
                 .participant1UserId(c.getParticipant1UserId())
                 .participant2UserId(c.getParticipant2UserId())
                 .messageCount(c.getMessages().size())
-                .unreadCount((int) unread).build();
+                .unreadCount((int) unread)
+                .lastMessage(last != null ? last.getContenu() : null)
+                .lastMessageAt(last != null ? last.getCreatedAt() : null)
+                .build();
     }
 
     private NotificationResponseDTO toNotificationDTO(Notification n) {

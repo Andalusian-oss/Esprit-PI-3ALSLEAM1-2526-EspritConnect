@@ -11,9 +11,16 @@ import java.util.List;
 public interface UserService {
     AuthResponseDTO register(RegisterRequestDTO dto);
     AuthResponseDTO login(LoginRequestDTO dto);
+    void logout(String email);
     UserResponseDTO getUserById(Long id);
     UserResponseDTO getUserByEmail(String email);
     List<UserResponseDTO> getAllUsers();
     UserResponseDTO updateUser(Long id, UpdateUserRequestDTO dto);
     void deleteUser(Long id);
+    List<UserResponseDTO> getPendingCompanies();
+    UserResponseDTO approveUser(Long id);
+    void rejectUser(Long id);
+    List<UserResponseDTO> getOnlineUsers();
+    List<UserResponseDTO> searchUsers(String query);
+    List<UserResponseDTO> getUsersByIds(List<Long> ids);
 }
