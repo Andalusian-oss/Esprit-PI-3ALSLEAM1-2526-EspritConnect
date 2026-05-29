@@ -12,6 +12,12 @@ export class PostService {
   constructor(private http: HttpClient, private authService: AuthService) {}
 
   getAllPosts(): Observable<Post[]> { return this.http.get<Post[]>(this.url); }
+  getPostsByUser(userId: number): Observable<Post[]> { return this.http.get<Post[]>(`${this.url}/user/${userId}`); }
+  uploadPhoto(file: File): Observable<{ url: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<{ url: string }>(`${this.url}/upload`, form);
+  }
   createPost(data: { contenu: string; photoUrls?: string[] }): Observable<Post> {
     const user = this.authService.getCurrentUser();
     const payload = { ...data, userName: user ? `${user.prenom} ${user.nom}` : 'Anonymous' };
@@ -27,4 +33,11 @@ export class PostService {
     return this.http.post<Comment>(`${this.url}/${postId}/comments`, payload);
   }
   deleteComment(commentId: number): Observable<void> { return this.http.delete<void>(`${this.url}/comments/${commentId}`); }
+
+  // Admin moderation
+  getPendingPosts(): Observable<Post[]> { return this.http.get<Post[]>(`${this.url}/admin/pending`); }
+  approvePost(id: number): Observable<Post> { return this.http.put<Post>(`${this.url}/admin/${id}/approve`, {}); }
+  rejectPost(id: number): Observable<Post> { return this.http.put<Post>(`${this.url}/admin/${id}/reject`, {}); }
+  adminDeletePost(id: number): Observable<void> { return this.http.delete<void>(`${this.url}/admin/${id}`); }
 }
+

@@ -27,7 +27,7 @@ public class MentoringSession {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private SessionStatus statut = SessionStatus.SCHEDULED;
+    private SessionStatus statut = SessionStatus.PLANNED;
 
-    public enum SessionStatus { SCHEDULED, DONE, CANCELLED }
+    public enum SessionStatus { PLANNED, DONE, CANCELLED }
 }

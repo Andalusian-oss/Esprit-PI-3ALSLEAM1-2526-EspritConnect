@@ -34,14 +34,32 @@ spring:
         - id: message-service
           uri: ${MESSAGE_SERVICE_URI:http://localhost:8085}
           predicates:
-            - Path=/api/messages/**, /api/conversations/**, /api/notifications/**
+            - "Path=/api/messages/**, /api/conversations/**, /api/notifications/**, /api/groups, /api/groups/**"
+
+        - id: resource-service
+          uri: ${RESOURCE_SERVICE_URI:http://localhost:8086}
+          predicates:
+            - Path=/api/resources/**
+
+        - id: cv-analyzer
+          uri: ${CV_ANALYZER_URI:http://localhost:8090}
+          predicates:
+            - Path=/api/cv-analyzer/**
+          filters:
+            - RewritePath=/api/cv-analyzer/(?<segment>.*), /${segment}
+
+        - id: chatbot-service
+          uri: ${CHATBOT_SERVICE_URI:http://localhost:8091}
+          predicates:
+            - Path=/api/chatbot/**
+          filters:
+            - RewritePath=/api/chatbot/(?<segment>.*), /${segment}
 
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins:
-              - "http://localhost:4200"
-              - "http://localhost:4201"
+            allowedOriginPatterns:
+              - "*"
             allowedMethods:
               - GET
               - POST
@@ -59,3 +77,6 @@ eureka:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
   instance:
     prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET}

@@ -8,4 +8,5 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     List<Application> findByJobId(Long jobId);
     List<Application> findByApplicantUserId(Long userId);
     boolean existsByJobIdAndApplicantUserId(Long jobId, Long userId);
+    List<Application> findByJobIdOrderByMatchScoreDescIdAsc(Long jobId);
 }

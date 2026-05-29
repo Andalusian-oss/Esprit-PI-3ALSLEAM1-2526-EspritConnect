@@ -1,0 +1,70 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1502 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+14 TL
+(Ahmed Ben Ali) Tj T*
+(Java Backend Developer) Tj T*
+(Email: ahmed.benali@gmail.com | Phone: +216 55 123 456 | LinkedIn: linkedin.com/in/ahmedbenali | Git) Tj T*
+() Tj T*
+(EDUCATION) Tj T*
+(Master in Software Engineering - ESPRIT, Tunis \(2020-2022\)) Tj T*
+(Bachelor in Computer Science - INSAT \(2017-2020\)) Tj T*
+() Tj T*
+(EXPERIENCE) Tj T*
+(3 years of experience in Java backend development.) Tj T*
+() Tj T*
+(Software Engineer at TunisTech \(2022-2024\)) Tj T*
+(- Developed REST API microservices using Spring Boot, Hibernate, MySQL) Tj T*
+(- Deployed applications with Docker, Kubernetes on AWS) Tj T*
+(- Implemented CI/CD pipelines with Jenkins and GitHub Actions) Tj T*
+() Tj T*
+(Internship at Proxym Group \(2021\)) Tj T*
+(- Built REST APIs with Spring Boot and PostgreSQL) Tj T*
+(- Wrote unit tests with JUnit and Mockito) Tj T*
+() Tj T*
+(SKILLS) Tj T*
+(Languages: Java, Python, JavaScript) Tj T*
+(Frameworks: Spring, Spring Boot, Hibernate, Angular, React) Tj T*
+(Databases: MySQL, PostgreSQL, MongoDB, Redis) Tj T*
+(DevOps: Docker, Kubernetes, Jenkins, GitHub Actions, AWS, Linux) Tj T*
+(Tools: Git, Maven, Postman, Swagger, Jira) Tj T*
+(Concepts: REST API, Microservices, Agile, Scrum, TDD, CI/CD, Design Patterns, SOLID) Tj T*
+() Tj T*
+(LANGUAGES) Tj T*
+(Arabic: Native | French: Fluent | English: Professional | German: Beginner) Tj T*
+() Tj T*
+(SOFT SKILLS) Tj T*
+(Teamwork, Leadership, Communication, Problem Solving, Analytical thinking) Tj T*
+() Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001795 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1865
+%%EOF

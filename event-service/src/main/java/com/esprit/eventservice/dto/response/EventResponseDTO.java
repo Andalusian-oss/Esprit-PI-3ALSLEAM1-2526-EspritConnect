@@ -1,5 +1,6 @@
 package com.esprit.eventservice.dto.response;
 
+import com.esprit.eventservice.entity.Event.EventCategory;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,4 +18,5 @@ public class EventResponseDTO {
     private String clubNom;
     private Long creatorUserId;
     private int registrationCount;
+    private EventCategory categorie;
 }

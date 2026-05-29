@@ -49,6 +49,10 @@ services:
       EVENT_SERVICE_URI: http://event-service:8083
       JOB_SERVICE_URI: http://job-service:8084
       MESSAGE_SERVICE_URI: http://message-service:8085
+      RESOURCE_SERVICE_URI: http://resource-service:8086
+      CV_ANALYZER_URI: http://cv-analyzer:8090
+      CHATBOT_SERVICE_URI: http://chatbot-service:8091
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - esprit-net
 
@@ -68,6 +72,15 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_URI: http://eureka-server:8761/eureka/
       JWT_SECRET: ${JWT_SECRET}
+      UPLOAD_DIR: /app/uploads
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      APP_BASE_URL: ${APP_BASE_URL}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL}
+    volumes:
+      - uploads_auth:/app/uploads
     networks:
       - esprit-net
 
@@ -87,6 +100,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_URI: http://eureka-server:8761/eureka/
       JWT_SECRET: ${JWT_SECRET}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_post:/app/uploads
     networks:
       - esprit-net
 
@@ -125,6 +141,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_URI: http://eureka-server:8761/eureka/
       JWT_SECRET: ${JWT_SECRET}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_job:/app/uploads
     networks:
       - esprit-net
 
@@ -148,8 +167,78 @@ services:
     networks:
       - esprit-net
 
+  resource-service:
+    build: ./resource-service
+    container_name: resource-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_resource?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      EUREKA_URI: http://eureka-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_resource:/app/uploads
+    networks:
+      - esprit-net
+
+  cv-analyzer:
+    build: ./cv-analyzer
+    container_name: cv-analyzer
+    ports:
+      - "8090:8090"
+    networks:
+      - esprit-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8090/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  chatbot-service:
+    build: ./chatbot-service
+    container_name: chatbot-service
+    ports:
+      - "8091:8091"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    networks:
+      - esprit-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8091/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "4200:4200"
+      - "4443:4443"
+    depends_on:
+      - api-gateway
+      - message-service
+    networks:
+      - esprit-net
+
 volumes:
   mysql_data:
+  uploads_auth:
+  uploads_post:
+  uploads_job:
+  uploads_resource:
 
 networks:
   esprit-net:

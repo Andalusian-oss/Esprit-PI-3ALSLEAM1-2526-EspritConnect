@@ -4,6 +4,7 @@ import { Club, Event, EventRequest } from '../../core/models/models';
 import { EventService } from '../../core/services/event.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
+import { LanguageService } from '../../core/services/language.service';
 
 @Component({
   selector: 'app-events',
@@ -11,68 +12,68 @@ import { AuthService } from '../../core/services/auth.service';
     <div class="page-wide">
       <div class="page-header page-header-row">
         <div>
-          <h1>Events & Clubs</h1>
-          <p>Manage campus events and student clubs</p>
+          <h1>{{ lang.t('events.title') }}</h1>
+          <p>{{ lang.t('events.subtitle') }}</p>
         </div>
         <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="toggleClubForm()">
           <span class="icon" [ngClass]="showClubForm ? 'icon-x' : 'icon-plus'"></span>
-          {{ showClubForm ? 'Close club form' : 'New club' }}
+          {{ showClubForm ? lang.t('events.closeClubForm') : lang.t('events.newClub') }}
         </button>
       </div>
 
       <div class="crud-grid" *ngIf="canManageEvents">
         <section class="panel">
-          <h2>{{ editingEventId ? 'Update event' : 'Create event' }}</h2>
+          <h2>{{ editingEventId ? lang.t('events.updateEvent') : lang.t('events.createEvent') }}</h2>
           <form [formGroup]="eventForm" (ngSubmit)="saveEvent()" class="stack">
-            <input formControlName="titre" placeholder="Title" />
-            <textarea formControlName="description" placeholder="Description"></textarea>
+            <input formControlName="titre" [placeholder]="lang.t('events.titlePh')" />
+            <textarea formControlName="description" [placeholder]="lang.t('events.descPh')"></textarea>
             <div class="grid-2">
               <input formControlName="date" type="datetime-local" />
-              <input formControlName="lieu" placeholder="Location" />
+              <input formControlName="lieu" [placeholder]="lang.t('events.locationPh')" />
             </div>
             <select formControlName="clubId">
-              <option [ngValue]="null">No club</option>
+              <option [ngValue]="null">{{ lang.t('events.noClub') }}</option>
               <option *ngFor="let club of clubs" [ngValue]="club.id">{{ club.nom }}</option>
             </select>
             <div class="form-actions">
               <button class="btn btn-primary" type="submit" [disabled]="eventForm.invalid || saving">
                 <span class="icon" [ngClass]="editingEventId ? 'icon-save' : 'icon-plus'"></span>
-                {{ editingEventId ? 'Update' : 'Create' }}
+                {{ editingEventId ? lang.t('common.update') : lang.t('common.create') }}
               </button>
-              <button class="btn btn-ghost" type="button" *ngIf="editingEventId" (click)="resetEventForm()">Cancel</button>
+              <button class="btn btn-ghost" type="button" *ngIf="editingEventId" (click)="resetEventForm()">{{ lang.t('common.cancel') }}</button>
             </div>
           </form>
         </section>
 
         <section class="panel" *ngIf="showClubForm">
-          <h2>{{ editingClubId ? 'Update club' : 'Create club' }}</h2>
+          <h2>{{ editingClubId ? lang.t('events.updateClub') : lang.t('events.createClub') }}</h2>
           <form [formGroup]="clubForm" (ngSubmit)="saveClub()" class="stack">
-            <input formControlName="nom" placeholder="Club name" />
-            <textarea formControlName="description" placeholder="Description"></textarea>
-            <input formControlName="logoUrl" placeholder="Logo URL" />
+            <input formControlName="nom" [placeholder]="lang.t('events.clubNamePh')" />
+            <textarea formControlName="description" [placeholder]="lang.t('events.descPh')"></textarea>
+            <input formControlName="logoUrl" [placeholder]="lang.t('events.logoUrlPh')" />
             <div class="form-actions">
               <button class="btn btn-primary" type="submit" [disabled]="clubForm.invalid || saving">
                 <span class="icon" [ngClass]="editingClubId ? 'icon-save' : 'icon-plus'"></span>
-                {{ editingClubId ? 'Update' : 'Create' }}
+                {{ editingClubId ? lang.t('common.update') : lang.t('common.create') }}
               </button>
-              <button class="btn btn-ghost" type="button" *ngIf="editingClubId" (click)="resetClubForm()">Cancel</button>
+              <button class="btn btn-ghost" type="button" *ngIf="editingClubId" (click)="resetClubForm()">{{ lang.t('common.cancel') }}</button>
             </div>
           </form>
         </section>
       </div>
 
       <div *ngIf="error" class="error-msg">{{ error }}</div>
-      <div *ngIf="loading" class="empty"><p>Loading...</p></div>
+      <div *ngIf="loading" class="empty"><p>{{ lang.t('common.loading') }}</p></div>
 
-      <div class="section-title">Events</div>
+      <div class="section-title">{{ lang.t('events.sectionEvents') }}</div>
       <div class="toolbar">
-        <input [(ngModel)]="eventQuery" placeholder="Search events..." />
+        <input [(ngModel)]="eventQuery" [placeholder]="lang.t('events.searchEvents')" />
         <select [(ngModel)]="eventClubFilter">
-          <option [ngValue]="null">All clubs</option>
+          <option [ngValue]="null">{{ lang.t('events.allClubs') }}</option>
           <option *ngFor="let club of clubs" [ngValue]="club.id">{{ club.nom }}</option>
         </select>
       </div>
-      <div *ngIf="!loading && events.length === 0" class="empty"><p>No events yet</p></div>
+      <div *ngIf="!loading && events.length === 0" class="empty"><p>{{ lang.t('events.noEvents') }}</p></div>
       <div class="list-grid">
         <article class="card" *ngFor="let event of pagedEvents">
           <div class="item-head">
@@ -80,44 +81,44 @@ import { AuthService } from '../../core/services/auth.service';
               <h3>{{ event.titre }}</h3>
               <p>{{ event.date | date:'medium' }}</p>
             </div>
-            <span class="badge badge-red">{{ event.registrationCount }} registered</span>
+            <span class="badge badge-red">{{ event.registrationCount }} {{ lang.t('events.registered') }}</span>
           </div>
           <p class="muted" *ngIf="event.description">{{ event.description }}</p>
           <div class="meta-row">
-            <span *ngIf="event.lieu">Location: {{ event.lieu }}</span>
-            <span *ngIf="event.clubNom">Club: {{ event.clubNom }}</span>
+            <span *ngIf="event.lieu">{{ lang.t('events.location') }} {{ event.lieu }}</span>
+            <span *ngIf="event.clubNom">{{ lang.t('events.club') }} {{ event.clubNom }}</span>
           </div>
           <div class="card-actions">
-            <button class="btn btn-ghost" (click)="register(event.id)"><span class="icon icon-check"></span>Register</button>
-            <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="editEvent(event)"><span class="icon icon-edit"></span>Edit</button>
-            <button class="btn btn-danger" *ngIf="canManageEvents" (click)="deleteEvent(event.id)"><span class="icon icon-trash"></span>Delete</button>
+            <button class="btn btn-ghost" (click)="register(event.id)"><span class="icon icon-check"></span>{{ lang.t('common.register') }}</button>
+            <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="editEvent(event)"><span class="icon icon-edit"></span>{{ lang.t('common.edit') }}</button>
+            <button class="btn btn-danger" *ngIf="canManageEvents" (click)="deleteEvent(event.id)"><span class="icon icon-trash"></span>{{ lang.t('common.delete') }}</button>
           </div>
         </article>
       </div>
       <div class="pagination" *ngIf="filteredEvents.length > pageSize">
-        <button class="btn btn-ghost" (click)="eventPage = eventPage - 1" [disabled]="eventPage === 1">Previous</button>
+        <button class="btn btn-ghost" (click)="eventPage = eventPage - 1" [disabled]="eventPage === 1">{{ lang.t('common.previous') }}</button>
         <span>{{ eventPage }} / {{ eventTotalPages }}</span>
-        <button class="btn btn-ghost" (click)="eventPage = eventPage + 1" [disabled]="eventPage === eventTotalPages">Next</button>
+        <button class="btn btn-ghost" (click)="eventPage = eventPage + 1" [disabled]="eventPage === eventTotalPages">{{ lang.t('common.next') }}</button>
       </div>
 
-      <div class="section-title">Clubs</div>
+      <div class="section-title">{{ lang.t('events.sectionClubs') }}</div>
       <div class="toolbar">
-        <input [(ngModel)]="clubQuery" placeholder="Search clubs..." />
+        <input [(ngModel)]="clubQuery" [placeholder]="lang.t('events.searchClubs')" />
       </div>
       <div class="list-grid">
         <article class="card" *ngFor="let club of filteredClubs">
           <div class="item-head">
             <div>
               <h3>{{ club.nom }}</h3>
-              <p>{{ club.memberCount }} members</p>
+              <p>{{ club.memberCount }} {{ lang.t('events.members') }}</p>
             </div>
-            <span class="badge badge-gray">Club</span>
+            <span class="badge badge-gray">{{ lang.t('events.clubBadge') }}</span>
           </div>
           <p class="muted" *ngIf="club.description">{{ club.description }}</p>
           <div class="card-actions">
-            <button class="btn btn-ghost" (click)="joinClub(club.id)"><span class="icon icon-user-plus"></span>Join</button>
-            <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="editClub(club)"><span class="icon icon-edit"></span>Edit</button>
-            <button class="btn btn-danger" *ngIf="canManageEvents" (click)="deleteClub(club.id)"><span class="icon icon-trash"></span>Delete</button>
+            <button class="btn btn-ghost" (click)="joinClub(club.id)"><span class="icon icon-user-plus"></span>{{ lang.t('common.join') }}</button>
+            <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="editClub(club)"><span class="icon icon-edit"></span>{{ lang.t('common.edit') }}</button>
+            <button class="btn btn-danger" *ngIf="canManageEvents" (click)="deleteClub(club.id)"><span class="icon icon-trash"></span>{{ lang.t('common.delete') }}</button>
           </div>
         </article>
       </div>
@@ -157,7 +158,8 @@ export class EventsComponent implements OnInit {
     private eventService: EventService,
     private fb: FormBuilder,
     private notifications: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    public lang: LanguageService
   ) {}
 
   get canManageEvents(): boolean {
@@ -219,7 +221,17 @@ export class EventsComponent implements OnInit {
   }
 
   register(id: number): void {
-    this.eventService.register(id).subscribe({ next: () => { this.notifications.success('Registration confirmed'); this.loadAll(); }, error: () => this.fail('Unable to register') });
+    this.eventService.register(id).subscribe({
+      next: () => { this.notifications.success('Registration confirmed'); this.loadAll(); },
+      error: (err) => {
+        const msg = err.error?.message || err.message || '';
+        if (msg.toLowerCase().includes('already')) {
+          this.notifications.info('You are already registered for this event');
+        } else {
+          this.fail('Unable to register for this event');
+        }
+      }
+    });
   }
 
   saveClub(): void {
@@ -259,13 +271,6 @@ export class EventsComponent implements OnInit {
     this.loadAll();
   }
 
-  private failSave(message: string): void {
-    this.saving = false;
-    this.fail(message);
-  }
-
-  private fail(message: string): void {
-    this.error = message;
-    this.notifications.error(message);
-  }
+  private failSave(message: string): void { this.saving = false; this.fail(message); }
+  private fail(message: string): void { this.error = message; this.notifications.error(message); }
 }

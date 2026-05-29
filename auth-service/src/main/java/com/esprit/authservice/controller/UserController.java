@@ -83,6 +83,14 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/directory")
+    @Operation(summary = "Public user directory for recruiters, mentors and admins")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPANY','MENTOR','ENSEIGNANT')")
+    public ResponseEntity<List<UserResponseDTO>> getDirectory(
+            @RequestParam(required = false) String role) {
+        return ResponseEntity.ok(userService.getDirectoryUsers(role));
+    }
+
     // ── Company approval ────────────────────────────────────────────────────
 
     @GetMapping("/pending")

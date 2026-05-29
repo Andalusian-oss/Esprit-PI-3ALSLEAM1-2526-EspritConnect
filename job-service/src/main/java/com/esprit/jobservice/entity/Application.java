@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "applications",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"job_id", "applicantUserId"}))
+       uniqueConstraints = @UniqueConstraint(columnNames = {"job_id", "applicant_user_id"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Application {
 
@@ -24,6 +24,10 @@ public class Application {
     @Column(nullable = false)
     @Builder.Default
     private ApplicationStatus statut = ApplicationStatus.PENDING;
+
+    private String cvUrl;
+
+    private Integer matchScore;
 
     public enum ApplicationStatus { PENDING, ACCEPTED, REJECTED }
 }

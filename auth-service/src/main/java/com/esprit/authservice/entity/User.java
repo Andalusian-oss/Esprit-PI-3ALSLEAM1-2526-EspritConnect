@@ -65,6 +65,14 @@ public class User {
     @Builder.Default
     private boolean approved = true;
 
+    /**
+     * Email verification flag. Set to false on registration; becomes true after the user
+     * clicks the verification link. Seed/admin accounts start as verified.
+     */
+    @Column(nullable = false, columnDefinition = "BOOLEAN NOT NULL DEFAULT TRUE")
+    @Builder.Default
+    private boolean emailVerified = true;
+
     /** Academic speciality (e.g. "Informatique", "Finance"). */
     private String specialite;
 

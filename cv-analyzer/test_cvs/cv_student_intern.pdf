@@ -1,0 +1,60 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 780 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+14 TL
+(Ines Chaabane) Tj T*
+(Computer Science Student - Looking for Internship) Tj T*
+(Email: ines.chaabane@iset.tn | Phone: +216 28 111 222) Tj T*
+() Tj T*
+(EDUCATION) Tj T*
+(Licence in Computer Science - ISET Sousse \(2021-2024\)) Tj T*
+(Bac Sciences \(2021\)) Tj T*
+() Tj T*
+(SKILLS) Tj T*
+(Languages: Java, Python, JavaScript, PHP) Tj T*
+(Frameworks: Spring, Angular, Laravel) Tj T*
+(Databases: MySQL, SQLite) Tj T*
+(Tools: Git, npm, Eclipse, VSCode) Tj T*
+() Tj T*
+(PROJECTS) Tj T*
+(E-commerce website with PHP and MySQL \(2023\)) Tj T*
+(Library management system in Java \(2022\)) Tj T*
+() Tj T*
+(LANGUAGES) Tj T*
+(Arabic: Native | French: Intermediate | English: Beginner) Tj T*
+() Tj T*
+(SOFT SKILLS) Tj T*
+(Teamwork, Adaptability) Tj T*
+() Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001072 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1142
+%%EOF

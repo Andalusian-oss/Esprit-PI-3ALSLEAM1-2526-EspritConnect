@@ -30,7 +30,7 @@ export class AuthService {
 
   register(data: RegisterPayload): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, data)
-      .pipe(tap(res => this.saveSession(res)));
+      .pipe(tap(res => { if (res.token) { this.saveSession(res); } }));
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
@@ -79,6 +79,16 @@ export class AuthService {
   isEnseignant(): boolean { return this.hasRole('ENSEIGNANT'); }
   isAlumni(): boolean { return this.hasRole('ALUMNI'); }
 
+  uploadAvatar(file: File): Observable<{ url: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<{ url: string }>(`${environment.apiUrl}/auth/upload`, form);
+  }
+
+  getUserById(id: number): Observable<User> {
+    return this.http.get<User>(`${environment.apiUrl}/auth/users/${id}`);
+  }
+
   getOnlineUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${environment.apiUrl}/auth/users/online`);
   }
@@ -93,7 +103,20 @@ export class AuthService {
     return this.http.get<User[]>(`${environment.apiUrl}/auth/users/bulk`, { params });
   }
 
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/reset-password`, { token, newPassword });
+  }
+
+  changePassword(oldPassword: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/change-password`, { oldPassword, newPassword });
+  }
+
   private saveSession(res: AuthResponse): void {
+    if (!res.token) return;
     localStorage.setItem(this.TOKEN_KEY, res.token);
     localStorage.setItem(this.USER_KEY, JSON.stringify(res.user));
     this.currentUserSubject.next(res.user);
@@ -106,7 +129,11 @@ export class AuthService {
 
   private isTokenExpired(token: string): boolean {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1])) as { exp?: number };
+      // JWT uses base64url — replace url-safe chars before atob()
+      const base64url = token.split('.')[1];
+      const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+      const payload = JSON.parse(atob(padded)) as { exp?: number };
       return !!payload.exp && payload.exp * 1000 <= Date.now();
     } catch {
       return true;

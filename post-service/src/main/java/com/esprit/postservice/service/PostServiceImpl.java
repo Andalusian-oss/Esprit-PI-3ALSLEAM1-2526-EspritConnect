@@ -8,11 +8,14 @@ import com.esprit.postservice.entity.Comment;
 import com.esprit.postservice.entity.Like;
 import com.esprit.postservice.entity.Photo;
 import com.esprit.postservice.entity.Post;
+import com.esprit.postservice.entity.PostStatus;
 import com.esprit.postservice.exception.ResourceNotFoundException;
 import com.esprit.postservice.repository.CommentRepository;
 import com.esprit.postservice.repository.LikeRepository;
 import com.esprit.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +37,8 @@ public class PostServiceImpl implements PostService {
         Post post = Post.builder()
                 .contenu(dto.getContenu())
                 .userId(userId)
-                .userName(dto.getUserName())
+                .userName(dto.getUserName() != null ? dto.getUserName() : "")
+                .status(PostStatus.PENDING)
                 .build();
 
         if (dto.getPhotoUrls() != null) {
@@ -49,8 +53,15 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostResponseDTO> getAllPosts() {
-        return postRepository.findAllByOrderByCreatedAtDesc().stream()
+        return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.APPROVED).stream()
                 .map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PostResponseDTO> getAllPosts(int page, int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.APPROVED, pageable)
+                .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -77,12 +88,34 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void deletePost(Long id, Long userId) {
+    public void deletePost(Long id, Long userId, String role) {
         Post post = findPost(id);
-        if (!post.getUserId().equals(userId)) {
+        if (!"ADMIN".equals(role) && !post.getUserId().equals(userId)) {
             throw new IllegalArgumentException("Not authorized to delete this post");
         }
         postRepository.delete(post);
+    }
+
+    @Override
+    public List<PostResponseDTO> getPendingPosts() {
+        return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.PENDING).stream()
+                .map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public PostResponseDTO approvePost(Long id) {
+        Post post = findPost(id);
+        post.setStatus(PostStatus.APPROVED);
+        return toDTO(postRepository.save(post));
+    }
+
+    @Override
+    @Transactional
+    public PostResponseDTO rejectPost(Long id) {
+        Post post = findPost(id);
+        post.setStatus(PostStatus.REJECTED);
+        return toDTO(postRepository.save(post));
     }
 
     @Override
@@ -92,7 +125,7 @@ public class PostServiceImpl implements PostService {
         Comment comment = Comment.builder()
                 .post(post)
                 .userId(userId)
-                .userName(dto.getUserName())
+                .userName(dto.getUserName() != null ? dto.getUserName() : "")
                 .texte(dto.getTexte())
                 .build();
         return toCommentDTO(commentRepository.save(comment));
@@ -143,6 +176,7 @@ public class PostServiceImpl implements PostService {
                 .likeCount(post.getLikes().size())
                 .commentCount(post.getComments().size())
                 .photoUrls(post.getPhotos().stream().map(Photo::getUrl).collect(Collectors.toList()))
+                .status(post.getStatus() != null ? post.getStatus().name() : PostStatus.PENDING.name())
                 .build();
     }
 

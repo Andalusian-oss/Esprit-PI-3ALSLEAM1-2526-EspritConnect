@@ -17,4 +17,5 @@ public class PostResponseDTO {
     private int likeCount;
     private int commentCount;
     private List<String> photoUrls;
+    private String status;
 }

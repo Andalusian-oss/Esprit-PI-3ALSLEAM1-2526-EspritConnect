@@ -1,5 +1,6 @@
 package com.esprit.messageservice.controller;
 
+import com.esprit.messageservice.dto.request.MessageEditRequestDTO;
 import com.esprit.messageservice.dto.request.MessageRequestDTO;
 import com.esprit.messageservice.dto.response.*;
 import com.esprit.messageservice.security.JwtUtil;
@@ -55,6 +56,19 @@ public class MessageController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{messageId}/edit")
+    public ResponseEntity<MessageResponseDTO> edit(@PathVariable Long messageId,
+                                                    @Valid @RequestBody MessageEditRequestDTO dto,
+                                                    HttpServletRequest req) {
+        return ResponseEntity.ok(messageService.editMessage(messageId, dto.getContenu(), extractUserId(req)));
+    }
+
+    @DeleteMapping("/conversations/{conversationId}")
+    public ResponseEntity<Void> deleteConversation(@PathVariable Long conversationId, HttpServletRequest req) {
+        messageService.deleteConversation(conversationId, extractUserId(req));
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/notifications")
     public ResponseEntity<List<NotificationResponseDTO>> getNotifications(HttpServletRequest req) {
         return ResponseEntity.ok(messageService.getMyNotifications(extractUserId(req)));
@@ -67,8 +81,8 @@ public class MessageController {
     }
 
     @GetMapping("/notifications/unread-count")
-    public ResponseEntity<Map<String, Long>> unreadCount(HttpServletRequest req) {
-        return ResponseEntity.ok(Map.of("count", messageService.countUnreadNotifications(extractUserId(req))));
+    public ResponseEntity<Long> unreadCount(HttpServletRequest req) {
+        return ResponseEntity.ok(messageService.countUnreadNotifications(extractUserId(req)));
     }
 
     private Long extractUserId(HttpServletRequest req) {

@@ -34,7 +34,12 @@ public class Event {
     @Column(name = "creator_user_id", nullable = false)
     private Long creatorUserId;
 
+    @Enumerated(EnumType.STRING)
+    private EventCategory categorie;
+
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EventRegistration> registrations = new ArrayList<>();
+
+    public enum EventCategory { SPORTIF, ACADEMIQUE, CULTUREL, TECHNOLOGIQUE, AUTRE }
 }

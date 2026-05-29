@@ -102,6 +102,7 @@ public class EventServiceImpl implements EventService {
                 .description(dto.getDescription())
                 .date(dto.getDate())
                 .lieu(dto.getLieu())
+                .categorie(dto.getCategorie())
                 .creatorUserId(userId);
         if (dto.getClubId() != null) builder.club(findClub(dto.getClubId()));
         return toEventDTO(eventRepository.save(builder.build()));
@@ -136,6 +137,7 @@ public class EventServiceImpl implements EventService {
         event.setDate(dto.getDate());
         if (dto.getDescription() != null) event.setDescription(dto.getDescription());
         if (dto.getLieu() != null) event.setLieu(dto.getLieu());
+        if (dto.getCategorie() != null) event.setCategorie(dto.getCategorie());
         return toEventDTO(eventRepository.save(event));
     }
 
@@ -188,6 +190,7 @@ public class EventServiceImpl implements EventService {
                 .clubId(event.getClub() != null ? event.getClub().getId() : null)
                 .clubNom(event.getClub() != null ? event.getClub().getNom() : null)
                 .creatorUserId(event.getCreatorUserId())
-                .registrationCount(event.getRegistrations().size()).build();
+                .registrationCount(event.getRegistrations().size())
+                .categorie(event.getCategorie()).build();
     }
 }

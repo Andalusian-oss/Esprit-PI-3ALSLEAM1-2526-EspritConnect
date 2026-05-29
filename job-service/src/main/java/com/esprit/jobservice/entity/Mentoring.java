@@ -33,5 +33,5 @@ public class Mentoring {
     @Builder.Default
     private List<MentoringSession> sessions = new ArrayList<>();
 
-    public enum MentoringStatus { ACTIVE, COMPLETED }
+    public enum MentoringStatus { ACTIVE, COMPLETED, CANCELLED }
 }

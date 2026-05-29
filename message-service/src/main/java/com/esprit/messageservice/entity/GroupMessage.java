@@ -1,0 +1,35 @@
+package com.esprit.messageservice.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "group_messages")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class GroupMessage {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)
+    private Group group;
+
+    @Column(name = "sender_user_id", nullable = false)
+    private Long senderUserId;
+
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
+    private String contenu;
+
+    @Builder.Default
+    private Boolean edited = false;
+
+    private LocalDateTime editedAt;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+}

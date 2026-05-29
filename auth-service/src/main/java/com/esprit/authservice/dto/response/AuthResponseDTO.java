@@ -9,4 +9,5 @@ public class AuthResponseDTO {
     private String token;
     private String tokenType;
     private UserResponseDTO user;
+    private String message;
 }

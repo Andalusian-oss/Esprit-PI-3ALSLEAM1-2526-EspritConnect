@@ -6,6 +6,7 @@ import com.esprit.messageservice.entity.*;
 import com.esprit.messageservice.exception.ResourceNotFoundException;
 import com.esprit.messageservice.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import org.springframework.http.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MessageServiceImpl implements MessageService {
 
     private final ConversationRepository conversationRepository;
@@ -74,6 +76,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ConversationResponseDTO> getMyConversations(Long userId) {
         List<Conversation> conversations = conversationRepository.findByParticipant1UserIdOrParticipant2UserId(userId, userId);
         
@@ -125,12 +128,13 @@ public class MessageServiceImpl implements MessageService {
                     ));
             }
         } catch (Exception e) {
-            System.err.println("Failed to resolve user names: " + e.getMessage());
+            log.error("Failed to resolve user names: {}", e.getMessage(), e);
         }
         return Collections.emptyMap();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MessageResponseDTO> getMessages(Long conversationId, Long userId) {
         return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId)
                 .stream().map(this::toMessageDTO).collect(Collectors.toList());
@@ -149,6 +153,36 @@ public class MessageServiceImpl implements MessageService {
                 .orElseThrow(() -> new ResourceNotFoundException("Message not found: " + messageId));
         if (!msg.getSenderUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
         messageRepository.delete(msg);
+    }
+
+    @Override
+    @Transactional
+    public MessageResponseDTO editMessage(Long messageId, String contenu, Long userId) {
+        Message msg = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found: " + messageId));
+        if (!msg.getSenderUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        msg.setContenu(contenu);
+        msg.setEdited(true);
+        msg.setEditedAt(java.time.LocalDateTime.now());
+        Message saved = messageRepository.save(msg);
+        MessageResponseDTO dto = toMessageDTO(saved);
+        // Push edit event to the other participant
+        Long convId = saved.getConversation().getId();
+        Conversation conv = saved.getConversation();
+        Long otherId = conv.getParticipant1UserId().equals(userId)
+                ? conv.getParticipant2UserId() : conv.getParticipant1UserId();
+        messagingTemplate.convertAndSendToUser(otherId.toString(), "/queue/messages/edit", dto);
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public void deleteConversation(Long conversationId, Long userId) {
+        Conversation conv = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Conversation not found: " + conversationId));
+        if (!conv.getParticipant1UserId().equals(userId) && !conv.getParticipant2UserId().equals(userId))
+            throw new IllegalArgumentException("Not authorized");
+        conversationRepository.delete(conv);
     }
 
     @Override
@@ -176,7 +210,9 @@ public class MessageServiceImpl implements MessageService {
         return MessageResponseDTO.builder().id(m.getId())
                 .conversationId(m.getConversation().getId())
                 .senderUserId(m.getSenderUserId())
-                .contenu(m.getContenu()).lu(m.getLu()).createdAt(m.getCreatedAt()).build();
+                .contenu(m.getContenu()).lu(m.getLu())
+                .edited(m.getEdited()).editedAt(m.getEditedAt())
+                .createdAt(m.getCreatedAt()).build();
     }
 
     private ConversationResponseDTO toConversationDTO(Conversation c, Long userId) {

@@ -33,6 +33,8 @@ export interface Post {
   commentCount: number;
   photoUrls: string[];
   userName: string;
+  likedByMe?: boolean;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 export interface Comment {
@@ -154,6 +156,39 @@ export interface Message {
   senderUserId: number;
   contenu: string;
   lu: boolean;
+  edited?: boolean;
+  editedAt?: string;
+  createdAt: string;
+}
+
+export interface Group {
+  id: number;
+  name: string;
+  avatarUrl?: string;
+  creatorUserId: number;
+  createdAt: string;
+  memberCount: number;
+  members: GroupMember[];
+  lastMessage?: string;
+  lastMessageAt?: string;
+}
+
+export interface GroupMember {
+  id: number;
+  userId: number;
+  userName: string;
+  role: 'ADMIN' | 'MEMBER';
+  joinedAt: string;
+}
+
+export interface GroupMessage {
+  id: number;
+  groupId: number;
+  senderUserId: number;
+  senderName: string;
+  contenu: string;
+  edited?: boolean;
+  editedAt?: string;
   createdAt: string;
 }
 
@@ -164,4 +199,164 @@ export interface Notification {
   message: string;
   lu: boolean;
   createdAt: string;
+}
+
+// ── Resources ──────────────────────────────────────────────────────────────
+export type ResourceType = 'ARTICLE' | 'PDF' | 'VIDEO' | 'LINK' | 'TUTORIAL';
+export type ResourceCategory = 'ACADEMIC' | 'CAREER' | 'TECHNICAL' | 'SOCIAL' | 'EVENT';
+
+export interface Resource {
+  id: number;
+  titre: string;
+  description?: string;
+  type: ResourceType;
+  categorie: ResourceCategory;
+  fileUrl?: string;
+  lien?: string;
+  tags?: string;
+  uploadedByUserId: number;
+  likeCount: number;
+  downloadCount: number;
+  likedByMe: boolean;
+  createdAt: string;
+}
+
+export interface ResourceRequest {
+  titre: string;
+  description?: string;
+  type: ResourceType;
+  categorie: ResourceCategory;
+  fileUrl?: string;
+  lien?: string;
+  tags?: string;
+}
+
+// ── PFE Books ─────────────────────────────────────────────────────────────
+export interface PfeBook {
+  id: number;
+  titre: string;
+  description: string;
+  auteur: string;
+  annee: number;
+  filiere: string;
+  departement: string;
+  documentUrl: string;
+  previewUrl?: string;
+  fileType: 'PDF' | 'DOCX' | 'DOC' | 'PPTX' | 'TXT';
+  fileSize: number;
+  downloadCount: number;
+  viewCount: number;
+  uploadedAt: string;
+  keywords?: string[];
+  likeCount: number;
+  likedByMe: boolean;
+  status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  uploaderId: number;
+  uploaderName: string;
+  uploaderRole: UserRole;
+}
+
+export interface PfeBookRequest {
+  titre: string;
+  description: string;
+  auteur: string;
+  annee: number;
+  filiere: string;
+  departement: string;
+  documentUrl: string;
+  previewUrl?: string;
+  fileType: 'PDF' | 'DOCX' | 'DOC' | 'PPTX' | 'TXT';
+  keywords?: string[];
+}
+
+// ── Chatbot ────────────────────────────────────────────────────────────────
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
+export interface ChatResponse {
+  response: string;
+  engine: string;
+}
+
+// ── CV Analysis ────────────────────────────────────────────────────────────
+export interface CvAnalysis {
+  name?: string;
+  contact: {
+    email?: string;
+    phone?: string;
+    linkedin?: string;
+    github?: string;
+  };
+  skills: {
+    languages: string[];
+    frameworks: string[];
+    databases: string[];
+    devops: string[];
+    tools: string[];
+    concepts: string[];
+    soft_skills: string[];
+  };
+  all_skills: string[];
+  education: string[];
+  experience: {
+    years_estimated?: number;
+    internships: string[];
+  };
+  languages: Array<{ language: string; level: string }>;
+  timeline?: Array<{ start: string; end: string; context: string }>;
+  score: number;
+  ats_score?: number;
+  job_match_score?: number;
+  word_count: number;
+  summary: string;
+  tips?: string[];
+  red_flags?: string[];
+}
+
+// ── Student Skills & Projects ─────────────────────────────────────────────
+export interface StudentSkill {
+  id: number;
+  studentUserId: number;
+  name: string;
+  category: 'TECHNICAL' | 'SOFT' | 'LANGUAGE' | 'TOOL' | 'FRAMEWORK';
+  proficiency: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+  addedAt: string;
+  yearsOfExperience?: number;
+}
+
+export interface StudentProject {
+  id: number;
+  studentUserId: number;
+  titre: string;
+  description: string;
+  technologies: string[];
+  imageUrl?: string;
+  githubUrl?: string;
+  liveUrl?: string;
+  startDate: string;
+  endDate?: string;
+  status: 'COMPLETED' | 'IN_PROGRESS' | 'PLANNED';
+  createdAt: string;
+}
+
+export interface StudentSkillRequest {
+  name: string;
+  category: 'TECHNICAL' | 'SOFT' | 'LANGUAGE' | 'TOOL' | 'FRAMEWORK';
+  proficiency: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+  yearsOfExperience?: number;
+}
+
+export interface StudentProjectRequest {
+  titre: string;
+  description: string;
+  technologies: string[];
+  imageUrl?: string;
+  githubUrl?: string;
+  liveUrl?: string;
+  startDate: string;
+  endDate?: string;
+  status: 'COMPLETED' | 'IN_PROGRESS' | 'PLANNED';
 }

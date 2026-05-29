@@ -29,7 +29,7 @@ public class PostController {
     private final JwtUtil jwtUtil;
 
     @PostMapping
-    @Operation(summary = "Create a new post")
+    @Operation(summary = "Create a new post (starts as PENDING, awaiting admin approval)")
     public ResponseEntity<PostResponseDTO> create(@Valid @RequestBody PostRequestDTO dto,
                                                   HttpServletRequest request) {
         Long userId = extractUserId(request);
@@ -37,13 +37,15 @@ public class PostController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all posts (feed)")
-    public ResponseEntity<List<PostResponseDTO>> getAll() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    @Operation(summary = "Get approved posts (feed), paginated with ?page=0&size=20")
+    public ResponseEntity<List<PostResponseDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(postService.getAllPosts(page, size));
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Get posts by user")
+    @Operation(summary = "Get all posts by user (all statuses)")
     public ResponseEntity<List<PostResponseDTO>> getByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(postService.getPostsByUser(userId));
     }
@@ -64,12 +66,46 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a post (cascades to comments, likes, photos)")
+    @Operation(summary = "Delete a post (owner or admin)")
     public ResponseEntity<Void> delete(@PathVariable Long id, HttpServletRequest request) {
         Long userId = extractUserId(request);
-        postService.deletePost(id, userId);
+        String role = extractRole(request);
+        postService.deletePost(id, userId, role);
         return ResponseEntity.noContent().build();
     }
+
+    // ── Admin moderation endpoints ──────────────────────────────────────
+
+    @GetMapping("/admin/pending")
+    @Operation(summary = "Admin: get all pending posts")
+    public ResponseEntity<List<PostResponseDTO>> getPending(HttpServletRequest request) {
+        requireAdmin(request);
+        return ResponseEntity.ok(postService.getPendingPosts());
+    }
+
+    @PutMapping("/admin/{id}/approve")
+    @Operation(summary = "Admin: approve a post")
+    public ResponseEntity<PostResponseDTO> approve(@PathVariable Long id, HttpServletRequest request) {
+        requireAdmin(request);
+        return ResponseEntity.ok(postService.approvePost(id));
+    }
+
+    @PutMapping("/admin/{id}/reject")
+    @Operation(summary = "Admin: reject a post")
+    public ResponseEntity<PostResponseDTO> reject(@PathVariable Long id, HttpServletRequest request) {
+        requireAdmin(request);
+        return ResponseEntity.ok(postService.rejectPost(id));
+    }
+
+    @DeleteMapping("/admin/{id}")
+    @Operation(summary = "Admin: delete any post")
+    public ResponseEntity<Void> adminDelete(@PathVariable Long id, HttpServletRequest request) {
+        requireAdmin(request);
+        postService.deletePost(id, null, "ADMIN");
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Comments ────────────────────────────────────────────────────────
 
     @PostMapping("/{postId}/comments")
     @Operation(summary = "Add a comment to a post")
@@ -102,11 +138,28 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
+    // ── Helpers ─────────────────────────────────────────────────────────
+
     private Long extractUserId(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return jwtUtil.extractUserId(authHeader.substring(7));
         }
         throw new IllegalArgumentException("Missing or invalid Authorization header");
+    }
+
+    private String extractRole(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return jwtUtil.extractRole(authHeader.substring(7));
+        }
+        return null;
+    }
+
+    private void requireAdmin(HttpServletRequest request) {
+        String role = extractRole(request);
+        if (!"ADMIN".equals(role)) {
+            throw new org.springframework.security.access.AccessDeniedException("Admin access required");
+        }
     }
 }

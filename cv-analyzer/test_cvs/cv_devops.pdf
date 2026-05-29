@@ -1,0 +1,72 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1592 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+14 TL
+(Karim Belhadj) Tj T*
+(DevOps Engineer / Cloud Architect) Tj T*
+(Email: karim.belhadj@gmail.com | Phone: +216 99 321 654 | LinkedIn: linkedin.com/in/karimbelhadj | G) Tj T*
+() Tj T*
+(EDUCATION) Tj T*
+(Master in Cloud Computing & DevOps - ESPRIT \(2019-2021\)) Tj T*
+(Engineer Degree in Networks & Telecom - ENIT \(2016-2019\)) Tj T*
+() Tj T*
+(EXPERIENCE) Tj T*
+(4 years of experience in DevOps and Cloud Engineering.) Tj T*
+() Tj T*
+(Senior DevOps Engineer at Telnet \(2021-Present\)) Tj T*
+(- Architected Kubernetes clusters on AWS and Azure) Tj T*
+(- Automated infrastructure with Terraform and Ansible) Tj T*
+(- Set up CI/CD pipelines with Jenkins, GitLab CI) Tj T*
+(- Monitoring with Prometheus, Grafana, Elasticsearch) Tj T*
+() Tj T*
+(Cloud Engineer at BIAT \(2019-2021\)) Tj T*
+(- Managed AWS services \(EC2, S3, RDS, Lambda\)) Tj T*
+(- Containerized applications with Docker, Kubernetes) Tj T*
+(- Linux server administration, Bash scripting) Tj T*
+() Tj T*
+(SKILLS) Tj T*
+(Languages: Python, Bash, Go, Java) Tj T*
+(Frameworks: FastAPI, Spring) Tj T*
+(DevOps: Docker, Kubernetes, Jenkins, GitLab CI, GitHub Actions, Terraform, Ansible, AWS, Azure, GCP,) Tj T*
+(Databases: MySQL, PostgreSQL, Redis, Elasticsearch) Tj T*
+(Tools: Git, Jira, Confluence, Prometheus, Grafana) Tj T*
+(Concepts: Microservices, CI/CD, Agile, Scrum) Tj T*
+() Tj T*
+(LANGUAGES) Tj T*
+(Arabic: Native | French: Fluent | English: Professional | German: Intermediate) Tj T*
+() Tj T*
+(SOFT SKILLS) Tj T*
+(Leadership, Problem solving, Communication, Teamwork, Analytical) Tj T*
+() Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001885 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1955
+%%EOF

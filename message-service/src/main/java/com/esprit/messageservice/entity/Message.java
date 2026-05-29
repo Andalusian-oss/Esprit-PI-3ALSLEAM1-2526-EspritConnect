@@ -21,11 +21,16 @@ public class Message {
     @Column(name = "sender_user_id", nullable = false)
     private Long senderUserId;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String contenu;
 
     @Builder.Default
     private Boolean lu = false;
+
+    @Builder.Default
+    private Boolean edited = false;
+
+    private LocalDateTime editedAt;
 
     @CreationTimestamp
     @Column(updatable = false)

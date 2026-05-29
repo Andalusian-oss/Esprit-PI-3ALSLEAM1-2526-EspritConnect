@@ -6,9 +6,12 @@ import com.esprit.jobservice.entity.*;
 import com.esprit.jobservice.exception.ResourceNotFoundException;
 import com.esprit.jobservice.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +42,13 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<JobResponseDTO> getAllJobs(int page, int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        return jobRepository.findAll(pageable).stream().map(this::toJobDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public JobResponseDTO getJobById(Long id) { return toJobDTO(findJob(id)); }
 
     @Override @Transactional
@@ -62,11 +72,26 @@ public class JobServiceImpl implements JobService {
     // ─── Applications ──────────────────────────────────────────────────────────
 
     @Override @Transactional
-    public ApplicationResponseDTO apply(Long jobId, Long userId) {
+    public ApplicationResponseDTO apply(Long jobId, Long userId, String cvUrl) {
         if (applicationRepository.existsByJobIdAndApplicantUserId(jobId, userId))
             throw new IllegalArgumentException("Already applied");
         Job job = findJob(jobId);
-        Application app = Application.builder().job(job).applicantUserId(userId).build();
+        Application app = Application.builder().job(job).applicantUserId(userId).cvUrl(cvUrl).build();
+        return toAppDTO(applicationRepository.save(app));
+    }
+
+    @Override @Transactional
+    public ApplicationResponseDTO updateMatchScore(Long appId, Integer score, Long userId) {
+        Application app = findApp(appId);
+        app.setMatchScore(score);
+        return toAppDTO(applicationRepository.save(app));
+    }
+
+    @Override @Transactional
+    public ApplicationResponseDTO updateCvUrl(Long appId, String cvUrl, Long userId) {
+        Application app = findApp(appId);
+        if (!app.getApplicantUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        app.setCvUrl(cvUrl);
         return toAppDTO(applicationRepository.save(app));
     }
 
@@ -78,6 +103,16 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<ApplicationResponseDTO> getRankedApplicants(Long jobId) {
+        return applicationRepository.findByJobId(jobId).stream()
+                .sorted(Comparator.comparingInt((Application a) -> a.getMatchScore() == null ? Integer.MIN_VALUE : -a.getMatchScore())
+                        .thenComparing(a -> a.getId()))
+                .map(this::toAppDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ApplicationResponseDTO> getApplicationsByUser(Long userId) {
         return applicationRepository.findByApplicantUserId(userId).stream().map(this::toAppDTO).collect(Collectors.toList());
     }
@@ -85,7 +120,8 @@ public class JobServiceImpl implements JobService {
     @Override @Transactional
     public ApplicationResponseDTO updateApplicationStatus(Long appId, String status, Long userId) {
         Application app = findApp(appId);
-        if (!app.getJob().getPosterUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        Long jobPosterId = app.getJob().getPosterUserId();
+        if (!jobPosterId.equals(userId)) throw new IllegalArgumentException("Only job poster can change application status");
         app.setStatut(Application.ApplicationStatus.valueOf(status.toUpperCase()));
         return toAppDTO(applicationRepository.save(app));
     }
@@ -126,6 +162,15 @@ public class JobServiceImpl implements JobService {
         if (!m.getMentorUserId().equals(userId) && !m.getMentoreUserId().equals(userId))
             throw new IllegalArgumentException("Not authorized");
         m.setStatut(Mentoring.MentoringStatus.COMPLETED);
+        mentoringRepository.save(m);
+    }
+
+    @Override @Transactional
+    public void cancelMentoring(Long id, Long userId) {
+        Mentoring m = findMentoring(id);
+        if (!m.getMentorUserId().equals(userId) && !m.getMentoreUserId().equals(userId))
+            throw new IllegalArgumentException("Not authorized");
+        m.setStatut(Mentoring.MentoringStatus.CANCELLED);
         mentoringRepository.save(m);
     }
 
@@ -172,7 +217,8 @@ public class JobServiceImpl implements JobService {
     }
     private ApplicationResponseDTO toAppDTO(Application a) {
         return ApplicationResponseDTO.builder().id(a.getId()).jobId(a.getJob().getId())
-                .jobTitre(a.getJob().getTitre()).applicantUserId(a.getApplicantUserId()).statut(a.getStatut()).build();
+                .jobTitre(a.getJob().getTitre()).applicantUserId(a.getApplicantUserId())
+                .statut(a.getStatut()).cvUrl(a.getCvUrl()).matchScore(a.getMatchScore()).build();
     }
     private MentoringResponseDTO toMentoringDTO(Mentoring m) {
         return MentoringResponseDTO.builder().id(m.getId()).mentorUserId(m.getMentorUserId())

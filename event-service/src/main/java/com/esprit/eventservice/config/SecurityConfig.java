@@ -23,8 +23,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/events/**", "/api/clubs/**").authenticated()
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/events/*/register", "/api/clubs/*/join").hasAnyRole("STUDENT", "MENTOR", "ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/events/*/unregister", "/api/clubs/*/leave").hasAnyRole("STUDENT", "MENTOR", "ADMIN")
+                // Register/unregister for events: all authenticated users
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/events/*/register").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/events/*/unregister").authenticated()
+                // Join/leave clubs: all authenticated users
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/clubs/*/join").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/clubs/*/leave").authenticated()
+                // Creating/editing events and clubs: admin, mentor only
                 .requestMatchers("/api/events/**", "/api/clubs/**").hasAnyRole("ADMIN", "MENTOR")
                 .anyRequest().authenticated())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

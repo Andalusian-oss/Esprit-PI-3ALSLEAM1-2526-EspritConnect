@@ -1,5 +1,6 @@
 package com.esprit.eventservice.dto.request;
 
+import com.esprit.eventservice.entity.Event.EventCategory;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,4 +20,5 @@ public class EventRequestDTO {
 
     private String lieu;
     private Long clubId;
+    private EventCategory categorie;
 }

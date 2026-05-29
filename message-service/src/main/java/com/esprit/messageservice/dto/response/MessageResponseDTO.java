@@ -12,5 +12,7 @@ public class MessageResponseDTO {
     private Long senderUserId;
     private String contenu;
     private Boolean lu;
+    private Boolean edited;
+    private LocalDateTime editedAt;
     private LocalDateTime createdAt;
 }

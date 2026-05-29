@@ -4,7 +4,10 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/feed', pathMatch: 'full' },
+  {
+    path: '',
+    loadChildren: () => import('./features/home/home.module').then(m => m.HomeModule)
+  },
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
@@ -25,6 +28,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'pfe-books',
+    loadChildren: () => import('./features/pfe-books/pfe-books.module').then(m => m.PfeBooksModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'messages',
     loadChildren: () => import('./features/messages/messages.module').then(m => m.MessagesModule),
     canActivate: [AuthGuard]
@@ -41,10 +49,20 @@ const routes: Routes = [
     data: { roles: ['ADMIN'] }
   },
   {
-    path: 'company',
-    loadChildren: () => import('./features/company/company.module').then(m => m.CompanyModule),
+    path: 'resources',
+    loadChildren: () => import('./features/resources/resources.module').then(m => m.ResourcesModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'rh',
+    loadChildren: () => import('./features/rh/rh.module').then(m => m.RhModule),
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['COMPANY'] }
+  },
+  {
+    path: 'company',
+    redirectTo: '/rh',
+    pathMatch: 'full'
   },
   {
     path: 'unauthorized',

@@ -18,12 +18,23 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html","/actuator/**").permitAll()
+                .requestMatchers("/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html","/actuator/**","/api/jobs/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/jobs/**").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/jobs/*/apply").hasAnyRole("STUDENT", "MENTOR", "ADMIN")
-                .requestMatchers("/api/jobs/applications/**").hasAnyRole("ADMIN", "MENTOR", "STUDENT")
-                .requestMatchers("/api/jobs/mentoring/**", "/api/jobs/sessions/**").hasAnyRole("MENTOR", "STUDENT", "ADMIN")
-                .requestMatchers("/api/jobs/**").hasAnyRole("ADMIN", "MENTOR")
+                // CV upload: any authenticated user (student, alumni, company, etc.)
+                .requestMatchers(HttpMethod.POST, "/api/jobs/upload").authenticated()
+                // Applying for jobs: students, alumni, employe, company, mentor, admin
+                .requestMatchers(HttpMethod.POST, "/api/jobs/*/apply").authenticated()
+                // Applications management: recruiters and applicants
+                .requestMatchers(HttpMethod.PATCH, "/api/jobs/applications/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/jobs/applications/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/jobs/applications/**").authenticated()
+                // Mentoring: any authenticated user
+                .requestMatchers("/api/jobs/mentoring/**", "/api/jobs/sessions/**").authenticated()
+                // Creating/editing jobs: admin, mentor, company
+                .requestMatchers(HttpMethod.POST, "/api/jobs", "/api/jobs/").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
+                .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
+                .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
+                .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
                 .anyRequest().authenticated())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

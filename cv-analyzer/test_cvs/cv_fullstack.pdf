@@ -1,0 +1,70 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1417 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+14 TL
+(Salma Trabelsi) Tj T*
+(Full Stack Developer) Tj T*
+(Email: salma.trabelsi@outlook.com | Phone: +216 22 987 654 | GitHub: github.com/salmatrabelsi) Tj T*
+() Tj T*
+(EDUCATION) Tj T*
+(Engineer Degree in Information Technology - ENSI \(2018-2023\)) Tj T*
+(Certificate in AWS Cloud Practitioner \(2023\)) Tj T*
+() Tj T*
+(EXPERIENCE) Tj T*
+(2 years of experience as Full Stack Developer.) Tj T*
+() Tj T*
+(Full Stack Developer at Sofrecom \(2023-Present\)) Tj T*
+(- Built Angular 17 + Spring Boot microservices platform) Tj T*
+(- Integrated Docker and managed MySQL/PostgreSQL databases) Tj T*
+(- Used Git, Scrum, Agile methodologies) Tj T*
+() Tj T*
+(Intern at Orange Tunisia \(2022\)) Tj T*
+(- Developed web app with React and Node.js backend) Tj T*
+(- Implemented REST API and MongoDB data layer) Tj T*
+() Tj T*
+(SKILLS) Tj T*
+(Languages: JavaScript, TypeScript, Java, Python, PHP) Tj T*
+(Frameworks: Angular, React, Vue, Spring, Node.js, Django, Flask) Tj T*
+(Databases: MySQL, MongoDB, PostgreSQL, Firebase) Tj T*
+(DevOps: Docker, Git, GitHub Actions, Nginx, Linux) Tj T*
+(Tools: Git, Webpack, npm, Postman, Figma, Maven, Jira) Tj T*
+(Concepts: REST API, Microservices, Agile, Scrum, CI/CD) Tj T*
+() Tj T*
+(LANGUAGES) Tj T*
+(Arabic: Native | French: Bilingual | English: Fluent) Tj T*
+() Tj T*
+(SOFT SKILLS) Tj T*
+(Creativity, Collaboration, Adaptability, Time Management) Tj T*
+() Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001710 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1780
+%%EOF

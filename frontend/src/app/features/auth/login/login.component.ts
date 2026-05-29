@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { LanguageService } from '../../../core/services/language.service';
 
 @Component({
   selector: 'app-login',
@@ -10,32 +11,39 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="auth-card">
         <div class="auth-logo">
           <div class="logo-mark">Esprit<span>Connect</span></div>
-          <div class="logo-sub">Welcome back</div>
+          <div class="logo-sub">{{ lang.t('auth.login.welcomeBack') }}</div>
         </div>
 
         <div class="info-banner info-banner-success" *ngIf="pendingApproval">
           <span class="icon icon-shield"></span>
-          Your company account has been submitted and is <strong>pending admin approval</strong>.
-          You'll be able to login once approved.
+          {{ lang.t('auth.login.pending') }}
         </div>
 
-        <h2 class="auth-title">Sign in</h2>
-        <p class="auth-subtitle">Enter your credentials to access your campus network</p>
+        <div class="info-banner info-banner-success" *ngIf="emailVerification">
+          <span class="icon icon-check"></span>
+          Registration successful! Please check your email and click the verification link before logging in.
+        </div>
+
+        <h2 class="auth-title">{{ lang.t('auth.login.sub') }}</h2>
+        <p class="auth-subtitle">{{ lang.t('auth.login.subtitle') }}</p>
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
           <div class="field">
-            <label>Email</label>
+            <label>{{ lang.t('auth.email') }}</label>
             <input formControlName="email" type="email" placeholder="you@esprit.tn" />
           </div>
           <div class="field">
-            <label>Password</label>
+            <label>{{ lang.t('auth.password') }}</label>
             <input formControlName="password" type="password" placeholder="••••••" />
+            <div style="text-align:right;margin-top:4px">
+              <a routerLink="/auth/forgot-password" style="font-size:13px;color:#1a73e8">Forgot password?</a>
+            </div>
           </div>
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading">
-            {{ loading ? 'Signing in...' : 'Sign in' }}
+            {{ loading ? lang.t('auth.login.signingIn') : lang.t('auth.login.btn') }}
           </button>
           <div class="error-msg" *ngIf="error">{{ error }}</div>
         </form>
-        <div class="auth-link">No account yet? <a routerLink="/auth/register">Create one</a></div>
+        <div class="auth-link">{{ lang.t('auth.login.noAccount') }} <a routerLink="/auth/register">{{ lang.t('auth.login.createOne') }}</a></div>
       </div>
     </div>
   `
@@ -45,12 +53,14 @@ export class LoginComponent implements OnInit {
   error = '';
   loading = false;
   pendingApproval = false;
+  emailVerification = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public lang: LanguageService
   ) {
     this.form = this.fb.group({
       email:    ['', [Validators.required, Validators.email]],
@@ -60,6 +70,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.pendingApproval = this.route.snapshot.queryParamMap.get('pending') === 'true';
+    this.emailVerification = this.route.snapshot.queryParamMap.get('verify') === 'true';
   }
 
   onSubmit(): void {

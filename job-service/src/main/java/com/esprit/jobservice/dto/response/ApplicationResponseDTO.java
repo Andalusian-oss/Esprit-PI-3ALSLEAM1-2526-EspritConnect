@@ -12,4 +12,6 @@ public class ApplicationResponseDTO {
     private String jobTitre;
     private Long applicantUserId;
     private ApplicationStatus statut;
+    private String cvUrl;
+    private Integer matchScore;
 }

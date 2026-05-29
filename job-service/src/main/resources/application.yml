@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: job-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/db_job?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
@@ -26,10 +30,13 @@ eureka:
     prefer-ip-address: true
 
 jwt:
-  secret: ${JWT_SECRET:esprit-connect-super-secret-key-must-be-at-least-256-bits-long}
+  secret: ${JWT_SECRET}
 
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+upload:
+  dir: ${UPLOAD_DIR:./uploads}

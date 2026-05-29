@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ESPRIT Connect — Votre Campus, Réinventé</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --red:#e31e24;--red2:#ff4a5b;--bg:#0a0d16;--bg2:#10131e;--bg3:#161928;
+  --card:#1c2033;--border:rgba(255,255,255,0.07);--text:#f0f2ff;
+  --muted:#8892b0;--dim:#3a4160;--cyan:#38d6c7;--gold:#ffd86e;
+  --green:#3ddc84;--purple:#9b6dff;
+  --grad:linear-gradient(135deg,#e31e24,#ff4a5b);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 36px;background:rgba(10,13,22,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:900;font-size:19px;letter-spacing:-.3px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 4px 14px rgba(227,30,36,0.4)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.progress-bar{width:220px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--grad);border-radius:2px;transition:width .5s ease}
+.slide-lbl{font-size:11px;color:var(--muted);letter-spacing:.5px}
+.dots{display:flex;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim);cursor:pointer;transition:.3s}
+.dot.on{background:var(--red);transform:scale(1.5)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 20px;border-radius:9px;font-size:13px;font-family:'Inter',sans-serif;font-weight:600;cursor:pointer;transition:.2s}
+.btn-ghost:hover{border-color:var(--red);color:var(--red)}
+.slides{width:100%;height:100%;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px 40px;opacity:0;pointer-events:none;transition:opacity .8s ease}
+.slide.active{opacity:1;pointer-events:auto}
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(-50px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideL{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes glow{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.slide.active .u1{animation:fadeUp .7s ease both}
+.slide.active .u2{animation:fadeUp .7s .12s ease both}
+.slide.active .u3{animation:fadeUp .7s .22s ease both}
+.slide.active .u4{animation:fadeUp .7s .32s ease both}
+.slide.active .u5{animation:fadeUp .7s .42s ease both}
+.slide.active .u6{animation:fadeUp .7s .52s ease both}
+.slide.active .r1{animation:slideR .7s ease both}
+.slide.active .r2{animation:slideR .7s .15s ease both}
+.slide.active .r3{animation:slideR .7s .3s ease both}
+.slide.active .l1{animation:slideL .7s ease both}
+.slide.active .l2{animation:slideL .7s .15s ease both}
+.tag{display:inline-flex;align-items:center;gap:6px;background:rgba(227,30,36,0.1);border:1px solid rgba(227,30,36,0.25);color:var(--red2);padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.big{font-family:'Syne',sans-serif;font-size:clamp(36px,5.5vw,76px);font-weight:900;line-height:1.05;text-align:center;letter-spacing:-1px}
+.mid{font-family:'Syne',sans-serif;font-size:clamp(24px,3vw,46px);font-weight:800;line-height:1.15;letter-spacing:-.5px}
+.sub{font-size:clamp(14px,1.6vw,20px);color:var(--muted);max-width:640px;text-align:center;line-height:1.75}
+.grad-text{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px}
+.badge{padding:4px 11px;border-radius:10px;font-size:11px;font-weight:700}
+.bd-green{background:rgba(61,220,132,0.12);color:var(--green);border:1px solid rgba(61,220,132,0.2)}
+.bd-red{background:rgba(227,30,36,0.12);color:var(--red2);border:1px solid rgba(227,30,36,0.2)}
+.bd-gold{background:rgba(255,216,110,0.12);color:var(--gold);border:1px solid rgba(255,216,110,0.2)}
+.bd-cyan{background:rgba(56,214,199,0.12);color:var(--cyan);border:1px solid rgba(56,214,199,0.2)}
+.bd-purple{background:rgba(155,109,255,0.12);color:var(--purple);border:1px solid rgba(155,109,255,0.2)}
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.av-r{background:var(--grad);color:#fff}
+.av-c{background:linear-gradient(135deg,#38d6c7,#00b4d8);color:#fff}
+.av-p{background:linear-gradient(135deg,#9b6dff,#6244e0);color:#fff}
+.av-g{background:linear-gradient(135deg,#ffd86e,#ff9f43);color:#1a1a1a}
+.btn-primary{background:var(--grad);color:#fff;padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;box-shadow:0 8px 28px rgba(227,30,36,0.35);transition:.2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(227,30,36,0.45)}
+.btn-outline{background:transparent;color:var(--text);padding:14px 36px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:.2s}
+.btn-outline:hover{border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.04)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><div class="brand-mark">E</div>ESPRIT Connect</div>
+  <div class="topbar-right">
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div class="progress-bar"><div class="progress-fill" id="pbar" style="width:10%"></div></div>
+      <span class="slide-lbl" id="slbl">1 / 10</span>
+    </div>
+    <div class="dots" id="dots"></div>
+    <button class="btn-ghost" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+  </div>
+</div>
+
+<div class="slides">
+
+<!-- SLIDE 1 — HERO -->
+<div class="slide active">
+  <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">
+    <div style="position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(227,30,36,0.18) 0%,transparent 70%);top:-200px;left:-150px;animation:glow 4s ease infinite"></div>
+    <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(155,109,255,0.12) 0%,transparent 70%);bottom:-120px;right:-100px;animation:glow 4s 2s ease infinite"></div>
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:55px 55px"></div>
+  </div>
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:28px;max-width:860px">
+    <div class="tag u1">🎓 Plateforme Officielle ESPRIT</div>
+    <h1 class="big u2">Votre Campus.<br><span class="grad-text">Réinventé.</span></h1>
+    <p class="sub u3">La plateforme tout-en-un qui connecte étudiants, enseignants et entreprises.<br>Collaborez, évoluez et construisez votre avenir — ensemble.</p>
+    <div style="display:flex;gap:14px" class="u4">
+      <button class="btn-primary">Rejoindre la communauté</button>
+      <button class="btn-outline">Voir la démo ↓</button>
+    </div>
+    <div style="display:flex;gap:40px;margin-top:8px" class="u5">
+      <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:34px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8 000+</div><div style="font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.4px">Étudiants actifs</div></div>
+      <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:34px;font-weight:900;background:linear-gradient(135deg,#38d6c7,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent">300+</div><div style="font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.4px">Offres d'emploi</div></div>
+      <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:34px;font-weight:900;background:linear-gradient(135deg,#ffd86e,#ff9f43);-webkit-background-clip:text;-webkit-text-fill-color:transparent">150+</div><div style="font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.4px">Entreprises partenaires</div></div>
+      <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:34px;font-weight:900;background:linear-gradient(135deg,#3ddc84,#00b44a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">95%</div><div style="font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.4px">Satisfaction</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2 — RÉSEAU SOCIAL -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:900px">
+    <div style="text-align:center">
+      <div class="tag u1">🌐 Réseau Social</div>
+      <h2 class="mid u2" style="margin-top:12px">Restez <span class="grad-text">connectés</span></h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Partagez vos projets, célébrez vos succès, inspirez votre communauté</p>
+    </div>
+    <div style="display:flex;gap:22px;width:100%;max-width:900px" class="u4">
+      <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div class="av av-r">A</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:14px">Ayoub Mansouri <span style="font-size:11px;color:var(--muted);font-weight:400">• Étudiant 4A</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">Il y a 5 min</div></div>
+            <span class="badge bd-red">Nouveau</span>
+          </div>
+          <p style="font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:14px">Je viens de décrocher mon stage chez Google Paris ! 🎉 Merci à toute la communauté ESPRIT pour le soutien. Ce parcours m'a tout appris.</p>
+          <div style="display:flex;gap:18px"><span style="font-size:12px;color:var(--muted);cursor:pointer">❤️ 124 J'aime</span><span style="font-size:12px;color:var(--muted);cursor:pointer">💬 38 Commentaires</span><span style="font-size:12px;color:var(--muted);cursor:pointer">↗️ Partager</span></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div class="av av-c">S</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:14px">Sarra Ben Ali <span style="font-size:11px;color:var(--muted);font-weight:400">• Enseignante</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">Il y a 1h</div></div>
+          </div>
+          <div style="width:100%;height:90px;border-radius:10px;background:linear-gradient(135deg,#1a1e2e,#252940);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px">📸</div>
+          <p style="font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:14px">Compte-rendu du Hackathon IA organisé par le club Tech ! Félicitations aux 3 équipes finalistes 🏆</p>
+          <div style="display:flex;gap:18px"><span style="font-size:12px;color:var(--muted)">❤️ 89</span><span style="font-size:12px;color:var(--muted)">💬 17</span><span style="font-size:12px;color:var(--muted)">↗️ Partager</span></div>
+        </div>
+      </div>
+      <div style="width:220px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px">Suggestions</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div class="av av-p" style="width:32px;height:32px;font-size:11px">M</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Mohamed K.</div><div style="font-size:11px;color:var(--muted)">Développeur Full-Stack</div></div><span style="font-size:11px;font-weight:700;color:var(--red);cursor:pointer">+ Suivre</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div class="av av-g" style="width:32px;height:32px;font-size:11px">L</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Lina Trabelsi</div><div style="font-size:11px;color:var(--muted)">Designer UX/UI</div></div><span style="font-size:11px;font-weight:700;color:var(--red);cursor:pointer">+ Suivre</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="av av-c" style="width:32px;height:32px;font-size:11px">R</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Rahim Hadj</div><div style="font-size:11px;color:var(--muted)">Data Scientist</div></div><span style="font-size:11px;font-weight:700;color:var(--red);cursor:pointer">+ Suivre</span></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Trending 🔥</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">#HackathonESPRIT</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">#StageGoogle</div>
+          <div style="font-size:12px;color:var(--muted)">#ProjetIA2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3 — EMPLOIS -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:900px">
+    <div style="text-align:center">
+      <div class="tag u1">💼 Carrière</div>
+      <h2 class="mid u2" style="margin-top:12px">Votre <span class="grad-text">prochaine opportunité</span> vous attend</h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Offres exclusives, stages et mentorat — directement depuis votre campus</p>
+    </div>
+    <div style="display:flex;gap:22px;width:100%;max-width:900px" class="u4">
+      <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;align-items:center;gap:16px">
+          <div style="width:48px;height:48px;border-radius:12px;background:rgba(56,214,199,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏢</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px;margin-bottom:3px">Ingénieur Full-Stack</div>
+            <div style="font-size:13px;color:var(--muted)">Vermeg • Tunis 🇹🇳 · Hybride</div>
+            <div style="display:flex;gap:6px;margin-top:8px"><span class="badge bd-green">CDI</span><span class="badge bd-cyan">Remote OK</span><span style="font-size:12px;color:var(--gold)">3 500 TND/mois</span></div>
+          </div>
+          <button style="padding:9px 22px;border-radius:9px;background:var(--grad);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;flex-shrink:0">Postuler</button>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;align-items:center;gap:16px">
+          <div style="width:48px;height:48px;border-radius:12px;background:rgba(155,109,255,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚀</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px;margin-bottom:3px">Data Scientist — Stage PFE</div>
+            <div style="font-size:13px;color:var(--muted)">Orange Tunisie • Lac 2</div>
+            <div style="display:flex;gap:6px;margin-top:8px"><span class="badge bd-gold">Stage</span><span class="badge bd-purple">IA / ML</span></div>
+          </div>
+          <button style="padding:9px 22px;border-radius:9px;background:var(--grad);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;flex-shrink:0">Postuler</button>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;align-items:center;gap:16px">
+          <div style="width:48px;height:48px;border-radius:12px;background:rgba(61,220,132,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌍</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px;margin-bottom:3px">Développeur Mobile iOS</div>
+            <div style="font-size:13px;color:var(--muted)">Telnet Group • Paris 🇫🇷</div>
+            <div style="display:flex;gap:6px;margin-top:8px"><span class="badge bd-green">CDI</span><span class="badge bd-cyan">Remote 100%</span><span style="font-size:12px;color:var(--gold)">4 800€/mois</span></div>
+          </div>
+          <button style="padding:9px 22px;border-radius:9px;background:var(--grad);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;flex-shrink:0">Postuler</button>
+        </div>
+      </div>
+      <div style="width:200px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px">Match de votre CV</div>
+        <div style="width:104px;height:104px;border-radius:50%;background:conic-gradient(var(--red) 0% 82%,var(--dim) 82%);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+          <div style="width:74px;height:74px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:900;color:var(--red)">82%</div>
+            <div style="font-size:9px;color:var(--muted)">match</div>
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:600;text-align:center;margin-bottom:12px;color:var(--green)">✅ Excellent profil</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="font-size:11px;color:var(--muted);width:70px">React</span><div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="width:90%;height:100%;border-radius:3px;background:var(--grad)"></div></div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="font-size:11px;color:var(--muted);width:70px">Node.js</span><div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="width:75%;height:100%;border-radius:3px;background:var(--grad)"></div></div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--muted);width:70px">DevOps</span><div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="width:60%;height:100%;border-radius:3px;background:var(--grad)"></div></div></div>
+        <div style="margin-top:12px;text-align:center;font-size:11px;color:var(--green)">🎯 Postulez maintenant !</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4 — ÉVÉNEMENTS -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:900px">
+    <div style="text-align:center">
+      <div class="tag u1">🎪 Vie du Campus</div>
+      <h2 class="mid u2" style="margin-top:12px">Des <span class="grad-text">événements</span> qui vous font grandir</h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Hackathons, conférences, workshops et clubs — ne ratez rien</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;width:100%;max-width:900px" class="u4">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="height:76px;background:linear-gradient(135deg,#e31e24,#ff4a5b);display:flex;align-items:center;justify-content:center;font-size:30px">🤖</div>
+        <div style="padding:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px">15 Juin 2026 · 9h</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px">Hackathon Intelligence Artificielle</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">48h pour créer la solution IA de demain. Prix : 5 000 TND.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--muted)">👥 320 inscrits</span><button style="padding:6px 14px;border-radius:8px;background:var(--grad);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer">Rejoindre</button></div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="height:76px;background:linear-gradient(135deg,#9b6dff,#6244e0);display:flex;align-items:center;justify-content:center;font-size:30px">🎤</div>
+        <div style="padding:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px">22 Juin 2026 · 14h</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px">Talk : Entrepreneurs ESPRIT</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">5 alumni devenus fondateurs de startups partagent leur parcours.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--muted)">👥 180 inscrits</span><button style="padding:6px 14px;border-radius:8px;background:linear-gradient(135deg,#9b6dff,#6244e0);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer">Rejoindre</button></div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="height:76px;background:linear-gradient(135deg,#38d6c7,#00b4d8);display:flex;align-items:center;justify-content:center;font-size:30px">☁️</div>
+        <div style="padding:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px">28 Juin 2026 · 10h</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px">Workshop Cloud & Carrière</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">Certification offerte aux 20 premiers inscrits.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--muted)">👥 95 inscrits</span><button style="padding:6px 14px;border-radius:8px;background:linear-gradient(135deg,#38d6c7,#00b4d8);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer">Rejoindre</button></div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="height:76px;background:linear-gradient(135deg,#ffd86e,#ff9f43);display:flex;align-items:center;justify-content:center;font-size:30px">🏆</div>
+        <div style="padding:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px">5 Juil 2026 · 16h</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px">Cérémonie des Prix ESPRIT</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">Récompense les meilleurs projets et parcours de l'année.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--muted)">👥 500 inscrits</span><button style="padding:6px 14px;border-radius:8px;background:linear-gradient(135deg,#ffd86e,#ff9f43);color:#1a1a1a;font-size:11px;font-weight:700;border:none;cursor:pointer">Rejoindre</button></div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="height:76px;background:linear-gradient(135deg,#3ddc84,#00b44a);display:flex;align-items:center;justify-content:center;font-size:30px">🌱</div>
+        <div style="padding:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px">12 Juil 2026 · 9h</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px">Green Tech Challenge</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">Développez des solutions tech pour l'environnement.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--muted)">👥 140 inscrits</span><button style="padding:6px 14px;border-radius:8px;background:linear-gradient(135deg,#3ddc84,#00b44a);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer">Rejoindre</button></div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="height:76px;background:linear-gradient(135deg,#ff6b6b,#ee5a24);display:flex;align-items:center;justify-content:center;font-size:30px">🎨</div>
+        <div style="padding:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px">19 Juil 2026 · 14h</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px">Design Sprint UX/UI</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">2 jours pour prototyper une application mobile primée.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--muted)">👥 75 inscrits</span><button style="padding:6px 14px;border-radius:8px;background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer">Rejoindre</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5 — MESSAGERIE -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:880px">
+    <div style="text-align:center">
+      <div class="tag u1">💬 Messagerie</div>
+      <h2 class="mid u2" style="margin-top:12px">Collaborez en <span class="grad-text">temps réel</span></h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Conversations privées, groupes de projet, échanges instantanés</p>
+    </div>
+    <div style="display:flex;gap:0;width:100%;max-width:820px;height:390px;border-radius:20px;overflow:hidden;border:1px solid var(--border)" class="u4">
+      <div style="width:200px;background:var(--bg2);border-right:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">Messages</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:rgba(227,30,36,0.1);border:1px solid rgba(227,30,36,0.2);cursor:pointer">
+          <div class="av av-c" style="width:32px;height:32px;font-size:11px">S</div>
+          <div style="flex:1;overflow:hidden"><div style="font-size:13px;font-weight:600">Sarra B.</div><div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Merci pour les slides 😊</div></div>
+          <div style="background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;cursor:pointer">
+          <div class="av av-p" style="width:32px;height:32px;font-size:11px">G</div>
+          <div style="flex:1;overflow:hidden"><div style="font-size:13px;font-weight:600">Groupe PFE</div><div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">✅ Livrable envoyé !</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;cursor:pointer">
+          <div class="av av-g" style="width:32px;height:32px;font-size:11px">M</div>
+          <div style="flex:1;overflow:hidden"><div style="font-size:13px;font-weight:600">Mr. Karim</div><div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Rendez-vous jeudi 10h</div></div>
+          <div style="background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;cursor:pointer">
+          <div class="av av-r" style="width:32px;height:32px;font-size:11px">V</div>
+          <div style="flex:1;overflow:hidden"><div style="font-size:13px;font-weight:600">Vermeg RH</div><div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Félicitations ! Vous êtes...</div></div>
+        </div>
+      </div>
+      <div style="flex:1;background:var(--bg3);display:flex;flex-direction:column">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--bg2)">
+          <div class="av av-c" style="width:34px;height:34px;font-size:11px">S</div>
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px rgba(61,220,132,0.2)"></div>
+          <div style="flex:1"><div style="font-weight:700;font-size:14px">Sarra Ben Ali</div><div style="font-size:11px;color:var(--green)">● En ligne</div></div>
+        </div>
+        <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="av av-c" style="width:28px;height:28px;font-size:10px">S</div>
+            <div>
+              <div style="padding:10px 14px;border-radius:14px;border-bottom-left-radius:4px;background:var(--card);font-size:13px;line-height:1.5;max-width:260px">Salut ! Tu as vu l'offre de stage chez Orange ? Ça correspond parfaitement à ton profil 👀</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:3px">14:22</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-direction:row-reverse">
+            <div class="av av-r" style="width:28px;height:28px;font-size:10px">A</div>
+            <div>
+              <div style="padding:10px 14px;border-radius:14px;border-bottom-right-radius:4px;background:var(--grad);color:#fff;font-size:13px;line-height:1.5;max-width:260px">Oui ! J'ai postulé ce matin. Le score de match était à 82% 🙌</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:3px;text-align:right">14:23</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="av av-c" style="width:28px;height:28px;font-size:10px">S</div>
+            <div style="padding:10px 14px;border-radius:14px;border-bottom-left-radius:4px;background:var(--card);display:flex;gap:5px;align-items:center">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);animation:fadeIn .6s 0s infinite alternate"></div>
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);animation:fadeIn .6s .2s infinite alternate"></div>
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);animation:fadeIn .6s .4s infinite alternate"></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--bg2)">
+          <input style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);outline:none" placeholder="Écrire un message..." readonly/>
+          <button style="background:var(--grad);border:none;padding:10px 18px;border-radius:10px;color:#fff;font-weight:700;cursor:pointer;font-size:13px">Envoyer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 — CV ANALYSER -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:900px">
+    <div style="text-align:center">
+      <div class="tag u1">🎯 CV Intelligent</div>
+      <h2 class="mid u2" style="margin-top:12px">Optimisez votre CV,<br><span class="grad-text">décrochez le job</span></h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Analyse instantanée, score de compatibilité et conseils personnalisés</p>
+    </div>
+    <div style="display:flex;gap:22px;width:100%;max-width:900px;align-items:flex-start" class="u4">
+      <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--card);border:2px dashed rgba(227,30,36,0.3);border-radius:16px;padding:28px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+          <div style="font-size:40px">📄</div>
+          <div style="font-weight:700;font-size:15px">Déposez votre CV ici</div>
+          <div style="font-size:13px;color:var(--muted)">PDF ou Word acceptés · Résultat en 3 secondes</div>
+          <button style="background:var(--grad);color:#fff;padding:10px 28px;border-radius:10px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px">Analyser mon CV →</button>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:900;color:var(--green)">87</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Qualité Globale</div></div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:900;color:var(--cyan)">74</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Score Lisibilité</div></div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:900;color:var(--red)">82%</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Match Offre</div></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Compétences détectées</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px"><span class="badge bd-green">React ✓</span><span class="badge bd-green">Node.js ✓</span><span class="badge bd-cyan">Python ✓</span><span class="badge bd-purple">Docker ✓</span><span class="badge bd-gold">SQL ✓</span><span class="badge bd-green">Git ✓</span></div>
+        </div>
+      </div>
+      <div style="width:260px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">💡 Conseils personnalisés</div>
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px"><span style="font-size:13px;flex-shrink:0">✅</span><span style="font-size:12px;color:var(--muted);line-height:1.5">Photo professionnelle — très bon point</span></div>
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px"><span style="font-size:13px;flex-shrink:0">⚠️</span><span style="font-size:12px;color:var(--muted);line-height:1.5">Ajoutez des chiffres à vos expériences (ex: +30% performance)</span></div>
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px"><span style="font-size:13px;flex-shrink:0">⚠️</span><span style="font-size:12px;color:var(--muted);line-height:1.5">Votre résumé est trop court, développez-le</span></div>
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px"><span style="font-size:13px;flex-shrink:0">✅</span><span style="font-size:12px;color:var(--muted);line-height:1.5">Compétences techniques bien structurées</span></div>
+          <div style="display:flex;align-items:flex-start;gap:8px"><span style="font-size:13px;flex-shrink:0">💡</span><span style="font-size:12px;color:var(--muted);line-height:1.5">Ajoutez un lien GitHub ou portfolio</span></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">À développer</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="badge bd-red">Kubernetes</span><span class="badge bd-red">AWS</span><span class="badge bd-gold">TypeScript</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7 — CHATBOT -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:900px">
+    <div style="text-align:center">
+      <div class="tag u1">🤖 Assistant IA</div>
+      <h2 class="mid u2" style="margin-top:12px">Votre <span class="grad-text">assistant personnel</span>,<br>disponible 24h/24</h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Posez toutes vos questions — en français ou en anglais</p>
+    </div>
+    <div style="display:flex;gap:28px;width:100%;max-width:900px;align-items:center" class="u4">
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden">
+        <div style="background:var(--bg2);padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:18px;position:relative">🤖<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid var(--bg2)"></div></div>
+          <div><div style="font-weight:700;font-size:15px">ESPRIT Assistant</div><div style="font-size:11px;color:var(--green)">● Toujours disponible</div></div>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:12px;min-height:220px">
+          <div style="display:flex;gap:10px">
+            <div style="width:30px;height:30px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🤖</div>
+            <div style="padding:12px 16px;border-radius:14px;border-bottom-left-radius:4px;background:var(--bg2);font-size:13px;line-height:1.6;max-width:300px">Bonjour ! Je suis votre assistant ESPRIT Connect. Comment puis-je vous aider aujourd'hui ? 😊</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-direction:row-reverse">
+            <div class="av av-c" style="width:30px;height:30px;font-size:11px">A</div>
+            <div style="padding:12px 16px;border-radius:14px;border-bottom-right-radius:4px;background:var(--grad);color:#fff;font-size:13px;line-height:1.6;max-width:300px">Comment améliorer mon CV pour les entreprises françaises ?</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="width:30px;height:30px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🤖</div>
+            <div style="padding:12px 16px;border-radius:14px;border-bottom-left-radius:4px;background:var(--bg2);font-size:13px;line-height:1.6;max-width:320px"><strong>1)</strong> Ajoutez une accroche percutante, <strong>2)</strong> Mettez en avant vos diplômes ESPRIT, <strong>3)</strong> Listez vos projets avec résultats chiffrés. Je peux analyser votre CV maintenant ! 🎯</div>
+          </div>
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg2)">
+          <input style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);outline:none" placeholder="Posez votre question..." readonly/>
+          <button style="background:var(--grad);border:none;padding:10px 16px;border-radius:10px;color:#fff;font-weight:700;cursor:pointer">→</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;width:240px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px"><span style="font-size:22px;flex-shrink:0">🎓</span><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">Orientation académique</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Cours, spécialisations, planning</div></div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px"><span style="font-size:22px;flex-shrink:0">💼</span><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">Conseils carrière</div><div style="font-size:12px;color:var(--muted);line-height:1.5">CV, entretiens, offres d'emploi</div></div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px"><span style="font-size:22px;flex-shrink:0">📅</span><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">Infos campus</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Événements, emplois du temps, deadlines</div></div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px"><span style="font-size:22px;flex-shrink:0">🌐</span><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">Bilingue FR / EN</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Répond en français et en anglais</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 — RH DASHBOARD -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:920px">
+    <div style="text-align:center">
+      <div class="tag u1">🏢 Espace Entreprise</div>
+      <h2 class="mid u2" style="margin-top:12px">Trouvez les <span class="grad-text">meilleurs talents</span><br>ESPRIT en un clic</h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Publiez vos offres, analysez les candidatures et recrutez les profils idéaux</p>
+    </div>
+    <div style="display:flex;gap:22px;width:100%;max-width:920px;align-items:flex-start" class="u4">
+      <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px"><div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:2px">247</div><div style="font-size:12px;color:var(--muted)">Candidatures reçues</div></div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px"><div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:900;color:var(--green);margin-bottom:2px">38</div><div style="font-size:12px;color:var(--muted)">Profils retenus</div></div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px"><div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:900;color:var(--cyan);margin-bottom:2px">5</div><div style="font-size:12px;color:var(--muted)">Offres publiées</div></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏆 Candidats les mieux notés</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div class="av av-r">A</div><div style="flex:1"><div style="font-weight:600;font-size:13px">Ayoub Mansouri</div><div style="font-size:11px;color:var(--muted)">Full-Stack · 4A Génie Logiciel</div></div><span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;background:rgba(61,220,132,0.12);color:var(--green);border:1px solid rgba(61,220,132,0.2)">95% match</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div class="av av-c">S</div><div style="flex:1"><div style="font-weight:600;font-size:13px">Sarra Ben Ali</div><div style="font-size:11px;color:var(--muted)">Data Science · 3A</div></div><span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;background:rgba(61,220,132,0.12);color:var(--green);border:1px solid rgba(61,220,132,0.2)">88% match</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div class="av av-p">M</div><div style="flex:1"><div style="font-weight:600;font-size:13px">Mohamed Khalil</div><div style="font-size:11px;color:var(--muted)">DevOps · 4A</div></div><span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;background:rgba(255,216,110,0.12);color:var(--gold);border:1px solid rgba(255,216,110,0.2)">76% match</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0"><div class="av av-g">L</div><div style="flex:1"><div style="font-weight:600;font-size:13px">Lina Trabelsi</div><div style="font-size:11px;color:var(--muted)">UX/UI Design · 3A</div></div><span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;background:rgba(255,216,110,0.12);color:var(--gold);border:1px solid rgba(255,216,110,0.2)">71% match</span></div>
+        </div>
+      </div>
+      <div style="width:220px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px">Pipeline RH</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0"></div><span style="font-size:12px;color:var(--muted);flex:1">Nouveaux</span><span style="font-size:13px;font-weight:700">142</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:10px;height:10px;border-radius:50%;background:var(--gold);flex-shrink:0"></div><span style="font-size:12px;color:var(--muted);flex:1">En revue</span><span style="font-size:13px;font-weight:700">67</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:10px;height:10px;border-radius:50%;background:var(--cyan);flex-shrink:0"></div><span style="font-size:12px;color:var(--muted);flex:1">Entretien</span><span style="font-size:13px;font-weight:700">24</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0"></div><span style="font-size:12px;color:var(--muted);flex:1">Retenus</span><span style="font-size:13px;font-weight:700">14</span></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Pourquoi ESPRIT ?</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:7px">✅ Profils 100% vérifiés</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:7px">✅ Score de compatibilité automatique</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:7px">✅ Accès direct aux talents</div>
+          <div style="font-size:12px;color:var(--muted)">✅ Base de 8 000+ étudiants</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9 — RESSOURCES -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:900px">
+    <div style="text-align:center">
+      <div class="tag u1">📚 Bibliothèque</div>
+      <h2 class="mid u2" style="margin-top:12px">Le savoir <span class="grad-text">partagé</span>,<br>c'est le savoir multiplié</h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:6px" class="u3">Cours, tutoriels, projets — partagés par et pour la communauté ESPRIT</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;width:100%;max-width:900px" class="u4">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(227,30,36,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px">📕</div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--red);margin-bottom:6px">Cours</div><div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.4">Architectures Modernes — Guide complet</div><div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Concevoir des systèmes distribués et scalables.</div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:var(--muted)">❤️ 234</span><button style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;color:var(--text);border:1px solid var(--border);cursor:pointer;background:transparent">Télécharger</button></div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(56,214,199,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px">🎬</div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--cyan);margin-bottom:6px">Vidéo</div><div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.4">Machine Learning de zéro à expert — 8h</div><div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Série de cours avec exercices pratiques et projets.</div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:var(--muted)">❤️ 189</span><button style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;color:var(--text);border:1px solid var(--border);cursor:pointer;background:transparent">Regarder</button></div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(155,109,255,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px">📝</div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--purple);margin-bottom:6px">Projet</div><div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.4">Projet PFE noté 20/20 — Application IoT</div><div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Rapport, code source et présentation inclus.</div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:var(--muted)">❤️ 312</span><button style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;color:var(--text);border:1px solid var(--border);cursor:pointer;background:transparent">Accéder</button></div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(61,220,132,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px">🛠️</div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--green);margin-bottom:6px">Tutoriel</div><div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.4">Déployer une app sur le cloud en 15 min</div><div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Étape par étape : du code local à la production.</div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:var(--muted)">❤️ 156</span><button style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;color:var(--text);border:1px solid var(--border);cursor:pointer;background:transparent">Voir</button></div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(255,216,110,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px">📊</div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gold);margin-bottom:6px">Template</div><div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.4">Template CV ESPRIT — Prêt à l'emploi</div><div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Design moderne, 3 couleurs disponibles.</div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:var(--muted)">❤️ 891</span><button style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;color:var(--text);border:1px solid var(--border);cursor:pointer;background:transparent">Télécharger</button></div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,107,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px">🎨</div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#ff6b6b;margin-bottom:6px">Design</div><div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.4">UI Kit ESPRIT — 200+ composants Figma</div><div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Bibliothèque officielle pour vos projets de design.</div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:var(--muted)">❤️ 445</span><button style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;color:var(--text);border:1px solid var(--border);cursor:pointer;background:transparent">Ouvrir</button></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 — CTA -->
+<div class="slide">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:32px;max-width:820px;width:100%;position:relative">
+    <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">
+      <div style="position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(227,30,36,0.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:glow 4s ease infinite"></div>
+    </div>
+    <div style="text-align:center;position:relative">
+      <div class="tag u1">🚀 Rejoignez-nous</div>
+      <h1 class="big u2" style="margin-top:16px">L'avenir d'ESPRIT,<br>c'est <span class="grad-text">maintenant.</span></h1>
+      <p class="sub u3" style="margin:14px auto 0">Plus qu'une plateforme — une communauté vivante de 8 000 esprits brillants<br>qui collaborent, apprennent et s'épanouissent ensemble.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:100%;position:relative" class="u4">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8 000+</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Étudiants & Alumni</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:900;background:linear-gradient(135deg,#38d6c7,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent">300+</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Offres ce mois</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:900;background:linear-gradient(135deg,#ffd86e,#ff9f43);-webkit-background-clip:text;-webkit-text-fill-color:transparent">150+</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Entreprises partenaires</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:900;background:linear-gradient(135deg,#3ddc84,#00b44a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">95%</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Taux de satisfaction</div></div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative" class="u5">
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>🌐</span> Réseau Social</div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>💼</span> Offres d'emploi</div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>🎪</span> Événements</div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>💬</span> Messagerie</div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>🎯</span> Analyse de CV</div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>🤖</span> Assistant IA</div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>📚</span> Ressources</div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(61,220,132,0.08);border:1px solid rgba(61,220,132,0.18);padding:10px 18px;border-radius:40px;font-size:13px;font-weight:600;color:var(--green)"><span>🏢</span> Espace RH</div>
+    </div>
+    <div class="u6" style="position:relative">
+      <button class="btn-primary" style="font-size:17px;padding:18px 56px;letter-spacing:.3px">Je rejoins ESPRIT Connect →</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const TOTAL=10;let cur=0,paused=false,timer;
+const allSlides=document.querySelectorAll('.slide');
+const pbar=document.getElementById('pbar');
+const slbl=document.getElementById('slbl');
+const dotsEl=document.getElementById('dots');
+for(let i=0;i<TOTAL;i++){const d=document.createElement('div');d.className='dot'+(i===0?' on':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d)}
+function goTo(n){allSlides[cur].classList.remove('active');dotsEl.children[cur].classList.remove('on');cur=(n+TOTAL)%TOTAL;allSlides[cur].classList.add('active');dotsEl.children[cur].classList.add('on');pbar.style.width=((cur+1)/TOTAL*100)+'%';slbl.textContent=(cur+1)+' / '+TOTAL;resetTimer()}
+function next(){goTo(cur+1)}
+function prev(){goTo(cur-1)}
+function resetTimer(){clearInterval(timer);if(!paused)timer=setInterval(next,6000)}
+function togglePause(){paused=!paused;document.getElementById('pauseBtn').textContent=paused?'▶ Reprendre':'⏸ Pause';resetTimer()}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')next();if(e.key==='ArrowLeft')prev();if(e.key.toLowerCase()==='p')togglePause()});
+resetTimer();
+</script>
+</body>
+</html>

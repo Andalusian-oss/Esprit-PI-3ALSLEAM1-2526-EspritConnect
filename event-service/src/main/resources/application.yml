@@ -29,7 +29,7 @@ eureka:
     prefer-ip-address: true
 
 jwt:
-  secret: ${JWT_SECRET:esprit-connect-super-secret-key-must-be-at-least-256-bits-long}
+  secret: ${JWT_SECRET}
 
 springdoc:
   api-docs:

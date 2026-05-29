@@ -23,4 +23,10 @@ public interface UserService {
     List<UserResponseDTO> getOnlineUsers();
     List<UserResponseDTO> searchUsers(String query);
     List<UserResponseDTO> getUsersByIds(List<Long> ids);
+    List<UserResponseDTO> getDirectoryUsers(String role);
+    String verifyEmail(String token);
+    void resendVerification(String email);
+    void forgotPassword(String email);
+    void resetPassword(String token, String newPassword);
+    void changePassword(String email, String oldPassword, String newPassword);
 }

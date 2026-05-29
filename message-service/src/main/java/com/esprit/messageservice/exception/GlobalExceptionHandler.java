@@ -1,7 +1,8 @@
 package com.esprit.messageservice.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*; import org.springframework.validation.FieldError;
+import org.springframework.http.*; import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.*; import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime; import java.util.*;
 
@@ -12,6 +13,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String,Object>> handleNotFound(ResourceNotFoundException ex) { return buildError(HttpStatus.NOT_FOUND, ex.getMessage()); }
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String,Object>> handleIllegal(IllegalArgumentException ex) { return buildError(HttpStatus.BAD_REQUEST, ex.getMessage()); }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String,Object>> handleMessageNotReadable(HttpMessageNotReadableException ex) {
+        return buildError(HttpStatus.BAD_REQUEST, "Malformed or invalid request body");
+    }
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String,Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String,String> fe = new HashMap<>();
