@@ -1,23 +1,71 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Application, Job, JobRequest, Mentoring, CvAnalysis } from '../../core/models/models';
+import { Application, Job, JobRequest, CvAnalysis } from '../../core/models/models';
 import { JobService } from '../../core/services/job.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ChatbotService } from '../../core/services/chatbot.service';
 import { LanguageService } from '../../core/services/language.service';
 import { environment } from '../../../environments/environment';
-import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
 
 @Component({
   selector: 'app-jobs',
   template: `
     <div class="page-wide">
-      <div class="page-header">
-        <h1>{{ lang.t('jobs.title') }}</h1>
-        <p>{{ lang.t('jobs.subtitle') }}</p>
+
+      <!-- ── Hero Header ── -->
+      <div class="jobs-hero">
+        <div class="jobs-hero-text">
+          <h1>{{ lang.t('jobs.title') }}</h1>
+          <p>{{ lang.t('jobs.subtitle') }}</p>
+        </div>
+        <div class="jobs-hero-stats">
+          <div class="jobs-kpi">
+            <span class="jobs-kpi-value">{{ jobs.length }}</span>
+            <span class="jobs-kpi-label">{{ lang.t('jobs.sectionOffers') }}</span>
+          </div>
+          <div class="jobs-kpi-sep"></div>
+          <div class="jobs-kpi">
+            <span class="jobs-kpi-value jobs-kpi-green">{{ totalAccepted }}</span>
+            <span class="jobs-kpi-label">Accepted</span>
+          </div>
+          <div class="jobs-kpi-sep"></div>
+          <div class="jobs-kpi">
+            <span class="jobs-kpi-value jobs-kpi-cyan">{{ pendingCount }}</span>
+            <span class="jobs-kpi-label">Pending</span>
+          </div>
+          <div class="jobs-kpi-sep"></div>
+          <div class="jobs-kpi">
+            <span class="jobs-kpi-value jobs-kpi-yellow">{{ myApplications.length }}</span>
+            <span class="jobs-kpi-label">My Applications</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Job type breakdown bar ── -->
+      <div class="jobs-type-bar" *ngIf="jobs.length > 0">
+        <div class="jobs-type-item">
+          <span class="badge badge-green">STAGE</span>
+          <div class="jobs-type-track">
+            <div class="jobs-type-fill jobs-type-stage" [style.width.%]="pct('STAGE')"></div>
+          </div>
+          <span class="jobs-type-count">{{ countType('STAGE') }}</span>
+        </div>
+        <div class="jobs-type-item">
+          <span class="badge badge-blue">CDI</span>
+          <div class="jobs-type-track">
+            <div class="jobs-type-fill jobs-type-cdi" [style.width.%]="pct('CDI')"></div>
+          </div>
+          <span class="jobs-type-count">{{ countType('CDI') }}</span>
+        </div>
+        <div class="jobs-type-item">
+          <span class="badge badge-gray">CDD</span>
+          <div class="jobs-type-track">
+            <div class="jobs-type-fill jobs-type-cdd" [style.width.%]="pct('CDD')"></div>
+          </div>
+          <span class="jobs-type-count">{{ countType('CDD') }}</span>
+        </div>
       </div>
 
       <div class="crud-grid">
@@ -53,16 +101,6 @@ import { of } from 'rxjs';
           </ng-template>
         </section>
 
-        <section class="panel">
-          <h2>{{ lang.t('jobs.requestMentoring') }}</h2>
-          <form [formGroup]="mentoringForm" (ngSubmit)="requestMentoring()" class="stack">
-            <input formControlName="mentorUserId" type="number" [placeholder]="lang.t('jobs.mentorIdPh')" />
-            <input formControlName="domaine" [placeholder]="lang.t('jobs.domainPh')" />
-            <button class="btn btn-primary" type="submit" [disabled]="mentoringForm.invalid || saving">
-              <span class="icon icon-user-plus"></span>{{ lang.t('jobs.requestMentoring') }}
-            </button>
-          </form>
-        </section>
       </div>
 
       <div *ngIf="error" class="error-msg">{{ error }}</div>
@@ -219,26 +257,6 @@ import { of } from 'rxjs';
         </div>
       </ng-container>
 
-      <!-- ── Mentoring ── -->
-      <div class="section-title">{{ lang.t('jobs.sectionMentoring') }}</div>
-      <div *ngIf="mentorings.length === 0" class="empty" style="padding:24px 0"><p>{{ lang.t('jobs.noMentoring') }}</p></div>
-      <div class="list-grid">
-        <article class="card" *ngFor="let item of mentorings">
-          <div class="item-head">
-            <div>
-              <h3>{{ item.domaine }}</h3>
-              <p>{{ lang.t('jobs.mentor') }} {{ getMentoringUserName(item.mentorUserId) }} / {{ lang.t('jobs.mentee') }} {{ getMentoringUserName(item.mentoreUserId) }}</p>
-            </div>
-            <span class="badge badge-gray">{{ item.statut }}</span>
-          </div>
-          <div class="meta-row"><span>{{ item.sessionCount }} {{ lang.t('jobs.sessions') }}</span></div>
-          <div class="card-actions">
-            <button class="btn btn-ghost" (click)="completeMentoring(item.id)">
-              <span class="icon icon-check"></span>{{ lang.t('jobs.complete') }}
-            </button>
-          </div>
-        </article>
-      </div>
     </div>
 
     <!-- ── Apply Modal ── -->
@@ -372,15 +390,227 @@ import { of } from 'rxjs';
       background: rgba(61,220,132,.07); border: 1px solid rgba(61,220,132,.2);
     }
     .btn.disabled { opacity: .6; pointer-events: none; }
+
+    /* ── Jobs Hero ── */
+    .jobs-hero {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; flex-wrap: wrap; padding: 28px 32px; border-radius: 20px;
+      background: linear-gradient(135deg, rgba(227,30,36,.12) 0%, rgba(56,214,199,.08) 100%);
+      border: 1px solid rgba(227,30,36,.2); margin-bottom: 20px;
+    }
+    .jobs-hero-text h1 { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; margin:0 0 6px; }
+    .jobs-hero-text p { color:var(--text-muted); margin:0; font-size:14px; }
+    .jobs-hero-stats { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .jobs-kpi { display:flex; flex-direction:column; align-items:center; min-width:72px; }
+    .jobs-kpi-value { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; line-height:1; }
+    .jobs-kpi-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px; margin-top:3px; }
+    .jobs-kpi-sep { width:1px; height:36px; background:var(--border); margin:0 4px; }
+    .jobs-kpi-green { color:#3ddc84; }
+    .jobs-kpi-cyan { color:#38d6c7; }
+    .jobs-kpi-yellow { color:#ffbd59; }
+
+    /* ── Job type breakdown bar ── */
+    .jobs-type-bar { display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+    .jobs-type-item { display:flex; align-items:center; gap:10px; flex:1; min-width:120px; }
+    .jobs-type-track { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+    .jobs-type-fill { height:100%; border-radius:3px; transition:width .5s; }
+    .jobs-type-stage { background:#3ddc84; }
+    .jobs-type-cdi   { background:#38d6c7; }
+    .jobs-type-cdd   { background:#ffbd59; }
+    .jobs-type-count { font-size:13px; font-weight:700; min-width:16px; text-align:right; }
+
+    /* Light mode hero */
+    :host-context(.light-theme) .jobs-hero {
+      background: linear-gradient(135deg, rgba(227,30,36,.06) 0%, rgba(56,214,199,.05) 100%);
+      border-color: rgba(227,30,36,.15);
+    }
+
+    /* ── Mentor Browse ── */
+    .mentor-browse-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
+      margin-bottom: 32px;
+    }
+    .mentor-browse-card {
+      display: flex; flex-direction: column; gap: 12px; padding: 18px;
+      border-radius: 14px; border: 1px solid var(--border);
+      background: var(--card-bg, var(--dark2));
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+    }
+    .mentor-browse-card:hover { border-color: var(--red, #e31e24); box-shadow: 0 4px 20px rgba(227,30,36,.12); transform: translateY(-2px); }
+    .mentor-browse-avatar {
+      width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(227,30,36,.15); color: var(--red, #e31e24);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; border: 2px solid rgba(227,30,36,.25);
+      overflow: hidden;
+    }
+    .avatar-has-img { background: transparent; border-color: var(--border); }
+    .mentor-browse-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .mentor-browse-info { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+    .mentor-browse-info strong { font-size: 15px; font-weight: 600; }
+    .mentor-online-badge { font-size: 11px; color: #3ddc84; font-weight: 600; }
+    .mentor-browse-actions { display:flex; gap:8px; align-items:center; }
+    .mentor-msg-btn {
+      flex-shrink:0; width:34px; height:34px; padding:0;
+      display:flex; align-items:center; justify-content:center;
+      border-color:rgba(56,214,199,.3); color:var(--accent-cyan,#38d6c7);
+      transition: background .15s, border-color .15s;
+    }
+    .mentor-msg-btn:hover { background:rgba(56,214,199,.1); border-color:var(--accent-cyan,#38d6c7); }
+    .mentor-modal-profile { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .domain-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .domain-chip {
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; cursor: pointer;
+      border: 1px solid var(--border); background: transparent; color: var(--text-muted);
+      transition: all .15s;
+    }
+    .domain-chip:hover, .domain-chip.active {
+      background: rgba(227,30,36,.1); color: var(--red, #e31e24);
+      border-color: rgba(227,30,36,.3);
+    }
+    .input-styled {
+      padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--input-bg, rgba(255,255,255,.06)); color: var(--text);
+      font-size: 14px; outline: none; transition: border-color .15s;
+    }
+    .input-styled:focus { border-color: var(--red, #e31e24); }
+    :host-context(.light-theme) .mentor-browse-card { background: #fff; border-color: #e0e0e0; }
+    :host-context(.light-theme) .mentor-browse-card:hover { border-color: #e31e24; box-shadow: 0 4px 16px rgba(227,30,36,.1); }
+    :host-context(.light-theme) .input-styled { background: #fff; border-color: #d0d0d0; color: #1a1a1a; }
+
+    /* ── Mentor Stats Row ── */
+    .mentor-stats-row {
+      display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .mentor-stat {
+      flex: 1; min-width: 100px; display: flex; flex-direction: column; align-items: center;
+      padding: 16px 12px; border-radius: 14px; border: 1px solid var(--border);
+      background: var(--card-bg, var(--dark2));
+      transition: border-color .2s, transform .2s;
+    }
+    .mentor-stat:hover { border-color: var(--accent-cyan); transform: translateY(-2px); }
+    .mentor-stat-value { font-size: 28px; font-weight: 800; font-family: 'Syne', sans-serif; line-height: 1; }
+    .mentor-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .6px; }
+    .mentor-stat-active { color: #3ddc84; }
+    .mentor-stat-done   { color: var(--accent-cyan, #38d6c7); }
+    .mentor-stat-total  { color: var(--text); }
+    .mentor-stat-sessions { color: #ffbd59; }
+
+    /* ── Mentor Tabs ── */
+    .mentor-tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .mentor-tab {
+      display: flex; align-items: center; gap: 6px; padding: 10px 18px 11px;
+      border: none; background: transparent; color: var(--text-muted);
+      font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: color .15s, border-color .15s;
+    }
+    .mentor-tab:hover { color: var(--text); }
+    .mentor-tab.active { color: var(--red, #e31e24); border-bottom-color: var(--red, #e31e24); font-weight: 600; }
+    .tab-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700;
+      background: var(--red, #e31e24); color: #fff;
+    }
+
+    /* ── Mentor Cards Grid ── */
+    .mentor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .mentor-card {
+      border: 1px solid var(--border); border-radius: 16px;
+      background: var(--card-bg, var(--dark2)); padding: 20px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .mentor-card:hover { border-color: rgba(56,214,199,.4); box-shadow: 0 4px 24px rgba(0,0,0,.2); }
+    .mentor-card-completed { opacity: .75; }
+    .mentor-card-cancelled { opacity: .6; }
+
+    .mentor-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .mentor-domain-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      background: rgba(56,214,199,.1); color: var(--accent-cyan, #38d6c7);
+      border: 1px solid rgba(56,214,199,.25); font-size: 13px; font-weight: 600;
+    }
+
+    /* ── Mentor People ── */
+    .mentor-people { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .mentor-person { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 120px; }
+    .mentor-avatar {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(227,30,36,.2); color: var(--red, #e31e24);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; border: 2px solid rgba(227,30,36,.3);
+    }
+    .mentor-avatar-you {
+      background: rgba(56,214,199,.15); color: var(--accent-cyan, #38d6c7);
+      border-color: rgba(56,214,199,.3);
+    }
+    .mentor-person-role { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+    .mentor-person-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .mentor-arrow { font-size: 18px; color: var(--text-muted); flex-shrink: 0; }
+
+    /* ── Session bar ── */
+    .mentor-session-bar {
+      display: flex; align-items: center; gap: 8px; padding: 8px 0;
+      border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted);
+    }
+    .mentor-sessions-toggle {
+      margin-left: auto; background: none; border: none; cursor: pointer;
+      font-size: 12px; color: var(--accent-cyan, #38d6c7); padding: 2px 6px;
+      border-radius: 6px; transition: background .15s;
+    }
+    .mentor-sessions-toggle:hover { background: rgba(56,214,199,.1); }
+
+    /* ── Sessions panel ── */
+    .mentor-sessions-panel {
+      margin-top: 12px; padding: 12px; border-radius: 10px;
+      background: var(--input-bg, rgba(255,255,255,.04)); border: 1px solid var(--border);
+    }
+    .mentor-session-row {
+      display: flex; align-items: center; gap: 10px; padding: 6px 0;
+      border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .mentor-session-row:last-of-type { border-bottom: none; }
+    .mentor-loading { font-size: 13px; color: var(--text-muted); padding: 8px 0; }
+    .mentor-no-sessions { font-size: 13px; color: var(--text-muted); padding: 8px 0; text-align: center; }
+
+    /* ── Add session form ── */
+    .add-session-form { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+    .add-session-inputs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .input-sm {
+      padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--input-bg, rgba(255,255,255,.06)); color: var(--text);
+      font-size: 13px; outline: none;
+    }
+    .input-sm:focus { border-color: var(--accent-cyan, #38d6c7); }
+
+    /* ── Card actions ── */
+    .mentor-card-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* ── Empty state ── */
+    .mentor-empty { text-align: center; padding: 40px 16px; color: var(--text-muted); }
+    .mentor-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* ── Badge helpers ── */
+    .badge-active { background: rgba(61,220,132,.15); color: #3ddc84; border: 1px solid rgba(61,220,132,.3); }
+    .badge-completed { background: rgba(56,214,199,.12); color: #38d6c7; border: 1px solid rgba(56,214,199,.25); }
+    .badge-cancelled { background: rgba(227,30,36,.1); color: #e31e24; border: 1px solid rgba(227,30,36,.2); }
+    .badge-planned { background: rgba(255,189,89,.12); color: #ffbd59; border: 1px solid rgba(255,189,89,.25); }
+    .badge-done { background: rgba(61,220,132,.12); color: #3ddc84; border: 1px solid rgba(61,220,132,.25); }
+
+    /* ── Light mode overrides ── */
+    :host-context(.light-theme) .mentor-stat { background: #f8f9fa; border-color: #e0e0e0; }
+    :host-context(.light-theme) .mentor-stat:hover { border-color: #38d6c7; }
+    :host-context(.light-theme) .mentor-card { background: #ffffff; border-color: #e0e0e0; }
+    :host-context(.light-theme) .mentor-card:hover { border-color: #38d6c7; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    :host-context(.light-theme) .mentor-sessions-panel { background: #f5f5f5; border-color: #e0e0e0; }
+    :host-context(.light-theme) .input-sm { background: #fff; border-color: #d0d0d0; color: #1a1a1a; }
+    :host-context(.light-theme) .modal-box { background: #ffffff; }
   `]
 })
 export class JobsComponent implements OnInit {
   jobs: Job[] = [];
   applications: Application[] = [];
   myApplications: Application[] = [];
-  mentorings: Mentoring[] = [];
   uploadingCvForApp: number | null = null;
-  mentoringUserMap: Map<number, string> = new Map();
   selectedJobId: number | null = null;
   editingJobId: number | null = null;
   jobQuery = '';
@@ -407,10 +637,6 @@ export class JobsComponent implements OnInit {
     lieu: ['']
   });
 
-  mentoringForm: FormGroup = this.fb.group({
-    mentorUserId: [null, Validators.required],
-    domaine: ['', Validators.required]
-  });
 
   constructor(
     private jobService: JobService,
@@ -444,6 +670,17 @@ export class JobsComponent implements OnInit {
     return this.filteredJobs.slice(start, start + this.pageSize);
   }
 
+  get totalAccepted(): number {
+    return this.myApplications.filter(a => a.statut === 'ACCEPTED').length;
+  }
+
+  get pendingCount(): number {
+    return this.myApplications.filter(a => a.statut === 'PENDING').length;
+  }
+
+  countType(type: string): number { return this.jobs.filter(j => j.type === type).length; }
+  pct(type: string): number { return this.jobs.length ? Math.round(this.countType(type) / this.jobs.length * 100) : 0; }
+
   ngOnInit(): void { this.loadAll(); }
 
   loadAll(): void {
@@ -452,27 +689,11 @@ export class JobsComponent implements OnInit {
       next: jobs => { this.jobs = jobs; this.loading = false; },
       error: () => this.fail('Unable to load jobs')
     });
-    this.jobService.getMentoringAsMentore().subscribe({
-      next: items => { this.mentorings = items; this.resolveMentoringNames(items); },
+    this.jobService.getMyApplications().subscribe({
+      next: apps => { this.myApplications = apps; },
       error: () => undefined
     });
-    if (!this.canManageJobs) {
-      this.jobService.getMyApplications().subscribe({
-        next: apps => { this.myApplications = apps; },
-        error: () => undefined
-      });
-    }
   }
-
-  private resolveMentoringNames(items: Mentoring[]): void {
-    const ids = [...new Set(items.flatMap(i => [i.mentorUserId, i.mentoreUserId]).filter(Boolean))];
-    if (!ids.length) return;
-    this.http.get<any[]>(`${environment.apiUrl}/auth/users/bulk?${ids.map(id => 'ids=' + id).join('&')}`)
-      .pipe(catchError(() => of([])))
-      .subscribe(users => users.forEach(u => this.mentoringUserMap.set(u.id, `${u.prenom} ${u.nom}`)));
-  }
-
-  getMentoringUserName(id: number): string { return this.mentoringUserMap.get(id) ?? `User #${id}`; }
 
   saveJob(): void {
     if (this.jobForm.invalid) return;
@@ -585,28 +806,10 @@ export class JobsComponent implements OnInit {
     (event.target as HTMLInputElement).value = '';
   }
 
-  requestMentoring(): void {
-    if (this.mentoringForm.invalid) return;
-    this.saving = true;
-    const mentorUserId = Number(this.mentoringForm.value.mentorUserId);
-    const domaine = String(this.mentoringForm.value.domaine);
-    this.jobService.requestMentoring(mentorUserId, domaine).subscribe({
-      next: () => this.afterSave('Mentoring requested'),
-      error: () => this.failSave('Unable to request mentoring')
-    });
-  }
-
-  completeMentoring(id: number): void {
-    this.jobService.completeMentoring(id).subscribe({
-      next: () => { this.notifications.success('Mentoring completed'); this.loadAll(); },
-      error: () => this.fail('Unable to complete mentoring')
-    });
-  }
-
   resetJobForm(): void { this.editingJobId = null; this.jobForm.reset({ type: 'STAGE' }); }
 
   private afterSave(message: string): void {
-    this.saving = false; this.error = ''; this.resetJobForm(); this.mentoringForm.reset();
+    this.saving = false; this.error = ''; this.resetJobForm();
     this.notifications.success(message); this.loadAll();
   }
 

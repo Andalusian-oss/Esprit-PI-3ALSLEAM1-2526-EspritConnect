@@ -72,6 +72,19 @@ INSERT IGNORE INTO mentorings (id, mentor_user_id, mentore_user_id, domaine, sta
 (5, 30, 34, 'Cloud & Docker',          'ACTIVE'),
 (6, 31, 36, 'Mobile & Career',         'ACTIVE');
 
+-- Additional mentorings with the new mentor profiles
+INSERT IGNORE INTO mentorings (id, mentor_user_id, mentore_user_id, domaine, statut) VALUES
+(7,  41,  9,  'Full Stack JS & React',      'ACTIVE'),
+(8,  42, 12,  'Data Science & Python',      'ACTIVE'),
+(9,  43, 33,  'Cloud & Kubernetes',         'ACTIVE'),
+(10, 44, 16,  'Cybersécurité & Réseau',     'ACTIVE'),
+(11, 45, 13,  'Développement Mobile',       'ACTIVE'),
+(12, 46, 10,  'Machine Learning & NLP',     'ACTIVE'),
+(13, 47, 35,  'Backend Microservices',      'ACTIVE'),
+(14, 48, 36,  'UI/UX & Frontend Vue',       'ACTIVE'),
+(15, 49, 14,  'IoT & Systèmes Embarqués',   'ACTIVE'),
+(16, 50,  7,  'Gestion de Projet Agile',    'COMPLETED');
+
 -- ── MENTORING SESSIONS ──
 INSERT IGNORE INTO mentoring_sessions (id, mentoring_id, date, duree_minutes, statut) VALUES
 (1,  1, '2026-05-07 18:00:00', 60,  'DONE'),
@@ -87,4 +100,22 @@ INSERT IGNORE INTO mentoring_sessions (id, mentoring_id, date, duree_minutes, st
 (11, 5, '2026-05-09 19:00:00', 75,  'DONE'),
 (12, 5, '2026-05-16 19:00:00', 75,  'PLANNED'),
 (13, 6, '2026-05-11 16:00:00', 45,  'DONE'),
-(14, 6, '2026-05-18 16:00:00', 45,  'PLANNED');
+(14, 6, '2026-05-18 16:00:00', 45,  'PLANNED'),
+(15, 7, '2026-05-10 18:00:00', 60,  'DONE'),
+(16, 7, '2026-05-17 18:00:00', 60,  'PLANNED'),
+(17, 8, '2026-05-09 17:30:00', 75,  'DONE'),
+(18, 8, '2026-05-16 17:30:00', 75,  'PLANNED'),
+(19, 9, '2026-05-12 19:00:00', 90,  'DONE'),
+(20, 9, '2026-05-19 19:00:00', 90,  'PLANNED'),
+(21,10, '2026-05-08 20:00:00', 60,  'DONE'),
+(22,11, '2026-05-13 18:00:00', 45,  'DONE'),
+(23,11, '2026-05-20 18:00:00', 45,  'PLANNED'),
+(24,12, '2026-05-07 19:00:00', 90,  'DONE'),
+(25,12, '2026-05-14 19:00:00', 90,  'DONE'),
+(26,13, '2026-05-11 20:00:00', 60,  'DONE'),
+(27,14, '2026-05-10 17:00:00', 45,  'DONE'),
+(28,15, '2026-05-09 18:30:00', 60,  'DONE'),
+(29,15, '2026-05-16 18:30:00', 60,  'PLANNED'),
+(30,16, '2026-04-15 17:00:00', 60,  'DONE'),
+(31,16, '2026-04-22 17:00:00', 60,  'DONE'),
+(32,16, '2026-04-29 17:00:00', 60,  'DONE');

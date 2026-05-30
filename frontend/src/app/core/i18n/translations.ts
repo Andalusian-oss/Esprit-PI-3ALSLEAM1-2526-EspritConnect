@@ -5,6 +5,8 @@ export interface Translations {
   'nav.feed': string;
   'nav.events': string;
   'nav.jobs': string;
+  'nav.mentoring': string;
+  'mentoring.subtitle': string;
   'nav.pfeBooks': string;
   'nav.resources': string;
   'nav.messages': string;
@@ -185,6 +187,35 @@ export interface Translations {
   'jobs.mentee': string;
   'jobs.sessions': string;
   'jobs.complete': string;
+  'jobs.mentorTab': string;
+  'jobs.menteeTab': string;
+  'jobs.statusActive': string;
+  'jobs.statusCompleted': string;
+  'jobs.statusCancelled': string;
+  'jobs.cancelMentoring': string;
+  'jobs.addSession': string;
+  'jobs.sessionDate': string;
+  'jobs.sessionDuration': string;
+  'jobs.noSessions': string;
+  'jobs.activeMentorings': string;
+  'jobs.plannedSessions': string;
+  'jobs.totalMentorings': string;
+  'jobs.browseMentors': string;
+  'jobs.browseMentorsDesc': string;
+  'jobs.filterSpeciality': string;
+  'jobs.allSpecialities': string;
+  'jobs.noMentorsAvailable': string;
+  'jobs.requestFromMentor': string;
+  'jobs.chooseDomain': string;
+  'jobs.sendRequest': string;
+  'jobs.mentorSpeciality': string;
+  'admin.mentorSection': string;
+  'admin.addMentorRelation': string;
+  'admin.mentorUserId': string;
+  'admin.menteeUserId': string;
+  'admin.createMentoring': string;
+  'admin.allMentorings': string;
+  'admin.noMentorings': string;
   'jobs.applyFor': string;
   'jobs.cvBanner': string;
   'jobs.cvLabel': string;
@@ -436,6 +467,8 @@ const en: Translations = {
   'nav.feed': 'Feed',
   'nav.events': 'Events',
   'nav.jobs': 'Jobs',
+  'nav.mentoring': 'Mentoring',
+  'mentoring.subtitle': 'Find a mentor, track your sessions and grow your skills',
   'nav.pfeBooks': 'PFE Books',
   'nav.resources': 'Resources',
   'nav.messages': 'Messages',
@@ -584,8 +617,8 @@ const en: Translations = {
   'events.members': 'members',
   'events.clubBadge': 'Club',
   // ── Jobs ──
-  'jobs.title': 'Jobs & Mentoring',
-  'jobs.subtitle': 'Browse internships, job offers, applications and mentoring sessions',
+  'jobs.title': 'Job Board',
+  'jobs.subtitle': 'Browse internships, CDI, CDD offers and manage your applications',
   'jobs.createOffer': 'Create Offer',
   'jobs.updateOffer': 'Update Offer',
   'jobs.findOpportunities': 'Find Opportunities',
@@ -610,12 +643,41 @@ const en: Translations = {
   'jobs.analyzeCv': 'Analyze CV',
   'jobs.analyzingCv': 'Analyzing...',
   'jobs.noApplications': 'No applications yet',
-  'jobs.sectionMentoring': 'My Mentoring',
-  'jobs.noMentoring': 'No mentoring sessions yet',
+  'jobs.sectionMentoring': 'Mentoring',
+  'jobs.noMentoring': 'No mentoring relationships yet',
   'jobs.mentor': 'Mentor:',
   'jobs.mentee': 'Mentee:',
   'jobs.sessions': 'sessions',
   'jobs.complete': 'Complete',
+  'jobs.mentorTab': 'As Mentor',
+  'jobs.menteeTab': 'As Mentee',
+  'jobs.statusActive': 'Active',
+  'jobs.statusCompleted': 'Completed',
+  'jobs.statusCancelled': 'Cancelled',
+  'jobs.cancelMentoring': 'Cancel',
+  'jobs.addSession': 'Add Session',
+  'jobs.sessionDate': 'Date & Time',
+  'jobs.sessionDuration': 'Duration (min)',
+  'jobs.noSessions': 'No sessions yet',
+  'jobs.activeMentorings': 'Active',
+  'jobs.plannedSessions': 'Planned sessions',
+  'jobs.totalMentorings': 'Total',
+  'jobs.browseMentors': 'Find a Mentor',
+  'jobs.browseMentorsDesc': 'Browse available mentors, filter by speciality and send a request',
+  'jobs.filterSpeciality': 'Speciality',
+  'jobs.allSpecialities': 'All specialities',
+  'jobs.noMentorsAvailable': 'No mentors available',
+  'jobs.requestFromMentor': 'Request Mentoring',
+  'jobs.chooseDomain': 'Topic / Domain *',
+  'jobs.sendRequest': 'Send Request',
+  'jobs.mentorSpeciality': 'Speciality:',
+  'admin.mentorSection': 'Mentor Management',
+  'admin.addMentorRelation': 'Create Mentoring Relationship',
+  'admin.mentorUserId': 'Mentor User ID',
+  'admin.menteeUserId': 'Mentee User ID',
+  'admin.createMentoring': 'Create',
+  'admin.allMentorings': 'All Mentoring Relationships',
+  'admin.noMentorings': 'No mentoring relationships found.',
   'jobs.applyFor': 'Apply for:',
   'jobs.cvBanner': 'Attach your CV to strengthen your application. Recruiters can analyze it with AI.',
   'jobs.cvLabel': 'CV / Resume (PDF, optional)',
@@ -867,6 +929,8 @@ const fr: Translations = {
   'nav.feed': 'Fil d\'actu',
   'nav.events': 'Événements',
   'nav.jobs': 'Emplois',
+  'nav.mentoring': 'Mentorat',
+  'mentoring.subtitle': 'Trouvez un mentor, suivez vos sessions et développez vos compétences',
   'nav.pfeBooks': 'Livres PFE',
   'nav.resources': 'Ressources',
   'nav.messages': 'Messages',
@@ -1015,8 +1079,8 @@ const fr: Translations = {
   'events.members': 'membres',
   'events.clubBadge': 'Club',
   // ── Jobs ──
-  'jobs.title': 'Emplois & Mentorat',
-  'jobs.subtitle': 'Parcourez les stages, offres d\'emploi, candidatures et sessions de mentorat',
+  'jobs.title': 'Offres d\'Emploi',
+  'jobs.subtitle': 'Parcourez les stages, CDI, CDD et gérez vos candidatures',
   'jobs.createOffer': 'Créer une offre',
   'jobs.updateOffer': 'Modifier l\'offre',
   'jobs.findOpportunities': 'Trouver des opportunités',
@@ -1041,12 +1105,41 @@ const fr: Translations = {
   'jobs.analyzeCv': 'Analyser le CV',
   'jobs.analyzingCv': 'Analyse en cours...',
   'jobs.noApplications': 'Aucune candidature',
-  'jobs.sectionMentoring': 'Mon Mentorat',
-  'jobs.noMentoring': 'Aucune session de mentorat',
+  'jobs.sectionMentoring': 'Mentorat',
+  'jobs.noMentoring': 'Aucune relation de mentorat',
   'jobs.mentor': 'Mentor :',
   'jobs.mentee': 'Mentoré :',
   'jobs.sessions': 'sessions',
   'jobs.complete': 'Terminer',
+  'jobs.mentorTab': 'En tant que Mentor',
+  'jobs.menteeTab': 'En tant que Mentoré',
+  'jobs.statusActive': 'Actif',
+  'jobs.statusCompleted': 'Terminé',
+  'jobs.statusCancelled': 'Annulé',
+  'jobs.cancelMentoring': 'Annuler',
+  'jobs.addSession': 'Ajouter une session',
+  'jobs.sessionDate': 'Date & Heure',
+  'jobs.sessionDuration': 'Durée (min)',
+  'jobs.noSessions': 'Aucune session',
+  'jobs.activeMentorings': 'Actifs',
+  'jobs.plannedSessions': 'Sessions planifiées',
+  'jobs.totalMentorings': 'Total',
+  'jobs.browseMentors': 'Trouver un Mentor',
+  'jobs.browseMentorsDesc': 'Parcourez les mentors disponibles, filtrez par spécialité et envoyez une demande',
+  'jobs.filterSpeciality': 'Spécialité',
+  'jobs.allSpecialities': 'Toutes les spécialités',
+  'jobs.noMentorsAvailable': 'Aucun mentor disponible',
+  'jobs.requestFromMentor': 'Demander un mentorat',
+  'jobs.chooseDomain': 'Sujet / Domaine *',
+  'jobs.sendRequest': 'Envoyer la demande',
+  'jobs.mentorSpeciality': 'Spécialité :',
+  'admin.mentorSection': 'Gestion des Mentors',
+  'admin.addMentorRelation': 'Créer une relation de mentorat',
+  'admin.mentorUserId': 'ID Mentor',
+  'admin.menteeUserId': 'ID Mentoré',
+  'admin.createMentoring': 'Créer',
+  'admin.allMentorings': 'Toutes les relations de mentorat',
+  'admin.noMentorings': 'Aucune relation de mentorat trouvée.',
   'jobs.applyFor': 'Postuler à :',
   'jobs.cvBanner': 'Joignez votre CV pour renforcer votre candidature. Les recruteurs peuvent l\'analyser avec l\'IA.',
   'jobs.cvLabel': 'CV / Lettre de motivation (PDF, optionnel)',

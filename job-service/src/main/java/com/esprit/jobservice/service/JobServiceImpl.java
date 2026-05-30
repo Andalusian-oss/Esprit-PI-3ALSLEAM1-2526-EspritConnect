@@ -136,9 +136,11 @@ public class JobServiceImpl implements JobService {
     // ─── Mentoring ─────────────────────────────────────────────────────────────
 
     @Override @Transactional
-    public MentoringResponseDTO requestMentoring(MentoringRequestDTO dto, Long mentoreUserId) {
+    public MentoringResponseDTO requestMentoring(MentoringRequestDTO dto, Long jwtUserId) {
+        // Admin can override the mentee by providing mentoreUserId explicitly
+        Long effectiveMenteeId = (dto.getMentoreUserId() != null) ? dto.getMentoreUserId() : jwtUserId;
         Mentoring m = Mentoring.builder().mentorUserId(dto.getMentorUserId())
-                .mentoreUserId(mentoreUserId).domaine(dto.getDomaine()).build();
+                .mentoreUserId(effectiveMenteeId).domaine(dto.getDomaine()).build();
         return toMentoringDTO(mentoringRepository.save(m));
     }
 

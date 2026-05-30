@@ -462,6 +462,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { path: '/feed',      labelKey: 'nav.feed',      icon: 'icon-home',      roles: ['STUDENT', 'ENSEIGNANT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR'] },
     { path: '/events',    labelKey: 'nav.events',    icon: 'icon-calendar',  roles: ['STUDENT', 'ENSEIGNANT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR'] },
     { path: '/jobs',      labelKey: 'nav.jobs',      icon: 'icon-briefcase', roles: ['STUDENT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR', 'COMPANY'] },
+    { path: '/mentoring', labelKey: 'nav.mentoring', icon: 'icon-mentoring', roles: ['STUDENT', 'ENSEIGNANT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR'] },
     { path: '/pfe-books', labelKey: 'nav.pfeBooks', icon: 'icon-book',      roles: ['STUDENT', 'ALUMNI', 'ADMIN', 'COMPANY'] },
     { path: '/resources', labelKey: 'nav.resources', icon: 'icon-book',      roles: null },
     { path: '/messages',  labelKey: 'nav.messages',  icon: 'icon-message',   roles: ['STUDENT', 'ENSEIGNANT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR', 'COMPANY'] },

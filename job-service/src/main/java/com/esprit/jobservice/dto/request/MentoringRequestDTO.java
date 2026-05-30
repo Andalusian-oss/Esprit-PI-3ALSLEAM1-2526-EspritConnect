@@ -11,4 +11,6 @@ public class MentoringRequestDTO {
     private Long mentorUserId;
     @NotBlank(message = "Domain is required")
     private String domaine;
+    // Optional: admin can set the mentee explicitly (overrides JWT user)
+    private Long mentoreUserId;
 }

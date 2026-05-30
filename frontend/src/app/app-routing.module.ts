@@ -28,6 +28,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'mentoring',
+    loadChildren: () => import('./features/mentoring/mentoring.module').then(m => m.MentoringModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'pfe-books',
     loadChildren: () => import('./features/pfe-books/pfe-books.module').then(m => m.PfeBooksModule),
     canActivate: [AuthGuard]

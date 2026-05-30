@@ -120,3 +120,18 @@ VALUES
 (38, 'recrutement@fintechlab.tn', @pw, 'Recrutement', 'FinTech Lab', 'COMPANY', NULL, NULL, NULL, NULL, NULL, TRUE, TRUE, '2024-11-20 12:00:00'),
 (39, 'jobs@medtech.tn', @pw, 'Jobs', 'MedTech Solutions', 'COMPANY', NULL, NULL, NULL, NULL, NULL, FALSE, FALSE, '2024-12-01 12:00:00'),
 (40, 'contact@greenbyte.tn', @pw, 'Contact', 'GreenByte Energy', 'COMPANY', NULL, NULL, NULL, NULL, NULL, FALSE, FALSE, '2024-12-05 12:00:00');
+
+-- ── MENTORS (10 experienced profiles, diverse specialities) ──
+INSERT IGNORE INTO users
+  (id, email, password, prenom, nom, role, promo, specialite, parcours, esprit_id, cin, approved, online, created_at)
+VALUES
+(41, 'ahmed.slim@mentor.esprit.tn',     @pw, 'Ahmed',   'Slim',       'MENTOR', '2020', 'Génie Logiciel',         'GL',    'ESP-2016-9001', '61001001', TRUE, TRUE,  '2023-01-15 09:00:00'),
+(42, 'cyrine.boubaker@mentor.esprit.tn',@pw, 'Cyrine',  'Boubaker',   'MENTOR', '2019', 'Data Science',           'BI',    'ESP-2015-9002', '62002002', TRUE, FALSE, '2023-02-10 09:00:00'),
+(43, 'ghariani.med@mentor.esprit.tn',   @pw, 'Mohamed', 'Ghariani',   'MENTOR', '2021', 'Cloud & DevOps',         'Cloud', 'ESP-2017-9003', '63003003', TRUE, TRUE,  '2023-03-05 09:00:00'),
+(44, 'fatma.oueslati@mentor.esprit.tn', @pw, 'Fatma',   'Oueslati',   'MENTOR', '2020', 'Cybersécurité',          'SSI',   'ESP-2016-9004', '64004004', TRUE, FALSE, '2023-04-20 09:00:00'),
+(45, 'yassine.chaari@mentor.esprit.tn', @pw, 'Yassine', 'Chaari',     'MENTOR', '2022', 'Développement Mobile',   'TWIN',  'ESP-2018-9005', '65005005', TRUE, TRUE,  '2023-05-12 09:00:00'),
+(46, 'mariem.soltani@mentor.esprit.tn', @pw, 'Mariem',  'Soltani',    'MENTOR', '2021', 'Intelligence Artificielle','BI',  'ESP-2017-9006', '66006006', TRUE, FALSE, '2023-06-01 09:00:00'),
+(47, 'khalil.turki@mentor.esprit.tn',   @pw, 'Khalil',  'Turki',      'MENTOR', '2019', 'Génie Logiciel',         'GL',    'ESP-2015-9007', '67007007', TRUE, TRUE,  '2023-07-08 09:00:00'),
+(48, 'donia.fersi@mentor.esprit.tn',    @pw, 'Donia',   'Fersi',      'MENTOR', '2022', 'Développement Web',      'TWIN',  'ESP-2018-9008', '68008008', TRUE, FALSE, '2023-08-14 09:00:00'),
+(49, 'ons.hammami@mentor.esprit.tn',    @pw, 'Ons',     'Hammami',    'MENTOR', '2020', 'Systèmes Embarqués',     'SEMC',  'ESP-2016-9009', '69009009', TRUE, TRUE,  '2023-09-22 09:00:00'),
+(50, 'bilel.mansouri@mentor.esprit.tn', @pw, 'Bilel',   'Mansouri',   'MENTOR', '2018', 'Génie Logiciel',         'GL',    'ESP-2014-9010', '70010010', TRUE, FALSE, '2023-10-30 09:00:00');

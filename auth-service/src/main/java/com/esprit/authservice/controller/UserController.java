@@ -1,6 +1,7 @@
 package com.esprit.authservice.controller;
 
 import com.esprit.authservice.dto.request.UpdateUserRequestDTO;
+import com.esprit.authservice.entity.Role;
 import com.esprit.authservice.dto.response.UserResponseDTO;
 import com.esprit.authservice.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -85,10 +86,26 @@ public class UserController {
 
     @GetMapping("/directory")
     @Operation(summary = "Public user directory for recruiters, mentors and admins")
-    @PreAuthorize("hasAnyRole('ADMIN','COMPANY','MENTOR','ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPANY','MENTOR','ENSEIGNANT','STUDENT','ALUMNI','EMPLOYE')")
     public ResponseEntity<List<UserResponseDTO>> getDirectory(
             @RequestParam(required = false) String role) {
         return ResponseEntity.ok(userService.getDirectoryUsers(role));
+    }
+
+    @GetMapping("/mentors")
+    @Operation(summary = "List all mentor users — accessible by any authenticated user")
+    public ResponseEntity<List<UserResponseDTO>> getMentors() {
+        return ResponseEntity.ok(userService.getDirectoryUsers("MENTOR"));
+    }
+
+    @PatchMapping("/{id:[0-9]+}/set-role")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Change a user's role (ADMIN only)")
+    public ResponseEntity<UserResponseDTO> setUserRole(@PathVariable Long id,
+                                                        @RequestParam String role) {
+        UpdateUserRequestDTO dto = new UpdateUserRequestDTO();
+        dto.setRole(Role.valueOf(role));
+        return ResponseEntity.ok(userService.updateUser(id, dto));
     }
 
     // ── Company approval ────────────────────────────────────────────────────
