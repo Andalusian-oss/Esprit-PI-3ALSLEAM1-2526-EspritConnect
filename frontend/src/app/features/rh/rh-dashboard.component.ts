@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { JobService } from '../../core/services/job.service';
+import { PostService } from '../../core/services/post.service';
 import { ChatbotService } from '../../core/services/chatbot.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { LanguageService } from '../../core/services/language.service';
@@ -784,6 +785,7 @@ export class RhDashboardComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private jobService: JobService,
+    private postService: PostService,
     private chatbotService: ChatbotService,
     private authService: AuthService,
     private notifications: NotificationService,
@@ -956,18 +958,22 @@ export class RhDashboardComponent implements OnInit {
     if (this.jobForm.invalid) return;
     this.saving = true;
     const payload = { ...this.jobForm.value, entreprise: this.currentUser?.nom ?? '' };
+    const isCreate = !this.editingJob;
     const req = this.editingJob
       ? this.jobService.updateJob(this.editingJob.id, payload)
       : this.jobService.createJob(payload);
     req.subscribe({
       next: () => {
+        if (isCreate) {
+          this.publishFeedAnnouncement(`New job offer posted: ${payload.titre} at ${payload.entreprise}`);
+        }
         this.saving = false;
         this.showForm = false;
         this.editingJob = null;
         this.requiredSkills = [];
         this.jobForm.reset({ type: 'CDI' });
         this.loadJobs();
-        this.notifications.success(this.editingJob ? 'Job updated' : 'Job posted');
+        this.notifications.success(isCreate ? 'Job posted' : 'Job updated');
       },
       error: () => { this.saving = false; this.notifications.error('Failed to save job'); }
     });
@@ -1026,5 +1032,9 @@ export class RhDashboardComponent implements OnInit {
     return parts.length >= 2
       ? (parts[0][0] + parts[1][0]).toUpperCase()
       : name.substring(0, 2).toUpperCase();
+  }
+
+  private publishFeedAnnouncement(content: string): void {
+    this.postService.createPost({ contenu: content, autoApprove: true }).subscribe({ error: () => undefined });
   }
 }

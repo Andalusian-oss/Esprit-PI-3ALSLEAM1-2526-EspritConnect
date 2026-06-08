@@ -56,6 +56,8 @@ export interface Event {
   clubNom?: string;
   creatorUserId: number;
   registrationCount: number;
+  attendeeLimit?: number | null;
+  remainingSpots?: number | null;
   categorie?: 'SPORTIF' | 'ACADEMIQUE' | 'CULTUREL' | 'TECHNOLOGIQUE' | 'AUTRE';
 }
 
@@ -65,7 +67,17 @@ export interface EventRequest {
   date: string;
   lieu?: string;
   clubId?: number | null;
+  attendeeLimit?: number | null;
   categorie?: 'SPORTIF' | 'ACADEMIQUE' | 'CULTUREL' | 'TECHNOLOGIQUE' | 'AUTRE';
+}
+
+export interface EventRegistration {
+  id: number;
+  eventId: number;
+  userId: number;
+  inviteCode: string;
+  qrPayload: string;
+  createdAt: string;
 }
 
 export interface Club {

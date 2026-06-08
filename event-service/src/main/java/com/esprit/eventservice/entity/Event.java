@@ -34,6 +34,9 @@ public class Event {
     @Column(name = "creator_user_id", nullable = false)
     private Long creatorUserId;
 
+    @Column(name = "attendee_limit")
+    private Integer attendeeLimit;
+
     @Enumerated(EnumType.STRING)
     private EventCategory categorie;
 

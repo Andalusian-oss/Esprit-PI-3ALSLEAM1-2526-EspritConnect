@@ -81,7 +81,7 @@ export class LoginComponent implements OnInit {
     this.authService.login(email, password).subscribe({
       next: (res) => {
         const role = res.user.role;
-        if (role === 'COMPANY') {
+        if (role === 'COMPANY' || role === 'EMPLOYE') {
           this.router.navigate(['/company']);
         } else if (role === 'ADMIN') {
           this.router.navigate(['/admin']);

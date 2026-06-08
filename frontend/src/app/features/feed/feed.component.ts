@@ -437,7 +437,7 @@ import { LanguageService } from '../../core/services/language.service';
                 [(ngModel)]="newComments[post.id]"
                 [placeholder]="lang.t('feed.commentPlaceholder')"
                 (keyup.enter)="addComment(post.id)" />
-              <button class="fd-send" (click)="addComment(post.id)" [disabled]="!newComments[post.id]?.trim()">
+              <button class="fd-send" (click)="addComment(post.id)" [disabled]="!(newComments[post.id] ?? '').trim()">
                 <span class="icon icon-send"></span>
               </button>
             </div>
@@ -489,7 +489,7 @@ export class FeedComponent implements OnInit {
   loadPosts(): void {
     this.loading = true;
     this.postService.getAllPosts().subscribe({
-      next: posts => {
+      next: (posts: Post[]) => {
         this.posts = posts;
         this.loading = false;
         this.resolveAuthorNames(posts);
@@ -502,8 +502,8 @@ export class FeedComponent implements OnInit {
     const ids = new Set<number>();
     posts.forEach(p => { if (!p.userName || p.userName.startsWith('User #')) ids.add(p.userId); });
     if (!ids.size) return;
-    this.authService.getUsersByIds(Array.from(ids)).subscribe(users => {
-      const map = new Map(users.map(u => [Number(u.id), `${u.prenom} ${u.nom}`]));
+    this.authService.getUsersByIds(Array.from(ids)).subscribe((users: { id: number; prenom: string; nom: string }[]) => {
+      const map = new Map<number, string>(users.map(u => [Number(u.id), `${u.prenom} ${u.nom}`]));
       this.posts.forEach(p => { if (map.has(Number(p.userId))) p.userName = map.get(Number(p.userId))!; });
     });
   }
@@ -519,7 +519,7 @@ export class FeedComponent implements OnInit {
     if (!files?.length) return;
     this.uploadingPhoto = true;
     const uploads = Array.from(files).map(f => this.postService.uploadPhoto(f).toPromise());
-    Promise.all(uploads).then(results => {
+    Promise.all(uploads).then((results: Array<{ url?: string } | undefined>) => {
       results.forEach(r => { if (r?.url) this.uploadedPhotos.push(r.url); });
       this.uploadingPhoto = false;
     }).catch(() => { this.uploadingPhoto = false; });
@@ -533,7 +533,7 @@ export class FeedComponent implements OnInit {
     this.postSubmitted = false;
     const payload = { contenu: this.postForm.value.contenu, photoUrls: this.uploadedPhotos };
     this.postService.createPost(payload).subscribe({
-      next: _post => {
+      next: (_post: Post) => {
         this.cancelCompose();
         this.saving = false;
         this.postSubmitted = true;
@@ -556,7 +556,7 @@ export class FeedComponent implements OnInit {
     if (!this.editContent.trim() || this.saving) return;
     this.saving = true;
     this.postService.updatePost(post.id, { contenu: this.editContent }).subscribe({
-      next: updated => { post.contenu = updated.contenu; this.cancelEdit(); this.saving = false; },
+      next: (updated: Post) => { post.contenu = updated.contenu; this.cancelEdit(); this.saving = false; },
       error: () => { this.saving = false; }
     });
   }
@@ -584,14 +584,14 @@ export class FeedComponent implements OnInit {
     if (this.expandedPostId === post.id) { this.expandedPostId = null; return; }
     this.expandedPostId = post.id;
     if (!this.comments[post.id]) {
-      this.postService.getComments(post.id).subscribe(c => { this.comments[post.id] = c; });
+      this.postService.getComments(post.id).subscribe((c: Comment[]) => { this.comments[post.id] = c; });
     }
   }
 
   addComment(postId: number): void {
     const text = (this.newComments[postId] || '').trim();
     if (!text) return;
-    this.postService.addComment(postId, text).subscribe(c => {
+    this.postService.addComment(postId, text).subscribe((c: Comment) => {
       if (!this.comments[postId]) this.comments[postId] = [];
       this.comments[postId].push(c);
       this.newComments[postId] = '';

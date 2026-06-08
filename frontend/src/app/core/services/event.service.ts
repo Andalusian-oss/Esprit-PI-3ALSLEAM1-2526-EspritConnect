@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Club, ClubRequest, Event, EventRequest } from '../models/models';
+import { Club, ClubRequest, Event, EventRequest, EventRegistration } from '../models/models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -15,7 +15,8 @@ export class EventService {
   createEvent(data: EventRequest): Observable<Event> { return this.http.post<Event>(this.eventsUrl, data); }
   updateEvent(id: number, data: EventRequest): Observable<Event> { return this.http.put<Event>(`${this.eventsUrl}/${id}`, data); }
   deleteEvent(id: number): Observable<void> { return this.http.delete<void>(`${this.eventsUrl}/${id}`); }
-  register(eventId: number): Observable<void> { return this.http.post<void>(`${this.eventsUrl}/${eventId}/register`, {}); }
+  register(eventId: number): Observable<EventRegistration> { return this.http.post<EventRegistration>(`${this.eventsUrl}/${eventId}/register`, {}); }
+  getMyRegistration(eventId: number): Observable<EventRegistration> { return this.http.get<EventRegistration>(`${this.eventsUrl}/${eventId}/my-registration`); }
   unregister(eventId: number): Observable<void> { return this.http.delete<void>(`${this.eventsUrl}/${eventId}/unregister`); }
 
   getClubs(): Observable<Club[]> { return this.http.get<Club[]>(this.clubsUrl); }

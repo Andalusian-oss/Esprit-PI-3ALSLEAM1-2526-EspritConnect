@@ -37,9 +37,11 @@ nav { display: none; }
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 48px 16px;
   background: var(--black);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  /* overflow-y intentionally NOT hidden so tall forms (e.g. company registration) are scrollable */
 
   &::before {
     content: '';

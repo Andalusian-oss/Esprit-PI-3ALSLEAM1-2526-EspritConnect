@@ -31,10 +31,10 @@ public class SecurityConfig {
                 // Mentoring: any authenticated user
                 .requestMatchers("/api/jobs/mentoring/**", "/api/jobs/sessions/**").authenticated()
                 // Creating/editing jobs: admin, mentor, company
-                .requestMatchers(HttpMethod.POST, "/api/jobs", "/api/jobs/").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
-                .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
-                .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
-                .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY")
+                .requestMatchers(HttpMethod.POST, "/api/jobs", "/api/jobs/").hasAnyRole("ADMIN", "MENTOR", "COMPANY", "EMPLOYE")
+                .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY", "EMPLOYE")
+                .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY", "EMPLOYE")
+                .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasAnyRole("ADMIN", "MENTOR", "COMPANY", "EMPLOYE")
                 .anyRequest().authenticated())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

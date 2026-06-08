@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Resource, ResourceRequest, ResourceCategory, ResourceType } from '../../core/models/models';
 import { ResourceService } from '../../core/services/resource.service';
+import { PostService } from '../../core/services/post.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
@@ -153,7 +154,7 @@ import { LanguageService } from '../../core/services/language.service';
           <div class="res-card-body">
             <h3 class="res-card-title">{{ r.titre }}</h3>
             <p class="res-card-desc" *ngIf="r.description">
-              {{ r.description | slice:0:110 }}{{ (r.description.length ?? 0) > 110 ? '…' : '' }}
+              {{ r.description | slice:0:110 }}{{ r.description.length > 110 ? '…' : '' }}
             </p>
 
             <!-- Tags -->
@@ -374,6 +375,7 @@ export class ResourcesComponent implements OnInit {
     private resourceService: ResourceService,
     private fb: FormBuilder,
     private notifications: NotificationService,
+    private postService: PostService,
     private authService: AuthService,
     public lang: LanguageService
   ) {}
@@ -383,7 +385,7 @@ export class ResourcesComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.resourceService.getAll().subscribe({
-      next: res => { this.resources = res; this.loading = false; },
+      next: (res: Resource[]) => { this.resources = res; this.loading = false; },
       error: () => { this.notifications.error('Unable to load resources'); this.loading = false; }
     });
   }
@@ -420,11 +422,15 @@ export class ResourcesComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving = true;
     const payload = this.form.value as ResourceRequest;
+    const isCreate = !this.editingId;
     const req = this.editingId
       ? this.resourceService.update(this.editingId, payload)
       : this.resourceService.create(payload);
     req.subscribe({
-      next: () => { this.saving = false; this.cancelForm(); this.notifications.success('Resource saved'); this.load(); },
+      next: () => {
+        if (isCreate) this.publishFeedAnnouncement(`New resource shared: ${payload.titre}`);
+        this.saving = false; this.cancelForm(); this.notifications.success('Resource saved'); this.load();
+      },
       error: () => { this.saving = false; this.notifications.error('Unable to save resource'); }
     });
   }
@@ -448,7 +454,7 @@ export class ResourcesComponent implements OnInit {
 
   toggleLike(r: Resource): void {
     this.resourceService.toggleLike(r.id).subscribe({
-      next: updated => { const idx = this.resources.findIndex(x => x.id === r.id); if (idx >= 0) this.resources[idx] = updated; },
+      next: (updated: Resource) => { const idx = this.resources.findIndex(x => x.id === r.id); if (idx >= 0) this.resources[idx] = updated; },
       error: () => this.notifications.error('Unable to like')
     });
   }
@@ -465,7 +471,7 @@ export class ResourcesComponent implements OnInit {
     if (!file) return;
     this.uploadingFile = true;
     this.resourceService.uploadFile(file).subscribe({
-      next: ({ url }) => { this.form.patchValue({ fileUrl: url }); this.uploadingFile = false; },
+      next: ({ url }: { url: string }) => { this.form.patchValue({ fileUrl: url }); this.uploadingFile = false; },
       error: () => { this.notifications.error('File upload failed'); this.uploadingFile = false; }
     });
   }
@@ -481,5 +487,9 @@ export class ResourcesComponent implements OnInit {
   typeIcon(type: string): string {
     const map: Record<string, string> = { ARTICLE: '📝', PDF: '📄', VIDEO: '🎬', LINK: '🔗', TUTORIAL: '🎓' };
     return map[type] ?? '📁';
+  }
+
+  private publishFeedAnnouncement(content: string): void {
+    this.postService.createPost({ contenu: content, autoApprove: true }).subscribe({ error: () => undefined });
   }
 }

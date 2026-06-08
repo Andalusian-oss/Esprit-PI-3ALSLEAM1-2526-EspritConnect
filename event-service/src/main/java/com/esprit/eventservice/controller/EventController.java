@@ -1,6 +1,7 @@
 package com.esprit.eventservice.controller;
 
 import com.esprit.eventservice.dto.request.EventRequestDTO;
+import com.esprit.eventservice.dto.response.EventRegistrationResponseDTO;
 import com.esprit.eventservice.dto.response.EventResponseDTO;
 import com.esprit.eventservice.security.JwtUtil;
 import com.esprit.eventservice.service.EventService;
@@ -61,9 +62,18 @@ public class EventController {
     }
 
     @PostMapping("/{id}/register")
-    public ResponseEntity<Void> register(@PathVariable Long id, HttpServletRequest req) {
-        eventService.registerForEvent(id, extractUserId(req));
-        return ResponseEntity.ok().build();
+    public ResponseEntity<EventRegistrationResponseDTO> register(@PathVariable Long id, HttpServletRequest req) {
+        return ResponseEntity.ok(eventService.registerForEvent(id, extractUserId(req)));
+    }
+
+    @GetMapping("/{id}/my-registration")
+    public ResponseEntity<EventRegistrationResponseDTO> getMyRegistration(@PathVariable Long id, HttpServletRequest req) {
+        return ResponseEntity.ok(eventService.getMyRegistration(id, extractUserId(req)));
+    }
+
+    @GetMapping("/my-invites")
+    public ResponseEntity<List<EventRegistrationResponseDTO>> getMyInvites(HttpServletRequest req) {
+        return ResponseEntity.ok(eventService.getMyRegistrations(extractUserId(req)));
     }
 
     @DeleteMapping("/{id}/unregister")

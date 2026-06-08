@@ -62,7 +62,7 @@ const routes: Routes = [
     path: 'rh',
     loadChildren: () => import('./features/rh/rh.module').then(m => m.RhModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['COMPANY'] }
+    data: { roles: ['COMPANY', 'EMPLOYE'] }
   },
   {
     path: 'company',

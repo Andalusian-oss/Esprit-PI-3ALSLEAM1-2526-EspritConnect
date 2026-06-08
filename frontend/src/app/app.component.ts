@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { MessageService } from './core/services/message.service';
 import { Router } from '@angular/router';
@@ -6,7 +6,7 @@ import { NotificationService } from './core/services/notification.service';
 import { ChatbotService } from './core/services/chatbot.service';
 import { LanguageService } from './core/services/language.service';
 import { User, UserRole, ChatMessage } from './core/models/models';
-import { Subscription, interval, of } from 'rxjs';
+import { Subscription, timer, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
@@ -299,7 +299,7 @@ import { switchMap } from 'rxjs/operators';
         </div>
 
         <!-- Notifications bell -->
-        <div class="notif-bell-wrap" (click)="toggleNotifications()" (clickOutside)="notifOpen=false">
+        <div class="notif-bell-wrap" (click)="toggleNotifications()">
           <button class="notif-bell-btn" type="button" aria-label="Notifications">
             <span class="icon icon-bell"></span>
             <span>{{ lang.t('nav.notifications') }}</span>
@@ -314,11 +314,11 @@ import { switchMap } from 'rxjs/operators';
               <div *ngIf="recentNotifications.length === 0" class="notif-empty">{{ lang.t('nav.noNotif') }}</div>
               <div *ngFor="let n of recentNotifications"
                    class="notif-item"
-                   [class.unread]="!n.read"
+                   [class.unread]="!n.lu"
                    (click)="openNotification(n)">
-                <div class="notif-dot" *ngIf="!n.read"></div>
+                <div class="notif-dot" *ngIf="!n.lu"></div>
                 <div style="flex:1">
-                  <div class="notif-text">{{ n.content }}</div>
+                  <div class="notif-text">{{ n.message }}</div>
                   <div class="notif-time">{{ n.createdAt | date:'dd/MM HH:mm' }}</div>
                 </div>
               </div>
@@ -450,6 +450,7 @@ export class AppComponent implements OnInit, OnDestroy {
   notifOpen = false;
   recentNotifications: any[] = [];
   private pollSub?: Subscription;
+  private msgSub?: Subscription;
 
   // Chatbot state
   chatOpen = false;
@@ -467,7 +468,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { path: '/resources', labelKey: 'nav.resources', icon: 'icon-book',      roles: null },
     { path: '/messages',  labelKey: 'nav.messages',  icon: 'icon-message',   roles: ['STUDENT', 'ENSEIGNANT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR', 'COMPANY'] },
     { path: '/profile',   labelKey: 'nav.profile',   icon: 'icon-user',      roles: null },
-    { path: '/rh',        labelKey: 'nav.rh',        icon: 'icon-users',     roles: ['COMPANY'] },
+    { path: '/rh',        labelKey: 'nav.rh',        icon: 'icon-users',     roles: ['COMPANY', 'EMPLOYE'] },
     { path: '/admin',     labelKey: 'nav.admin',     icon: 'icon-shield',    roles: ['ADMIN'] },
   ];
 
@@ -477,27 +478,41 @@ export class AppComponent implements OnInit, OnDestroy {
     public lang: LanguageService,
     private messageService: MessageService,
     private chatbotService: ChatbotService,
-    private router: Router
+    private router: Router,
+    private elRef: ElementRef
   ) {}
 
   ngOnInit(): void {
     this.initTheme();
 
-    this.pollSub = interval(30000).pipe(
+    // Poll immediately then every 30s
+    this.pollSub = timer(0, 30000).pipe(
       switchMap(() => {
         if (!this.authService.isLoggedIn()) return of(0);
         return this.messageService.getUnreadNotificationCount();
       })
-    ).subscribe({ next: count => { this.unreadCount = count; }, error: () => {} });
+      ).subscribe({ next: (count: number) => { this.unreadCount = count; }, error: () => {} });
 
-    if (this.authService.isLoggedIn()) {
-      this.messageService.getUnreadNotificationCount().subscribe({
-        next: count => { this.unreadCount = count; }, error: () => {}
-      });
-    }
+    // Real-time increment when a new direct message arrives via WebSocket
+    this.msgSub = this.messageService.newMessage$.subscribe(() => {
+      this.unreadCount++;
+    });
   }
 
-  ngOnDestroy(): void { this.pollSub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+    this.msgSub?.unsubscribe();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.notifOpen) {
+      const bellWrap = this.elRef.nativeElement.querySelector('.notif-bell-wrap');
+      if (bellWrap && !bellWrap.contains(event.target as Node)) {
+        this.notifOpen = false;
+      }
+    }
+  }
 
   get user(): User | null { return this.authService.getCurrentUser(); }
 
@@ -550,25 +565,25 @@ export class AppComponent implements OnInit, OnDestroy {
     this.notifOpen = !this.notifOpen;
     if (this.notifOpen) {
       this.messageService.getNotifications().subscribe({
-        next: ns => { this.recentNotifications = ns.slice(0, 10); },
+          next: (ns: any[]) => { this.recentNotifications = ns.slice(0, 10); },
         error: () => {}
       });
     }
   }
 
   markAllRead(): void {
-    const unread = this.recentNotifications.filter(n => !n.read);
+    const unread = this.recentNotifications.filter(n => !n.lu);
     unread.forEach(n => {
       this.messageService.markNotificationRead(n.id).subscribe({ error: () => {} });
-      n.read = true;
+      n.lu = true;
     });
     this.unreadCount = 0;
   }
 
   openNotification(n: any): void {
-    if (!n.read) {
+    if (!n.lu) {
       this.messageService.markNotificationRead(n.id).subscribe({ error: () => {} });
-      n.read = true;
+      n.lu = true;
       this.unreadCount = Math.max(0, this.unreadCount - 1);
     }
     this.notifOpen = false;
@@ -600,7 +615,7 @@ export class AppComponent implements OnInit, OnDestroy {
       history,
       user_role: this.user?.role
     }).subscribe({
-      next: (res) => {
+        next: (res: { response: string }) => {
         this.chatHistory.push({ role: 'assistant', content: res.response, timestamp: new Date() });
         this.botTyping = false;
       },

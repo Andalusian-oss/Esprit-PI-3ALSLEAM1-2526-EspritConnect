@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Club, Event, EventRequest } from '../../core/models/models';
+import { Club, Event, EventRegistration, EventRequest } from '../../core/models/models';
 import { EventService } from '../../core/services/event.service';
+import { PostService } from '../../core/services/post.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
+import * as QRCode from 'qrcode';
 
 @Component({
   selector: 'app-events',
@@ -31,6 +33,7 @@ import { LanguageService } from '../../core/services/language.service';
               <input formControlName="date" type="datetime-local" />
               <input formControlName="lieu" [placeholder]="lang.t('events.locationPh')" />
             </div>
+            <input formControlName="attendeeLimit" type="number" min="1" placeholder="Attendee limit (e.g. 20)" />
             <select formControlName="clubId">
               <option [ngValue]="null">{{ lang.t('events.noClub') }}</option>
               <option *ngFor="let club of clubs" [ngValue]="club.id">{{ club.nom }}</option>
@@ -81,15 +84,24 @@ import { LanguageService } from '../../core/services/language.service';
               <h3>{{ event.titre }}</h3>
               <p>{{ event.date | date:'medium' }}</p>
             </div>
-            <span class="badge badge-red">{{ event.registrationCount }} {{ lang.t('events.registered') }}</span>
+            <span class="badge badge-red">
+              {{ event.registrationCount }}<ng-container *ngIf="event.attendeeLimit"> / {{ event.attendeeLimit }}</ng-container>
+              {{ lang.t('events.registered') }}
+            </span>
           </div>
           <p class="muted" *ngIf="event.description">{{ event.description }}</p>
           <div class="meta-row">
             <span *ngIf="event.lieu">{{ lang.t('events.location') }} {{ event.lieu }}</span>
             <span *ngIf="event.clubNom">{{ lang.t('events.club') }} {{ event.clubNom }}</span>
+            <span *ngIf="event.attendeeLimit">{{ event.remainingSpots ?? 0 }} spots left</span>
           </div>
           <div class="card-actions">
-            <button class="btn btn-ghost" (click)="register(event.id)"><span class="icon icon-check"></span>{{ lang.t('common.register') }}</button>
+            <button class="btn btn-ghost" (click)="register(event)" [disabled]="loadingInviteEventId === event.id">
+              <span class="icon icon-check"></span>{{ lang.t('common.register') }}
+            </button>
+            <button class="btn btn-ghost" (click)="openMyInvite(event)" [disabled]="loadingInviteEventId === event.id">
+              <span class="icon icon-qr-code"></span>My Invite
+            </button>
             <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="editEvent(event)"><span class="icon icon-edit"></span>{{ lang.t('common.edit') }}</button>
             <button class="btn btn-danger" *ngIf="canManageEvents" (click)="deleteEvent(event.id)"><span class="icon icon-trash"></span>{{ lang.t('common.delete') }}</button>
           </div>
@@ -122,6 +134,26 @@ import { LanguageService } from '../../core/services/language.service';
           </div>
         </article>
       </div>
+
+      <div *ngIf="inviteModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000" (click)="closeInviteModal()">
+        <div style="width:min(420px,100%);background:var(--card-bg, #141414);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.35)" (click)="$event.stopPropagation()">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px">
+            <div>
+              <h3 style="margin:0 0 6px 0">{{ inviteModal.event.titre }}</h3>
+              <p style="margin:0;color:var(--text-muted, #aaa)">{{ inviteModal.event.date | date:'medium' }}</p>
+            </div>
+            <button class="btn btn-ghost" type="button" (click)="closeInviteModal()">Close</button>
+          </div>
+          <div style="display:flex;justify-content:center;margin:12px 0 18px">
+            <img [src]="inviteModal.qrImageUrl" alt="Event invite QR code" style="width:240px;height:240px;background:#fff;border-radius:14px;padding:10px" />
+          </div>
+          <div style="display:grid;gap:8px;font-size:14px">
+            <div><strong>Invite code:</strong> {{ inviteModal.registration.inviteCode }}</div>
+            <div><strong>Generated:</strong> {{ inviteModal.registration.createdAt | date:'medium' }}</div>
+            <div style="color:var(--text-muted, #aaa);line-height:1.5">Present this QR code at the event entrance. Each attendee receives a unique invite.</div>
+          </div>
+        </div>
+      </div>
     </div>
   `
 })
@@ -139,12 +171,16 @@ export class EventsComponent implements OnInit {
   eventClubFilter: number | null = null;
   eventPage = 1;
   readonly pageSize = 6;
+  loadingInviteEventId: number | null = null;
+  private registrationsByEventId = new Map<number, EventRegistration>();
+  inviteModal: { event: Event; registration: EventRegistration; qrImageUrl: string } | null = null;
 
   eventForm: FormGroup = this.fb.group({
     titre: ['', Validators.required],
     description: [''],
     date: ['', Validators.required],
     lieu: [''],
+    attendeeLimit: [null],
     clubId: [null]
   });
 
@@ -158,6 +194,7 @@ export class EventsComponent implements OnInit {
     private eventService: EventService,
     private fb: FormBuilder,
     private notifications: NotificationService,
+    private postService: PostService,
     private authService: AuthService,
     public lang: LanguageService
   ) {}
@@ -193,9 +230,9 @@ export class EventsComponent implements OnInit {
 
   loadAll(): void {
     this.loading = true;
-    this.eventService.getEvents().subscribe({ next: events => this.events = events, error: () => this.error = 'Unable to load events' });
+    this.eventService.getEvents().subscribe({ next: (events: Event[]) => this.events = events, error: () => this.error = 'Unable to load events' });
     this.eventService.getClubs().subscribe({
-      next: clubs => { this.clubs = clubs; this.loading = false; },
+      next: (clubs: Club[]) => { this.clubs = clubs; this.loading = false; },
       error: () => { this.loading = false; this.error = 'Unable to load clubs'; }
     });
   }
@@ -204,15 +241,22 @@ export class EventsComponent implements OnInit {
     if (this.eventForm.invalid) return;
     this.saving = true;
     const payload = this.eventForm.value as EventRequest;
+    const isCreate = !this.editingEventId;
     const request = this.editingEventId
       ? this.eventService.updateEvent(this.editingEventId, payload)
       : this.eventService.createEvent(payload);
-    request.subscribe({ next: () => this.afterSave('Event saved'), error: () => this.failSave('Unable to save event') });
+    request.subscribe({
+      next: () => {
+        if (isCreate) this.publishFeedAnnouncement(`New event posted: ${payload.titre}`);
+        this.afterSave(isCreate ? 'Event saved' : 'Event updated');
+      },
+      error: () => this.failSave('Unable to save event')
+    });
   }
 
   editEvent(event: Event): void {
     this.editingEventId = event.id;
-    this.eventForm.patchValue({ ...event, date: event.date.slice(0, 16), clubId: event.clubId ?? null });
+    this.eventForm.patchValue({ ...event, date: event.date.slice(0, 16), clubId: event.clubId ?? null, attendeeLimit: event.attendeeLimit ?? null });
   }
 
   deleteEvent(id: number): void {
@@ -220,15 +264,48 @@ export class EventsComponent implements OnInit {
     this.eventService.deleteEvent(id).subscribe({ next: () => { this.notifications.success('Event deleted'); this.loadAll(); }, error: () => this.fail('Unable to delete event') });
   }
 
-  register(id: number): void {
-    this.eventService.register(id).subscribe({
-      next: () => { this.notifications.success('Registration confirmed'); this.loadAll(); },
-      error: (err) => {
+  register(event: Event): void {
+    this.loadingInviteEventId = event.id;
+    this.eventService.register(event.id).subscribe({
+      next: (registration: EventRegistration) => {
+        this.notifications.success('Registration confirmed');
+        this.registrationsByEventId.set(event.id, registration);
+        this.loadAll();
+        void this.showInviteModal(event, registration);
+      },
+      error: (err: any) => {
+        this.loadingInviteEventId = null;
         const msg = err.error?.message || err.message || '';
         if (msg.toLowerCase().includes('already')) {
           this.notifications.info('You are already registered for this event');
+        } else if (msg.toLowerCase().includes('limit') || msg.toLowerCase().includes('full')) {
+          this.notifications.error('This event is already full');
         } else {
           this.fail('Unable to register for this event');
+        }
+      }
+    });
+  }
+
+  openMyInvite(event: Event): void {
+    const cached = this.registrationsByEventId.get(event.id);
+    if (cached) {
+      void this.showInviteModal(event, cached);
+      return;
+    }
+    this.loadingInviteEventId = event.id;
+    this.eventService.getMyRegistration(event.id).subscribe({
+      next: (registration: EventRegistration) => {
+        this.registrationsByEventId.set(event.id, registration);
+        void this.showInviteModal(event, registration);
+      },
+      error: (err: any) => {
+        this.loadingInviteEventId = null;
+        const msg = err.error?.message || err.message || '';
+        if (msg.toLowerCase().includes('not found')) {
+          this.notifications.info('Register for the event first to generate your invite QR code');
+        } else {
+          this.notifications.error('Unable to load your invite');
         }
       }
     });
@@ -237,10 +314,17 @@ export class EventsComponent implements OnInit {
   saveClub(): void {
     if (this.clubForm.invalid) return;
     this.saving = true;
+    const isCreate = !this.editingClubId;
     const request = this.editingClubId
       ? this.eventService.updateClub(this.editingClubId, this.clubForm.value)
       : this.eventService.createClub(this.clubForm.value);
-    request.subscribe({ next: () => this.afterSave('Club saved'), error: () => this.failSave('Unable to save club') });
+    request.subscribe({
+      next: () => {
+        if (isCreate) this.publishFeedAnnouncement(`New club created: ${this.clubForm.value.nom}`);
+        this.afterSave(isCreate ? 'Club saved' : 'Club updated');
+      },
+      error: () => this.failSave('Unable to save club')
+    });
   }
 
   editClub(club: Club): void {
@@ -259,8 +343,9 @@ export class EventsComponent implements OnInit {
   }
 
   toggleClubForm(): void { this.showClubForm = !this.showClubForm; }
-  resetEventForm(): void { this.editingEventId = null; this.eventForm.reset({ clubId: null }); }
+  resetEventForm(): void { this.editingEventId = null; this.eventForm.reset({ clubId: null, attendeeLimit: null }); }
   resetClubForm(): void { this.editingClubId = null; this.clubForm.reset(); }
+  closeInviteModal(): void { this.inviteModal = null; }
 
   private afterSave(message: string): void {
     this.saving = false;
@@ -269,6 +354,25 @@ export class EventsComponent implements OnInit {
     this.resetClubForm();
     this.notifications.success(message);
     this.loadAll();
+  }
+
+  private publishFeedAnnouncement(content: string): void {
+    this.postService.createPost({ contenu: content, autoApprove: true }).subscribe({ error: () => undefined });
+  }
+
+  private async showInviteModal(event: Event, registration: EventRegistration): Promise<void> {
+    try {
+      const qrImageUrl = await QRCode.toDataURL(registration.qrPayload, {
+        width: 240,
+        margin: 1,
+        errorCorrectionLevel: 'M'
+      });
+      this.inviteModal = { event, registration, qrImageUrl };
+    } catch {
+      this.notifications.error('Unable to generate QR code for this invite');
+    } finally {
+      this.loadingInviteEventId = null;
+    }
   }
 
   private failSave(message: string): void { this.saving = false; this.fail(message); }

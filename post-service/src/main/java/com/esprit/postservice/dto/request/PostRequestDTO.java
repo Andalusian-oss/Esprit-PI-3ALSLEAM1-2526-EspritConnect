@@ -14,4 +14,5 @@ public class PostRequestDTO {
     private List<String> photoUrls;
 
     private String userName;
+    private Boolean autoApprove;
 }

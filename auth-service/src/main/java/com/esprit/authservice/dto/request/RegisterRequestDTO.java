@@ -41,4 +41,5 @@ public class RegisterRequestDTO {
 
     /** Academic track / curriculum (e.g. \"GL\", \"DS\"). */
     private String parcours;
-}
+    /** URL of the uploaded verification document. Required for COMPANY accounts. */
+    private String verificationDocumentUrl;}

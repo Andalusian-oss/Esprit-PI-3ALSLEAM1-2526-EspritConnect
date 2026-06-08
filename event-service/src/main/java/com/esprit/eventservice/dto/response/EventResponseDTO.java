@@ -18,5 +18,7 @@ public class EventResponseDTO {
     private String clubNom;
     private Long creatorUserId;
     private int registrationCount;
+    private Integer attendeeLimit;
+    private Integer remainingSpots;
     private EventCategory categorie;
 }

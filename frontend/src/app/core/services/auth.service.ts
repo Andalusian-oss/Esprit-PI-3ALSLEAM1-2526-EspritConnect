@@ -16,6 +16,7 @@ export interface RegisterPayload {
   specialite?: string;
   parcours?: string;
   avatarUrl?: string;
+  verificationDocumentUrl?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,6 +84,12 @@ export class AuthService {
     const form = new FormData();
     form.append('file', file);
     return this.http.post<{ url: string }>(`${environment.apiUrl}/auth/upload`, form);
+  }
+
+  uploadCompanyDoc(file: File): Observable<{ url: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<{ url: string }>(`${environment.apiUrl}/auth/upload-company-doc`, form);
   }
 
   getUserById(id: number): Observable<User> {

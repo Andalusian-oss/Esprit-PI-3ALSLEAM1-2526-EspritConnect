@@ -1,5 +1,6 @@
 package com.esprit.authservice.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,19 +12,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "File Upload")
-@SecurityRequirement(name = "bearerAuth")
 public class FileUploadController {
+
+    private static final List<String> ALLOWED_DOC_EXTENSIONS = List.of(".pdf", ".doc", ".docx");
 
     @Value("${upload.dir:./uploads}")
     private String uploadDir;
 
     @PostMapping("/upload")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) throws IOException {
         String ext = getExtension(file.getOriginalFilename());
         String filename = UUID.randomUUID() + ext;
@@ -31,6 +35,26 @@ public class FileUploadController {
         Files.createDirectories(dir);
         Files.copy(file.getInputStream(), dir.resolve(filename));
         return ResponseEntity.ok(Map.of("url", "/api/auth/uploads/avatars/" + filename));
+    }
+
+    /**
+     * Public endpoint — no authentication required.
+     * Allows companies to upload their verification document before the account exists.
+     * Only PDF, DOC, and DOCX files are accepted.
+     */
+    @Operation(summary = "Upload company verification document (public, pre-registration)")
+    @PostMapping("/upload-company-doc")
+    public ResponseEntity<Map<String, String>> uploadCompanyDoc(@RequestParam("file") MultipartFile file) throws IOException {
+        String ext = getExtension(file.getOriginalFilename());
+        if (!ALLOWED_DOC_EXTENSIONS.contains(ext.toLowerCase())) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", "Only PDF, DOC, and DOCX files are accepted for verification documents."));
+        }
+        String filename = UUID.randomUUID() + ext;
+        Path dir = Paths.get(uploadDir, "company-docs");
+        Files.createDirectories(dir);
+        Files.copy(file.getInputStream(), dir.resolve(filename));
+        return ResponseEntity.ok(Map.of("url", "/api/auth/uploads/company-docs/" + filename));
     }
 
     private String getExtension(String name) {

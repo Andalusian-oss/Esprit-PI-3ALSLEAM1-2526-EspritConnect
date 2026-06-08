@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Application, Job, JobRequest, CvAnalysis } from '../../core/models/models';
 import { JobService } from '../../core/services/job.service';
+import { PostService } from '../../core/services/post.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ChatbotService } from '../../core/services/chatbot.service';
@@ -642,6 +643,7 @@ export class JobsComponent implements OnInit {
     private jobService: JobService,
     private fb: FormBuilder,
     private notifications: NotificationService,
+    private postService: PostService,
     private authService: AuthService,
     private chatbotService: ChatbotService,
     private http: HttpClient,
@@ -650,7 +652,7 @@ export class JobsComponent implements OnInit {
 
   get canManageJobs(): boolean {
     const role = this.authService.getCurrentUser()?.role;
-    return role === 'ADMIN' || role === 'MENTOR' || role === 'COMPANY';
+    return role === 'ADMIN' || role === 'MENTOR' || role === 'COMPANY' || role === 'EMPLOYE';
   }
 
   get filteredJobs(): Job[] {
@@ -686,11 +688,11 @@ export class JobsComponent implements OnInit {
   loadAll(): void {
     this.loading = true;
     this.jobService.getJobs().subscribe({
-      next: jobs => { this.jobs = jobs; this.loading = false; },
+      next: (jobs: Job[]) => { this.jobs = jobs; this.loading = false; },
       error: () => this.fail('Unable to load jobs')
     });
     this.jobService.getMyApplications().subscribe({
-      next: apps => { this.myApplications = apps; },
+      next: (apps: Application[]) => { this.myApplications = apps; },
       error: () => undefined
     });
   }
@@ -699,8 +701,17 @@ export class JobsComponent implements OnInit {
     if (this.jobForm.invalid) return;
     this.saving = true;
     const payload = this.jobForm.value as JobRequest;
+    const isCreate = !this.editingJobId;
     const request = this.editingJobId ? this.jobService.updateJob(this.editingJobId, payload) : this.jobService.createJob(payload);
-    request.subscribe({ next: () => this.afterSave('Job saved'), error: () => this.failSave('Unable to save job') });
+    request.subscribe({
+      next: () => {
+        if (isCreate) {
+          this.publishFeedAnnouncement(`New job offer posted: ${payload.titre} at ${payload.entreprise}`);
+        }
+        this.afterSave(isCreate ? 'Job posted' : 'Job updated');
+      },
+      error: () => this.failSave('Unable to save job')
+    });
   }
 
   editJob(job: Job): void { this.editingJobId = job.id; this.jobForm.patchValue(job); }
@@ -721,7 +732,7 @@ export class JobsComponent implements OnInit {
     if (!file) return;
     this.uploadingCv = true;
     this.jobService.uploadCV(file).subscribe({
-      next: ({ url }) => { this.cvUrl = url; this.uploadingCv = false; },
+      next: ({ url }: { url: string }) => { this.cvUrl = url; this.uploadingCv = false; },
       error: () => { this.notifications.error('CV upload failed'); this.uploadingCv = false; }
     });
   }
@@ -731,7 +742,7 @@ export class JobsComponent implements OnInit {
     this.saving = true;
     this.jobService.apply(this.applyModal.id, this.cvUrl || undefined).subscribe({
       next: () => { this.notifications.success('Application submitted!'); this.saving = false; this.closeApplyModal(); this.loadAll(); },
-      error: (err) => { const msg = err.error?.message || 'Unable to apply'; this.fail(msg); this.saving = false; }
+      error: (err: any) => { const msg = err.error?.message || 'Unable to apply'; this.fail(msg); this.saving = false; }
     });
   }
 
@@ -739,7 +750,7 @@ export class JobsComponent implements OnInit {
     this.selectedJobId = this.selectedJobId === jobId ? null : jobId;
     if (!this.selectedJobId) { this.applications = []; return; }
     this.jobService.getApplications(jobId).subscribe({
-      next: apps => this.applications = apps,
+      next: (apps: Application[]) => this.applications = apps,
       error: () => this.fail('Unable to load applications')
     });
   }
@@ -790,9 +801,9 @@ export class JobsComponent implements OnInit {
     if (!file) return;
     this.uploadingCvForApp = app.id;
     this.jobService.uploadCV(file).subscribe({
-      next: ({ url }) => {
+      next: ({ url }: { url: string }) => {
         this.jobService.updateApplicationCvUrl(app.id, url).subscribe({
-          next: updated => {
+          next: (updated: Application) => {
             const idx = this.myApplications.findIndex(a => a.id === app.id);
             if (idx !== -1) this.myApplications[idx] = { ...this.myApplications[idx], cvUrl: updated.cvUrl };
             this.uploadingCvForApp = null;
@@ -811,6 +822,10 @@ export class JobsComponent implements OnInit {
   private afterSave(message: string): void {
     this.saving = false; this.error = ''; this.resetJobForm();
     this.notifications.success(message); this.loadAll();
+  }
+
+  private publishFeedAnnouncement(content: string): void {
+    this.postService.createPost({ contenu: content, autoApprove: true }).subscribe({ error: () => undefined });
   }
 
   private failSave(message: string): void { this.saving = false; this.fail(message); }

@@ -3,6 +3,7 @@ package com.esprit.eventservice.service;
 import com.esprit.eventservice.dto.request.ClubRequestDTO;
 import com.esprit.eventservice.dto.request.EventRequestDTO;
 import com.esprit.eventservice.dto.response.ClubResponseDTO;
+import com.esprit.eventservice.dto.response.EventRegistrationResponseDTO;
 import com.esprit.eventservice.dto.response.EventResponseDTO;
 import com.esprit.eventservice.entity.*;
 import com.esprit.eventservice.exception.ResourceNotFoundException;
@@ -11,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -103,6 +106,7 @@ public class EventServiceImpl implements EventService {
                 .date(dto.getDate())
                 .lieu(dto.getLieu())
                 .categorie(dto.getCategorie())
+            .attendeeLimit(dto.getAttendeeLimit())
                 .creatorUserId(userId);
         if (dto.getClubId() != null) builder.club(findClub(dto.getClubId()));
         return toEventDTO(eventRepository.save(builder.build()));
@@ -138,6 +142,10 @@ public class EventServiceImpl implements EventService {
         if (dto.getDescription() != null) event.setDescription(dto.getDescription());
         if (dto.getLieu() != null) event.setLieu(dto.getLieu());
         if (dto.getCategorie() != null) event.setCategorie(dto.getCategorie());
+        if (dto.getAttendeeLimit() != null && registrationRepository.countByEventId(id) > dto.getAttendeeLimit()) {
+            throw new IllegalArgumentException("Attendee limit cannot be lower than the current number of registrations");
+        }
+        event.setAttendeeLimit(dto.getAttendeeLimit());
         return toEventDTO(eventRepository.save(event));
     }
 
@@ -151,11 +159,37 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public void registerForEvent(Long eventId, Long userId) {
+    public EventRegistrationResponseDTO registerForEvent(Long eventId, Long userId) {
         if (registrationRepository.existsByEventIdAndUserId(eventId, userId))
             throw new IllegalArgumentException("Already registered");
         Event event = findEvent(eventId);
-        registrationRepository.save(EventRegistration.builder().event(event).userId(userId).build());
+        long currentRegistrations = registrationRepository.countByEventId(eventId);
+        if (event.getAttendeeLimit() != null && currentRegistrations >= event.getAttendeeLimit()) {
+            throw new IllegalArgumentException("This event has reached its attendee limit");
+        }
+        EventRegistration registration = registrationRepository.save(EventRegistration.builder()
+                .event(event)
+                .userId(userId)
+                .inviteCode(generateInviteCode())
+                .createdAt(LocalDateTime.now())
+                .build());
+        return toRegistrationDTO(registration);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EventRegistrationResponseDTO getMyRegistration(Long eventId, Long userId) {
+        EventRegistration registration = registrationRepository.findByEventIdAndUserId(eventId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Registration not found"));
+        return toRegistrationDTO(registration);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventRegistrationResponseDTO> getMyRegistrations(Long userId) {
+        return registrationRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toRegistrationDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -176,6 +210,10 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
     }
 
+    private String generateInviteCode() {
+        return UUID.randomUUID().toString().replace("-", "").toUpperCase();
+    }
+
     private ClubResponseDTO toClubDTO(Club club) {
         return ClubResponseDTO.builder()
                 .id(club.getId()).nom(club.getNom()).description(club.getDescription())
@@ -184,13 +222,34 @@ public class EventServiceImpl implements EventService {
     }
 
     private EventResponseDTO toEventDTO(Event event) {
+        int registrationCount = event.getRegistrations().size();
+        Integer remainingSpots = event.getAttendeeLimit() == null
+            ? null
+            : Math.max(event.getAttendeeLimit() - registrationCount, 0);
         return EventResponseDTO.builder()
                 .id(event.getId()).titre(event.getTitre()).description(event.getDescription())
                 .date(event.getDate()).lieu(event.getLieu())
                 .clubId(event.getClub() != null ? event.getClub().getId() : null)
                 .clubNom(event.getClub() != null ? event.getClub().getNom() : null)
                 .creatorUserId(event.getCreatorUserId())
-                .registrationCount(event.getRegistrations().size())
+            .registrationCount(registrationCount)
+            .attendeeLimit(event.getAttendeeLimit())
+            .remainingSpots(remainingSpots)
                 .categorie(event.getCategorie()).build();
     }
+
+        private EventRegistrationResponseDTO toRegistrationDTO(EventRegistration registration) {
+        Long eventId = registration.getEvent().getId();
+        return EventRegistrationResponseDTO.builder()
+            .id(registration.getId())
+            .eventId(eventId)
+                .eventTitre(registration.getEvent().getTitre())
+                .eventDate(registration.getEvent().getDate())
+                .eventLieu(registration.getEvent().getLieu())
+            .userId(registration.getUserId())
+            .inviteCode(registration.getInviteCode())
+            .qrPayload("ESPRIT_CONNECT_EVENT_INVITE|event=" + eventId + "|invite=" + registration.getInviteCode() + "|user=" + registration.getUserId())
+            .createdAt(registration.getCreatedAt())
+            .build();
+        }
 }

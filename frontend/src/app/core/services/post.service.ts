@@ -18,7 +18,7 @@ export class PostService {
     form.append('file', file);
     return this.http.post<{ url: string }>(`${this.url}/upload`, form);
   }
-  createPost(data: { contenu: string; photoUrls?: string[] }): Observable<Post> {
+  createPost(data: { contenu: string; photoUrls?: string[]; autoApprove?: boolean }): Observable<Post> {
     const user = this.authService.getCurrentUser();
     const payload = { ...data, userName: user ? `${user.prenom} ${user.nom}` : 'Anonymous' };
     return this.http.post<Post>(this.url, payload);

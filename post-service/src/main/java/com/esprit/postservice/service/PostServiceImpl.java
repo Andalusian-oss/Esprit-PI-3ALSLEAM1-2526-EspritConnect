@@ -38,7 +38,7 @@ public class PostServiceImpl implements PostService {
                 .contenu(dto.getContenu())
                 .userId(userId)
                 .userName(dto.getUserName() != null ? dto.getUserName() : "")
-                .status(PostStatus.PENDING)
+                .status(Boolean.TRUE.equals(dto.getAutoApprove()) ? PostStatus.APPROVED : PostStatus.PENDING)
                 .build();
 
         if (dto.getPhotoUrls() != null) {
@@ -52,12 +52,14 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PostResponseDTO> getAllPosts() {
         return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.APPROVED).stream()
                 .map(this::toDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PostResponseDTO> getAllPosts(int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.APPROVED, pageable)
@@ -65,12 +67,14 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PostResponseDTO> getPostsByUser(Long userId) {
         return postRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PostResponseDTO getPostById(Long id) {
         return toDTO(findPost(id));
     }
@@ -97,6 +101,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PostResponseDTO> getPendingPosts() {
         return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.PENDING).stream()
                 .map(this::toDTO).collect(Collectors.toList());

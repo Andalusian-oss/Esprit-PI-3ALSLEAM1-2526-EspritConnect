@@ -12,6 +12,8 @@ export class MessageService {
   private groupUrl = `${environment.apiUrl}/groups`;
   private stompClient: Client | null = null;
   readonly callSignal$ = new Subject<{ type: 'offer' | 'answer' | 'ice' | 'end' | 'reject'; payload: any }>();
+  /** Emits once each time a new direct message is received via WebSocket (for unread-count updates). */
+  readonly newMessage$ = new Subject<void>();
 
   constructor(private http: HttpClient) {}
 
@@ -117,6 +119,7 @@ export class MessageService {
       onConnect: () => {
         this.stompClient?.subscribe('/user/queue/messages', (frame: IMessage) => {
           onDirectMessage(JSON.parse(frame.body));
+          this.newMessage$.next();
         });
         this.stompClient?.subscribe('/user/queue/messages/edit', (frame: IMessage) => {
           onEditedMessage(JSON.parse(frame.body));

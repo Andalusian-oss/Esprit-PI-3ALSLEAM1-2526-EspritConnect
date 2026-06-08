@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PfeBook, User } from '../../core/models/models';
 import { PfeBookService } from '../../core/services/pfe-book.service';
+import { PostService } from '../../core/services/post.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
@@ -298,6 +299,7 @@ export class PfeBooksComponent implements OnInit {
   constructor(
     private pfeService: PfeBookService,
     private notif: NotificationService,
+    private postService: PostService,
     private authService: AuthService,
     private fb: FormBuilder,
     public lang: LanguageService
@@ -390,6 +392,8 @@ export class PfeBooksComponent implements OnInit {
 
   submitBook(): void {
     if (this.uploadForm.invalid) return;
+    const title = this.uploadForm.value.titre as string;
+    this.postService.createPost({ contenu: `New PFE book uploaded: ${title}`, autoApprove: true }).subscribe({ error: () => undefined });
     this.notif.success(this.lang.t('pfe.uploadSuccess'));
     this.uploadForm.reset();
     this.showUploadForm = false;

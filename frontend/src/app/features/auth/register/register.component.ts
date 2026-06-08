@@ -70,6 +70,29 @@ interface RoleOption {
                 <input formControlName="prenom" placeholder="e.g. Acme Corp SA" />
                 <small class="field-hint">{{ lang.t('auth.register.companyHint') }}</small>
               </div>
+
+              <!-- Verification document upload -->
+              <div class="field" style="margin-top:4px">
+                <label style="display:flex;align-items:center;gap:6px">
+                  <svg style="width:14px;height:14px;color:var(--red)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Verification Document&nbsp;<span style="color:var(--red)">*</span>
+                </label>
+                <div class="doc-upload-area" [class.has-file]="selectedFile" (click)="docFileInput.click()" role="button" tabindex="0" (keydown.enter)="docFileInput.click()" (keydown.space)="docFileInput.click()">
+                  <input #docFileInput type="file" accept=".pdf,.doc,.docx" style="display:none" (change)="onFileSelected($event)" />
+                  <ng-container *ngIf="!selectedFile">
+                    <svg style="width:28px;height:28px;margin-bottom:8px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span style="font-weight:600;font-size:0.9rem">Click to upload your document</span>
+                    <span style="margin-top:4px;font-size:0.78rem">PDF, DOC or DOCX &bull; max 10 MB</span>
+                  </ng-container>
+                  <ng-container *ngIf="selectedFile">
+                    <svg style="width:20px;height:20px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style="margin-left:10px;font-weight:500;word-break:break-all">{{ selectedFile.name }}</span>
+                    <button type="button" class="doc-clear-btn" (click)="clearFile($event)" aria-label="Remove file">&#10005;</button>
+                  </ng-container>
+                </div>
+                <small class="field-hint">Your company registration certificate or official document will be reviewed by the admin before your account is activated.</small>
+              </div>
+
               <div class="info-banner" style="margin-bottom:12px">
                 <span class="icon icon-shield"></span>
                 {{ lang.t('auth.register.pendingMsg') }}
@@ -154,8 +177,13 @@ interface RoleOption {
 
             <div class="form-actions">
               <button type="button" class="btn btn-ghost" (click)="step = 1">{{ lang.t('auth.register.back') }}</button>
-              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading">
-                {{ loading ? lang.t('auth.register.creating') : lang.t('auth.register.create') }}
+              <button type="submit" class="btn btn-primary"
+                [disabled]="form.invalid || loading || (selectedRole === 'COMPANY' && !selectedFile)">
+                <ng-container *ngIf="loading">
+                  <svg style="width:14px;height:14px;animation:spin 1s linear infinite;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                  {{ selectedRole === 'COMPANY' ? 'Uploading...' : lang.t('auth.register.creating') }}
+                </ng-container>
+                <ng-container *ngIf="!loading">{{ lang.t('auth.register.create') }}</ng-container>
               </button>
             </div>
 
@@ -235,11 +263,81 @@ interface RoleOption {
     :host-context(body.light-theme) .reg-sel-wrap:focus-within .reg-sel-chevron {
       color: var(--red);
     }
+
+    /* ── Company document upload area ── */
+    .doc-upload-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border: 2px dashed var(--border, rgba(255,255,255,0.28));
+      border-radius: 10px;
+      padding: 24px 20px;
+      cursor: pointer;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      text-align: center;
+      outline: none;
+      min-height: 100px;
+    }
+
+    .doc-upload-area:hover,
+    .doc-upload-area:focus {
+      border-color: var(--red);
+      background: rgba(225,29,46,0.06);
+      box-shadow: 0 0 0 3px rgba(225,29,46,0.12);
+    }
+
+    .doc-upload-area.has-file {
+      flex-direction: row;
+      justify-content: flex-start;
+      border-color: #22c55e;
+      border-style: solid;
+      background: rgba(34,197,94,0.08);
+      color: var(--text);
+      padding: 14px 16px;
+      min-height: unset;
+    }
+
+    .doc-clear-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .doc-clear-btn:hover {
+      color: var(--red);
+      background: rgba(225,29,46,0.1);
+    }
+
+    :host-context(body.light-theme) .doc-upload-area {
+      border-color: rgba(15,23,42,0.25);
+    }
+
+    :host-context(body.light-theme) .doc-upload-area:hover,
+    :host-context(body.light-theme) .doc-upload-area:focus {
+      border-color: var(--red);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
   `]
 })
 export class RegisterComponent {
   step = 1;
   selectedRole: UserRole | null = null;
+  selectedFile: File | null = null;
   form: FormGroup;
   error = '';
   loading = false;
@@ -270,7 +368,17 @@ export class RegisterComponent {
     return !!this.selectedRole && this.selectedRole !== 'COMPANY';
   }
 
-  selectRole(role: UserRole): void { this.selectedRole = role; }
+  selectRole(role: UserRole): void { this.selectedRole = role; this.selectedFile = null; }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedFile = input.files?.[0] ?? null;
+  }
+
+  clearFile(event: Event): void {
+    event.stopPropagation();
+    this.selectedFile = null;
+  }
 
   roleLabelFor(role: UserRole | null): string {
     return this.roleOptions.find(r => r.value === role)?.label ?? '';
@@ -301,35 +409,54 @@ export class RegisterComponent {
 
   onSubmit(): void {
     if (this.form.invalid || !this.selectedRole) return;
+    if (this.selectedRole === 'COMPANY' && !this.selectedFile) {
+      this.error = 'Please upload a verification document before submitting.';
+      return;
+    }
     this.loading = true;
     this.error = '';
-    const val = this.form.value;
-    this.authService.register({
-      email:      val.email,
-      password:   val.password,
-      prenom:     val.prenom,
-      nom:        val.nom || val.prenom,
-      role:       this.selectedRole,
-      promo:      val.promo || undefined,
-      espritId:   val.espritId || undefined,
-      cin:        val.cin || undefined,
-      specialite: val.specialite || undefined,
-      parcours:   val.parcours || undefined
-    }).subscribe({
-      next: (res) => {
-        if (!res.token) {
-          // Email verification required — token is null until user verifies
-          this.router.navigate(['/auth/login'], { queryParams: { verify: 'true' } });
-        } else if (res.user.approved === false) {
-          this.router.navigate(['/auth/login'], { queryParams: { pending: 'true' } });
-        } else {
-          this.router.navigate(['/feed']);
+
+    const doRegister = (documentUrl?: string) => {
+      const val = this.form.value;
+      this.authService.register({
+        email:      val.email,
+        password:   val.password,
+        prenom:     val.prenom,
+        nom:        val.nom || val.prenom,
+        role:       this.selectedRole!,
+        promo:      val.promo || undefined,
+        espritId:   val.espritId || undefined,
+        cin:        val.cin || undefined,
+        specialite: val.specialite || undefined,
+        parcours:   val.parcours || undefined,
+        verificationDocumentUrl: documentUrl
+      }).subscribe({
+        next: (res) => {
+          if (!res.token) {
+            this.router.navigate(['/auth/login'], { queryParams: { verify: 'true' } });
+          } else if (res.user.approved === false) {
+            this.router.navigate(['/auth/login'], { queryParams: { pending: 'true' } });
+          } else {
+            this.router.navigate(['/feed']);
+          }
+        },
+        error: err => {
+          this.error = err.error?.message || 'Registration failed';
+          this.loading = false;
         }
-      },
-      error: err => {
-        this.error = err.error?.message || 'Registration failed';
-        this.loading = false;
-      }
-    });
+      });
+    };
+
+    if (this.selectedRole === 'COMPANY' && this.selectedFile) {
+      this.authService.uploadCompanyDoc(this.selectedFile).subscribe({
+        next: (res) => doRegister(res.url),
+        error: () => {
+          this.error = 'Document upload failed. Please try again.';
+          this.loading = false;
+        }
+      });
+    } else {
+      doRegister();
+    }
   }
 }

@@ -78,4 +78,7 @@ public class User {
 
     /** Academic track / curriculum (e.g. "GL", "DS", "BI"). */
     private String parcours;
+
+    /** URL of the verification document uploaded by COMPANY accounts during registration. */
+    private String verificationDocumentUrl;
 }

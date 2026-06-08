@@ -8,13 +8,11 @@ import com.esprit.authservice.dto.response.UserResponseDTO;
 import com.esprit.authservice.entity.EmailVerificationToken;
 import com.esprit.authservice.entity.PasswordResetToken;
 import com.esprit.authservice.repository.PasswordResetTokenRepository;
-import com.esprit.authservice.entity.EspritReference;
 import com.esprit.authservice.entity.Role;
 import com.esprit.authservice.entity.User;
 import com.esprit.authservice.exception.ResourceNotFoundException;
 import com.esprit.authservice.mapper.UserMapper;
 import com.esprit.authservice.repository.EmailVerificationTokenRepository;
-import com.esprit.authservice.repository.EspritReferenceRepository;
 import com.esprit.authservice.repository.UserRepository;
 import com.esprit.authservice.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +31,6 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final EspritReferenceRepository espritReferenceRepository;
     private final EmailVerificationTokenRepository tokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserMapper userMapper;
@@ -53,6 +50,9 @@ public class UserServiceImpl implements UserService {
 
         if (dto.getRole() == Role.COMPANY) {
             // Companies self-register but require admin approval.
+            if (dto.getVerificationDocumentUrl() == null || dto.getVerificationDocumentUrl().isBlank()) {
+                throw new IllegalArgumentException("A verification document is required for company registration.");
+            }
             // prenom holds the company name; nom is not collected — default it to the same value.
             if (user.getNom() == null || user.getNom().isBlank()) {
                 user.setNom(user.getPrenom());
@@ -60,17 +60,15 @@ public class UserServiceImpl implements UserService {
             user.setRole(Role.COMPANY);
             user.setApproved(false);
         } else {
-            // All other roles: verify espritId + CIN against the reference table
-            if (dto.getEspritId() == null || dto.getEspritId().isBlank()
-                    || dto.getCin() == null || dto.getCin().isBlank()) {
-                throw new IllegalArgumentException("Esprit ID and CIN are required for non-company accounts");
+            // Use the role supplied by the client directly
+            Role assignedRole = dto.getRole();
+            if (assignedRole == Role.STUDENT || assignedRole == Role.ENSEIGNANT || assignedRole == Role.ALUMNI) {
+                if (!dto.getEmail().toLowerCase().endsWith("@esprit.tn")) {
+                    throw new IllegalArgumentException(
+                            "Students, teachers, and alumni must register with an @esprit.tn email address.");
+                }
             }
-            EspritReference ref = espritReferenceRepository
-                    .findByEspritIdAndCin(dto.getEspritId(), dto.getCin())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Esprit ID / CIN combination not found. Contact the administration."));
-            // Role is auto-assigned from the reference table; ignore whatever the client sent
-            user.setRole(ref.getExpectedRole());
+            user.setRole(assignedRole);
             user.setApproved(true);
         }
 
