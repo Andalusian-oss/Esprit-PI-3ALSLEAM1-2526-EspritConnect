@@ -17,6 +17,7 @@ export class EventService {
   deleteEvent(id: number): Observable<void> { return this.http.delete<void>(`${this.eventsUrl}/${id}`); }
   register(eventId: number): Observable<EventRegistration> { return this.http.post<EventRegistration>(`${this.eventsUrl}/${eventId}/register`, {}); }
   getMyRegistration(eventId: number): Observable<EventRegistration> { return this.http.get<EventRegistration>(`${this.eventsUrl}/${eventId}/my-registration`); }
+  getEventRegistrations(eventId: number): Observable<EventRegistration[]> { return this.http.get<EventRegistration[]>(`${this.eventsUrl}/${eventId}/registrations`); }
   unregister(eventId: number): Observable<void> { return this.http.delete<void>(`${this.eventsUrl}/${eventId}/unregister`); }
 
   getClubs(): Observable<Club[]> { return this.http.get<Club[]>(this.clubsUrl); }

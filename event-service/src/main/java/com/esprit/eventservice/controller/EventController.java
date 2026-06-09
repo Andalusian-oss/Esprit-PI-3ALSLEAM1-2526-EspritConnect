@@ -52,12 +52,12 @@ public class EventController {
     public ResponseEntity<EventResponseDTO> update(@PathVariable Long id,
                                                     @Valid @RequestBody EventRequestDTO dto,
                                                     HttpServletRequest req) {
-        return ResponseEntity.ok(eventService.updateEvent(id, dto, extractUserId(req)));
+        return ResponseEntity.ok(eventService.updateEvent(id, dto, extractUserId(req), extractRole(req)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id, HttpServletRequest req) {
-        eventService.deleteEvent(id, extractUserId(req));
+        eventService.deleteEvent(id, extractUserId(req), extractRole(req));
         return ResponseEntity.noContent().build();
     }
 
@@ -82,9 +82,21 @@ public class EventController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}/registrations")
+    public ResponseEntity<List<EventRegistrationResponseDTO>> getRegistrations(@PathVariable Long id,
+                                                                                HttpServletRequest req) {
+        return ResponseEntity.ok(eventService.getEventRegistrations(id, extractUserId(req), extractRole(req)));
+    }
+
     private Long extractUserId(HttpServletRequest req) {
         String auth = req.getHeader("Authorization");
         if (auth != null && auth.startsWith("Bearer ")) return jwtUtil.extractUserId(auth.substring(7));
         throw new IllegalArgumentException("Missing Authorization header");
+    }
+
+    private String extractRole(HttpServletRequest req) {
+        String auth = req.getHeader("Authorization");
+        if (auth != null && auth.startsWith("Bearer ")) return jwtUtil.extractRole(auth.substring(7));
+        return null;
     }
 }

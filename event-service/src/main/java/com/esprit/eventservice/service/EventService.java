@@ -23,10 +23,11 @@ public interface EventService {
     List<EventResponseDTO> getAllEvents();
     List<EventResponseDTO> getEventsByClub(Long clubId);
     EventResponseDTO getEventById(Long id);
-    EventResponseDTO updateEvent(Long id, EventRequestDTO dto, Long userId);
-    void deleteEvent(Long id, Long userId);
+    EventResponseDTO updateEvent(Long id, EventRequestDTO dto, Long userId, String role);
+    void deleteEvent(Long id, Long userId, String role);
     EventRegistrationResponseDTO registerForEvent(Long eventId, Long userId);
     EventRegistrationResponseDTO getMyRegistration(Long eventId, Long userId);
     List<EventRegistrationResponseDTO> getMyRegistrations(Long userId);
     void unregisterFromEvent(Long eventId, Long userId);
+    List<EventRegistrationResponseDTO> getEventRegistrations(Long eventId, Long userId, String role);
 }

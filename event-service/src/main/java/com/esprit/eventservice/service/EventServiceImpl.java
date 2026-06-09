@@ -134,9 +134,10 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventResponseDTO updateEvent(Long id, EventRequestDTO dto, Long userId) {
+    public EventResponseDTO updateEvent(Long id, EventRequestDTO dto, Long userId, String role) {
         Event event = findEvent(id);
-        if (!event.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        boolean isAdmin = "ADMIN".equals(role);
+        if (!isAdmin && !event.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
         event.setTitre(dto.getTitre());
         event.setDate(dto.getDate());
         if (dto.getDescription() != null) event.setDescription(dto.getDescription());
@@ -151,10 +152,22 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public void deleteEvent(Long id, Long userId) {
+    public void deleteEvent(Long id, Long userId, String role) {
         Event event = findEvent(id);
-        if (!event.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        boolean isAdmin = "ADMIN".equals(role);
+        if (!isAdmin && !event.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
         eventRepository.delete(event);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventRegistrationResponseDTO> getEventRegistrations(Long eventId, Long userId, String role) {
+        Event event = findEvent(eventId);
+        boolean isAdmin = "ADMIN".equals(role);
+        if (!isAdmin && !event.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        return registrationRepository.findAllByEventIdOrderByCreatedAtAsc(eventId).stream()
+                .map(this::toRegistrationDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

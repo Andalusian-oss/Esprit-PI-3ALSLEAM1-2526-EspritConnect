@@ -102,6 +102,9 @@ import * as QRCode from 'qrcode';
             <button class="btn btn-ghost" (click)="openMyInvite(event)" [disabled]="loadingInviteEventId === event.id">
               <span class="icon icon-qr-code"></span>My Invite
             </button>
+            <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="viewAttendees(event)">
+              <span class="icon icon-users"></span>Attendees
+            </button>
             <button class="btn btn-ghost" *ngIf="canManageEvents" (click)="editEvent(event)"><span class="icon icon-edit"></span>{{ lang.t('common.edit') }}</button>
             <button class="btn btn-danger" *ngIf="canManageEvents" (click)="deleteEvent(event.id)"><span class="icon icon-trash"></span>{{ lang.t('common.delete') }}</button>
           </div>
@@ -154,6 +157,40 @@ import * as QRCode from 'qrcode';
           </div>
         </div>
       </div>
+
+      <div *ngIf="attendeesModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000" (click)="closeAttendeesModal()">
+        <div style="width:min(560px,100%);max-height:80vh;overflow-y:auto;background:var(--card-bg, #141414);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.35)" (click)="$event.stopPropagation()">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px">
+            <div>
+              <h3 style="margin:0 0 4px 0">{{ attendeesModal.event.titre }}</h3>
+              <p style="margin:0;color:var(--text-muted,#aaa);font-size:13px">
+                {{ attendeesModal.registrations.length }} registered
+                <ng-container *ngIf="attendeesModal.event.attendeeLimit"> / {{ attendeesModal.event.attendeeLimit }} capacity</ng-container>
+              </p>
+            </div>
+            <button class="btn btn-ghost" type="button" (click)="closeAttendeesModal()">Close</button>
+          </div>
+          <div *ngIf="attendeesModal.registrations.length === 0" style="color:var(--text-muted,#aaa);text-align:center;padding:24px 0">No registrations yet</div>
+          <table *ngIf="attendeesModal.registrations.length > 0" style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.1)">
+                <th style="text-align:left;padding:8px 6px">#</th>
+                <th style="text-align:left;padding:8px 6px">Invite Code</th>
+                <th style="text-align:left;padding:8px 6px">User ID</th>
+                <th style="text-align:left;padding:8px 6px">Registered At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of attendeesModal.registrations; let i = index" style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                <td style="padding:8px 6px;color:var(--text-muted,#aaa)">{{ i + 1 }}</td>
+                <td style="padding:8px 6px;font-family:monospace;font-size:11px">{{ r.inviteCode }}</td>
+                <td style="padding:8px 6px">{{ r.userId }}</td>
+                <td style="padding:8px 6px;color:var(--text-muted,#aaa)">{{ r.createdAt | date:'short' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   `
 })
@@ -174,6 +211,7 @@ export class EventsComponent implements OnInit {
   loadingInviteEventId: number | null = null;
   private registrationsByEventId = new Map<number, EventRegistration>();
   inviteModal: { event: Event; registration: EventRegistration; qrImageUrl: string } | null = null;
+  attendeesModal: { event: Event; registrations: EventRegistration[] } | null = null;
 
   eventForm: FormGroup = this.fb.group({
     titre: ['', Validators.required],
@@ -346,6 +384,16 @@ export class EventsComponent implements OnInit {
   resetEventForm(): void { this.editingEventId = null; this.eventForm.reset({ clubId: null, attendeeLimit: null }); }
   resetClubForm(): void { this.editingClubId = null; this.clubForm.reset(); }
   closeInviteModal(): void { this.inviteModal = null; }
+  closeAttendeesModal(): void { this.attendeesModal = null; }
+
+  viewAttendees(event: Event): void {
+    this.eventService.getEventRegistrations(event.id).subscribe({
+      next: (registrations: EventRegistration[]) => {
+        this.attendeesModal = { event, registrations };
+      },
+      error: () => this.notifications.error('Unable to load attendee list')
+    });
+  }
 
   private afterSave(message: string): void {
     this.saving = false;
