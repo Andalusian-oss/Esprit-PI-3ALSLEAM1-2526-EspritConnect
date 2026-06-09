@@ -2,6 +2,7 @@ package com.esprit.postservice.controller;
 
 import com.esprit.postservice.dto.request.CommentRequestDTO;
 import com.esprit.postservice.dto.request.PostRequestDTO;
+import com.esprit.postservice.dto.request.ReactionRequestDTO;
 import com.esprit.postservice.dto.response.CommentResponseDTO;
 import com.esprit.postservice.dto.response.PostResponseDTO;
 import com.esprit.postservice.security.JwtUtil;
@@ -135,6 +136,16 @@ public class PostController {
     public ResponseEntity<Void> toggleLike(@PathVariable Long postId, HttpServletRequest request) {
         Long userId = extractUserId(request);
         postService.toggleLike(postId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{postId}/reactions")
+    @Operation(summary = "Add or toggle a reaction (LIKE, WOW, APPRECIATE, GG)")
+    public ResponseEntity<Void> setReaction(@PathVariable Long postId,
+                                            @Valid @RequestBody ReactionRequestDTO dto,
+                                            HttpServletRequest request) {
+        Long userId = extractUserId(request);
+        postService.setReaction(postId, userId, dto.getType());
         return ResponseEntity.ok().build();
     }
 

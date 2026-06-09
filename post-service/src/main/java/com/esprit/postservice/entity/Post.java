@@ -27,6 +27,12 @@ public class Post {
     @Column(nullable = false)
     private String userName;
 
+    @Column
+    private Long originalPostId;
+
+    @Column
+    private String originalAuthorName;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -47,4 +53,8 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Photo> photos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Reaction> reactions = new ArrayList<>();
 }

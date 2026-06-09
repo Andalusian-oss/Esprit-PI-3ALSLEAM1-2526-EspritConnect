@@ -25,15 +25,21 @@ const ROLE_LABELS: Record<string, string> = {
           <h1>{{ lang.t('admin.title') }}</h1>
           <p>{{ lang.t('admin.subtitle') }}</p>
         </div>
-        <div class="stat-pills">
-          <span class="stat-pill">
-            <span class="icon icon-users"></span>
-            {{ allUsers.length }} {{ lang.t('admin.users') }}
-          </span>
-          <span class="stat-pill stat-pill-green">
-            <span class="icon icon-check"></span>
-            {{ onlineCount }} {{ lang.t('admin.online') }}
-          </span>
+        <div style="display: flex; gap: 16px; align-items: center;">
+          <button class="btn btn-accent" routerLink="/admin/statistics" style="display: flex; align-items: center; gap: 8px;">
+            <span>📊</span>
+            <span>{{ lang.t('admin.viewStatistics') || 'View Statistics' }}</span>
+          </button>
+          <div class="stat-pills">
+            <span class="stat-pill">
+              <span class="icon icon-users"></span>
+              {{ allUsers.length }} {{ lang.t('admin.users') }}
+            </span>
+            <span class="stat-pill stat-pill-green">
+              <span class="icon icon-check"></span>
+              {{ onlineCount }} {{ lang.t('admin.online') }}
+            </span>
+          </div>
         </div>
       </div>
 

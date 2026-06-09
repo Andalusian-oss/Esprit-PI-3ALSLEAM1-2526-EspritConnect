@@ -309,6 +309,9 @@ import { environment } from '../../../environments/environment';
         <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">
           {{ lang.t('profile.myPosts') }} <span style="font-size:13px;font-weight:400;color:var(--text-muted)">({{ userPosts.length }})</span>
         </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+          Includes your original posts and anything you share from the Feed.
+        </div>
         <div *ngIf="loadingPosts" style="color:var(--text-muted);font-size:14px">{{ lang.t('profile.loadingPosts') }}</div>
         <div *ngIf="!loadingPosts && userPosts.length === 0" style="color:var(--text-muted);font-size:14px">{{ lang.t('profile.noPosts') }}</div>
         <div *ngFor="let post of userPosts" style="padding:12px 0;border-bottom:1px solid var(--border)">

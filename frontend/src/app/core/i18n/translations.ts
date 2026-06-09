@@ -121,13 +121,20 @@ export interface Translations {
   'feed.compose': string;
   'feed.mindPlaceholder': string;
   'feed.photo': string;
+  'feed.media': string;
   'feed.publishing': string;
   'feed.publish': string;
+  'feed.sharedFrom': string;
   'feed.emptyTitle': string;
   'feed.emptyDesc': string;
   'feed.noComments': string;
   'feed.commentPlaceholder': string;
   'feed.saveEdit': string;
+  'feed.share': string;
+  'feed.reactLike': string;
+  'feed.reactWow': string;
+  'feed.reactAppreciate': string;
+  'feed.reactGg': string;
   // ── Events ──
   'events.title': string;
   'events.subtitle': string;
@@ -583,13 +590,20 @@ const en: Translations = {
   'feed.compose': 'Share something with your campus…',
   'feed.mindPlaceholder': "What's on your mind?",
   'feed.photo': 'Photo',
+  'feed.media': 'Photo / Video',
   'feed.publishing': 'Posting…',
   'feed.publish': 'Publish',
+  'feed.sharedFrom': 'Shared from',
   'feed.emptyTitle': 'No posts yet',
   'feed.emptyDesc': 'Be the first to share something with the ESPRIT community!',
   'feed.noComments': 'No comments yet. Be the first!',
   'feed.commentPlaceholder': 'Write a comment…',
   'feed.saveEdit': 'Save',
+  'feed.share': 'Share',
+  'feed.reactLike': 'Like',
+  'feed.reactWow': 'Wow',
+  'feed.reactAppreciate': 'Appreciate',
+  'feed.reactGg': 'GG',
   // ── Events ──
   'events.title': 'Events & Clubs',
   'events.subtitle': 'Manage campus events and student clubs',
@@ -1045,13 +1059,20 @@ const fr: Translations = {
   'feed.compose': 'Partagez quelque chose avec votre campus…',
   'feed.mindPlaceholder': 'À quoi pensez-vous ?',
   'feed.photo': 'Photo',
+  'feed.media': 'Photo / Vidéo',
   'feed.publishing': 'Publication…',
   'feed.publish': 'Publier',
+  'feed.sharedFrom': 'Partagé depuis',
   'feed.emptyTitle': 'Aucune publication',
   'feed.emptyDesc': 'Soyez le premier à partager quelque chose avec la communauté ESPRIT !',
   'feed.noComments': 'Pas encore de commentaires. Soyez le premier !',
   'feed.commentPlaceholder': 'Écrire un commentaire…',
   'feed.saveEdit': 'Enregistrer',
+  'feed.share': 'Partager',
+  'feed.reactLike': 'J\'aime',
+  'feed.reactWow': 'Wow',
+  'feed.reactAppreciate': 'Bravo',
+  'feed.reactGg': 'GG',
   // ── Events ──
   'events.title': 'Événements & Clubs',
   'events.subtitle': 'Gérer les événements campus et les clubs étudiants',

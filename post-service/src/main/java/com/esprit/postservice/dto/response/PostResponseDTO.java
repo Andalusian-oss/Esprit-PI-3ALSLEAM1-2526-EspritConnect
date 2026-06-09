@@ -14,8 +14,11 @@ public class PostResponseDTO {
     private Long userId;
     private LocalDateTime createdAt;
     private String userName;
+    private Long originalPostId;
+    private String originalAuthorName;
     private int likeCount;
     private int commentCount;
     private List<String> photoUrls;
     private String status;
+    private ReactionCountDTO reactions; // New field for reaction counts
 }

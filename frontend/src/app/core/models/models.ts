@@ -28,13 +28,24 @@ export interface Post {
   id: number;
   contenu: string;
   userId: number;
+  originalPostId?: number | null;
+  originalAuthorName?: string | null;
   createdAt: string;
   likeCount: number;
   commentCount: number;
   photoUrls: string[];
   userName: string;
   likedByMe?: boolean;
+  reaction?: 'LIKE' | 'WOW' | 'APPRECIATE' | 'GG' | null;
+  reactionCount?: number;
   status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reactions?: {
+    likes: number;
+    wows: number;
+    appreciates: number;
+    ggs: number;
+    userReaction: 'LIKE' | 'WOW' | 'APPRECIATE' | 'GG' | null;
+  };
 }
 
 export interface Comment {

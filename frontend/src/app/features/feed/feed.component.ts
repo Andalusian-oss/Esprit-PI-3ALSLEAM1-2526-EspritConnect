@@ -43,7 +43,7 @@ import { LanguageService } from '../../core/services/language.service';
     .compose-photos { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .compose-photo-thumb {
       position:relative; width:76px; height:76px;
-      img { width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
+      img, video { width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border); background:var(--dark3); }
       .remove-photo {
         position:absolute; top:-6px; right:-6px; width:20px; height:20px;
         border-radius:50%; background:var(--red); color:#fff; border:none;
@@ -175,10 +175,10 @@ import { LanguageService } from '../../core/services/language.service';
 
     /* Photo grid */
     .fd-photos { margin-top:12px; display:grid; gap:2px; }
-    .fd-photos img { width:100%; object-fit:cover; display:block; }
-    .fd-photos.ph-1 img { max-height:380px; }
+    .fd-photos img, .fd-photos video { width:100%; object-fit:cover; display:block; background:var(--dark3); }
+    .fd-photos.ph-1 img, .fd-photos.ph-1 video { max-height:380px; }
     .fd-photos.ph-multi { grid-template-columns:repeat(2,1fr); }
-    .fd-photos.ph-multi img { aspect-ratio:1/1; }
+    .fd-photos.ph-multi img, .fd-photos.ph-multi video { aspect-ratio:1/1; }
 
     /* Action bar */
     .fd-actions {
@@ -198,6 +198,26 @@ import { LanguageService } from '../../core/services/language.service';
       &.active { color:var(--accent-cyan); }
     }
     .fd-like-icon { font-size:16px; line-height:1; }
+
+    .fd-reactions {
+      display:flex; align-items:center; gap:6px; padding:0 10px 8px;
+      border-top:1px dashed var(--border); margin-top:2px;
+    }
+    .fd-reaction {
+      border:1px solid var(--border); background:var(--dark3); color:var(--text-muted);
+      font-size:12px; border-radius:999px; padding:4px 10px; cursor:pointer; transition:var(--transition);
+    }
+    .fd-reaction:hover { border-color:var(--accent-cyan); color:var(--text); }
+    .fd-reaction.active { border-color:var(--red); color:#fff; background:var(--red); }
+
+    .fd-share-badge {
+      margin: 0 16px 8px;
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:11px; color:var(--text-muted);
+      background:var(--dark3); border:1px solid var(--border);
+      border-radius:999px; padding:3px 10px;
+    }
+    .fd-share-badge .icon { width:13px; height:13px; }
 
     /* Comments section */
     .fd-comments {
@@ -293,7 +313,8 @@ import { LanguageService } from '../../core/services/language.service';
               <!-- Photo previews -->
               <div class="compose-photos" *ngIf="uploadedPhotos.length > 0">
                 <div class="compose-photo-thumb" *ngFor="let url of uploadedPhotos; let i = index">
-                  <img [src]="url" />
+                  <img *ngIf="!isVideoUrl(url)" [src]="url" />
+                  <video *ngIf="isVideoUrl(url)" [src]="url" muted playsinline preload="metadata"></video>
                   <button type="button" class="remove-photo" (click)="removePhoto(i)">✕</button>
                 </div>
               </div>
@@ -301,15 +322,15 @@ import { LanguageService } from '../../core/services/language.service';
               <div class="compose-bar">
                 <label class="compose-attach">
                   <span class="icon icon-image"></span>
-                  <span>{{ uploadingPhoto ? lang.t('common.uploading') : lang.t('feed.photo') }}</span>
-                  <input type="file" accept="image/*" multiple (change)="attachPhoto($event)" style="display:none" [disabled]="uploadingPhoto" />
+                  <span>{{ uploadingPhoto ? lang.t('common.uploading') : lang.t('feed.media') }}</span>
+                  <input type="file" accept="image/*,video/*" multiple (change)="attachPhoto($event)" style="display:none" [disabled]="uploadingPhoto" />
                 </label>
                 <span class="compose-char" [class.over]="(postForm.value.contenu?.length || 0) > 280">
                   {{ postForm.value.contenu?.length || 0 }}/280
                 </span>
                 <div class="compose-btns">
                   <button type="button" class="fd-btn-ghost" (click)="cancelCompose()">{{ lang.t('common.cancel') }}</button>
-                  <button type="submit" class="fd-btn-primary" [disabled]="postForm.invalid || saving || uploadingPhoto">
+                  <button type="submit" class="fd-btn-primary" [disabled]="(!canPublish()) || saving || uploadingPhoto">
                     {{ saving ? lang.t('feed.publishing') : lang.t('feed.publish') }}
                   </button>
                 </div>
@@ -322,7 +343,7 @@ import { LanguageService } from '../../core/services/language.service';
       <!-- ── POST SUBMITTED NOTICE ── -->
       <div class="fd-pending-notice" *ngIf="postSubmitted">
         <span class="pn-icon">⏳</span>
-        <p><strong>Post submitted for review.</strong> An admin will approve or reject it shortly. It won't appear in the feed until approved.</p>
+        <p><strong>Post submitted.</strong> If this was a share, it is published instantly. Original posts may require admin review.</p>
       </div>
 
       <!-- ── LOADING ── -->
@@ -379,6 +400,10 @@ import { LanguageService } from '../../core/services/language.service';
           </div>
 
           <!-- Post body / inline edit -->
+          <div class="fd-share-badge" *ngIf="post.originalPostId">
+            <span class="icon icon-share"></span>
+            <span>{{ lang.t('feed.sharedFrom') }} {{ post.originalAuthorName || 'original author' }}</span>
+          </div>
           <div class="fd-body" *ngIf="editingId !== post.id">{{ post.contenu }}</div>
           <div class="fd-edit" *ngIf="editingId === post.id">
             <textarea [(ngModel)]="editContent" rows="3"></textarea>
@@ -395,7 +420,10 @@ import { LanguageService } from '../../core/services/language.service';
                *ngIf="post.photoUrls?.length"
                [class.ph-1]="post.photoUrls.length === 1"
                [class.ph-multi]="post.photoUrls.length > 1">
-            <img *ngFor="let url of post.photoUrls" [src]="url" loading="lazy" />
+            <ng-container *ngFor="let url of post.photoUrls">
+              <img *ngIf="!isVideoUrl(url)" [src]="url" loading="lazy" />
+              <video *ngIf="isVideoUrl(url)" [src]="url" controls muted playsinline preload="metadata"></video>
+            </ng-container>
           </div>
 
           <!-- Action bar -->
@@ -408,6 +436,16 @@ import { LanguageService } from '../../core/services/language.service';
               <span class="icon icon-message"></span>
               <span>{{ post.commentCount }}</span>
             </button>
+            <button class="fd-action" (click)="sharePost(post)">
+              <span class="icon icon-share"></span>
+              <span>{{ lang.t('feed.share') }}</span>
+            </button>
+          </div>
+          <div class="fd-reactions">
+            <button class="fd-reaction" [class.active]="post.reactions?.userReaction === 'LIKE'" (click)="react(post, 'LIKE')">👍 <span>{{ post.reactions?.likes || 0 }}</span></button>
+            <button class="fd-reaction" [class.active]="post.reactions?.userReaction === 'WOW'" (click)="react(post, 'WOW')">😮 <span>{{ post.reactions?.wows || 0 }}</span></button>
+            <button class="fd-reaction" [class.active]="post.reactions?.userReaction === 'APPRECIATE'" (click)="react(post, 'APPRECIATE')">🙏 <span>{{ post.reactions?.appreciates || 0 }}</span></button>
+            <button class="fd-reaction" [class.active]="post.reactions?.userReaction === 'GG'" (click)="react(post, 'GG')">🎮 <span>{{ post.reactions?.ggs || 0 }}</span></button>
           </div>
 
           <!-- Comments panel -->
@@ -437,7 +475,7 @@ import { LanguageService } from '../../core/services/language.service';
                 [(ngModel)]="newComments[post.id]"
                 [placeholder]="lang.t('feed.commentPlaceholder')"
                 (keyup.enter)="addComment(post.id)" />
-              <button class="fd-send" (click)="addComment(post.id)" [disabled]="!(newComments[post.id] ?? '').trim()">
+              <button class="fd-send" (click)="addComment(post.id)" [disabled]="!((newComments[post.id] || '').trim())">
                 <span class="icon icon-send"></span>
               </button>
             </div>
@@ -514,24 +552,88 @@ export class FeedComponent implements OnInit {
     this.uploadedPhotos = [];
   }
 
+  sharePost(post: Post): void {
+    if (this.saving) return;
+    this.saving = true;
+    const sharedContent = `↻ ${post.contenu}`;
+    this.postService.createPost({
+      contenu: sharedContent,
+      photoUrls: post.photoUrls ?? [],
+      autoApprove: true,
+      originalPostId: post.id,
+      originalAuthorName: post.originalAuthorName || post.userName
+    }).subscribe({
+      next: () => {
+        this.saving = false;
+        this.postSubmitted = true;
+        setTimeout(() => { this.postSubmitted = false; }, 8000);
+      },
+      error: () => { this.saving = false; }
+    });
+  }
+
   attachPhoto(event: Event): void {
     const files = (event.target as HTMLInputElement).files;
     if (!files?.length) return;
+    
+    // Validate file types
+    const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'];
+    const invalidFiles: string[] = [];
+    const validFiles: File[] = [];
+    
+    Array.from(files).forEach(f => {
+      const ext = f.name.split('.').pop()?.toLowerCase();
+      if (!ext || !validExtensions.includes(ext)) {
+        invalidFiles.push(f.name);
+      } else if (f.size > 10 * 1024 * 1024) {  // 10MB limit
+        invalidFiles.push(`${f.name} (exceeds 10MB)`);
+      } else {
+        validFiles.push(f);
+      }
+    });
+    
+    if (invalidFiles.length > 0) {
+      alert(`Cannot upload: ${invalidFiles.join(', ')}\nAllowed: JPG, PNG, GIF, WebP, MP4, WebM, OGG, MOV (max 10MB each)`);
+      return;
+    }
+    
+    if (validFiles.length === 0) return;
+    
     this.uploadingPhoto = true;
-    const uploads = Array.from(files).map(f => this.postService.uploadPhoto(f).toPromise());
+    const uploads = validFiles.map(f => this.postService.uploadPhoto(f).toPromise());
     Promise.all(uploads).then((results: Array<{ url?: string } | undefined>) => {
       results.forEach(r => { if (r?.url) this.uploadedPhotos.push(r.url); });
       this.uploadingPhoto = false;
-    }).catch(() => { this.uploadingPhoto = false; });
+    }).catch((err) => { 
+      this.uploadingPhoto = false;
+      console.error('Upload error:', err);
+      
+      // Extract error message from response
+      let errorMsg = 'Unknown error';
+      
+      if (err?.error?.message) {
+        errorMsg = err.error.message;
+      } else if (err?.error?.error) {
+        errorMsg = err.error.error;
+      } else if (typeof err?.error === 'string') {
+        errorMsg = err.error;
+      } else if (err?.message) {
+        errorMsg = err.message;
+      } else if (err?.status) {
+        errorMsg = `HTTP ${err.status}: ${err.statusText}`;
+      }
+      
+      alert('Upload failed: ' + errorMsg);
+    });
   }
 
   removePhoto(i: number): void { this.uploadedPhotos.splice(i, 1); }
 
   createPost(): void {
-    if (this.postForm.invalid || this.saving) return;
+    if ((!this.canPublish()) || this.saving) return;
     this.saving = true;
     this.postSubmitted = false;
-    const payload = { contenu: this.postForm.value.contenu, photoUrls: this.uploadedPhotos };
+    const payload = { contenu: (this.postForm.value.contenu || '').trim(), photoUrls: this.uploadedPhotos };
     this.postService.createPost(payload).subscribe({
       next: (_post: Post) => {
         this.cancelCompose();
@@ -580,6 +682,59 @@ export class FeedComponent implements OnInit {
     this.postService.toggleLike(post.id).subscribe();
   }
 
+  react(post: Post, reaction: 'LIKE' | 'WOW' | 'APPRECIATE' | 'GG'): void {
+    if (!post.reactions) {
+      post.reactions = { likes: 0, wows: 0, appreciates: 0, ggs: 0, userReaction: null };
+    }
+    
+    const oldReaction = post.reactions.userReaction;
+    
+    // Optimistically update UI
+    if (oldReaction) {
+      switch (oldReaction) {
+        case 'LIKE': post.reactions.likes--; break;
+        case 'WOW': post.reactions.wows--; break;
+        case 'APPRECIATE': post.reactions.appreciates--; break;
+        case 'GG': post.reactions.ggs--; break;
+      }
+    }
+    
+    if (oldReaction !== reaction) {
+      switch (reaction) {
+        case 'LIKE': post.reactions.likes++; break;
+        case 'WOW': post.reactions.wows++; break;
+        case 'APPRECIATE': post.reactions.appreciates++; break;
+        case 'GG': post.reactions.ggs++; break;
+      }
+      post.reactions.userReaction = reaction;
+    } else {
+      post.reactions.userReaction = null;
+    }
+    
+    this.postService.setReaction(post.id, reaction).subscribe({
+      error: () => {
+        // Revert on error
+        post.reactions!.userReaction = oldReaction;
+        if (oldReaction) {
+          switch (oldReaction) {
+            case 'LIKE': post.reactions!.likes++; break;
+            case 'WOW': post.reactions!.wows++; break;
+            case 'APPRECIATE': post.reactions!.appreciates++; break;
+            case 'GG': post.reactions!.ggs++; break;
+          }
+        }
+        if (oldReaction !== reaction) {
+          switch (reaction) {
+            case 'LIKE': post.reactions!.likes--; break;
+            case 'WOW': post.reactions!.wows--; break;
+            case 'APPRECIATE': post.reactions!.appreciates--; break;
+            case 'GG': post.reactions!.ggs--; break;
+          }
+        }
+      }
+    });
+  }
+
   toggleComments(post: Post): void {
     if (this.expandedPostId === post.id) { this.expandedPostId = null; return; }
     this.expandedPostId = post.id;
@@ -611,5 +766,14 @@ export class FeedComponent implements OnInit {
     if (!name || name.startsWith('User #')) return 'U';
     const parts = name.trim().split(' ');
     return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
+  }
+
+  isVideoUrl(url: string): boolean {
+    return /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url);
+  }
+
+  canPublish(): boolean {
+    const text = (this.postForm.value.contenu || '').trim();
+    return text.length > 0 || this.uploadedPhotos.length > 0;
   }
 }

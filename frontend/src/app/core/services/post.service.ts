@@ -18,7 +18,7 @@ export class PostService {
     form.append('file', file);
     return this.http.post<{ url: string }>(`${this.url}/upload`, form);
   }
-  createPost(data: { contenu: string; photoUrls?: string[]; autoApprove?: boolean }): Observable<Post> {
+  createPost(data: { contenu?: string; photoUrls?: string[]; autoApprove?: boolean; originalPostId?: number; originalAuthorName?: string }): Observable<Post> {
     const user = this.authService.getCurrentUser();
     const payload = { ...data, userName: user ? `${user.prenom} ${user.nom}` : 'Anonymous' };
     return this.http.post<Post>(this.url, payload);
@@ -26,6 +26,9 @@ export class PostService {
   updatePost(id: number, data: { contenu: string }): Observable<Post> { return this.http.put<Post>(`${this.url}/${id}`, data); }
   deletePost(id: number): Observable<void> { return this.http.delete<void>(`${this.url}/${id}`); }
   toggleLike(postId: number): Observable<void> { return this.http.post<void>(`${this.url}/${postId}/likes`, {}); }
+  setReaction(postId: number, reaction: 'LIKE' | 'WOW' | 'APPRECIATE' | 'GG'): Observable<void> {
+    return this.http.post<void>(`${this.url}/${postId}/reactions`, { type: reaction });
+  }
   getComments(postId: number): Observable<Comment[]> { return this.http.get<Comment[]>(`${this.url}/${postId}/comments`); }
   addComment(postId: number, texte: string): Observable<Comment> {
     const user = this.authService.getCurrentUser();

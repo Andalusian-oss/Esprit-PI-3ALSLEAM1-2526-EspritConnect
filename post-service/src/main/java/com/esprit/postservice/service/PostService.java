@@ -4,6 +4,7 @@ import com.esprit.postservice.dto.request.CommentRequestDTO;
 import com.esprit.postservice.dto.request.PostRequestDTO;
 import com.esprit.postservice.dto.response.CommentResponseDTO;
 import com.esprit.postservice.dto.response.PostResponseDTO;
+import com.esprit.postservice.entity.Reaction.ReactionType;
 
 import java.util.List;
 
@@ -26,4 +27,5 @@ public interface PostService {
     void deleteComment(Long commentId, Long userId);
 
     void toggleLike(Long postId, Long userId);
+    void setReaction(Long postId, Long userId, ReactionType type);
 }
