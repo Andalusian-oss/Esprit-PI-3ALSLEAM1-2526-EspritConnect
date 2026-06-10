@@ -354,6 +354,12 @@ interface ApplicantWithUser extends Application {
                           *ngIf="app.statut !== 'REJECTED'"
                           (click)="updateStatus(app, 'REJECTED')">✕</button>
                   <button class="action-msg" [title]="lang.t('common.message')" (click)="messageApplicant(app.applicantUserId)">💬</button>
+                  <button *ngIf="app.cvUrl" class="action-analyze"
+                          [title]="app.analyzing ? 'Analyzing…' : 'Analyze CV'"
+                          [disabled]="app.analyzing"
+                          (click)="analyzeSingle(app)">
+                    {{ app.analyzing ? '⏳' : '🔍' }}
+                  </button>
                   <a *ngIf="app.cvUrl" [href]="app.cvUrl" target="_blank" class="action-cv" [title]="lang.t('common.viewCv')">📄</a>
                 </div>
               </div>
@@ -683,7 +689,10 @@ interface ApplicantWithUser extends Application {
     .chip-rejected { background:var(--red-glow); color:var(--red); }
 
     .app-actions { display:flex; gap:6px; align-items:center; }
-    .action-accept, .action-reject, .action-msg, .action-cv { border:none; border-radius:6px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; transition:opacity .15s; text-decoration:none; }
+    .action-accept, .action-reject, .action-msg, .action-cv, .action-analyze { border:none; border-radius:6px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; transition:opacity .15s; text-decoration:none; }
+    .action-analyze { background:rgba(156,39,176,.15); color:#9c27b0; }
+    .action-analyze:hover:not(:disabled) { opacity:.8; }
+    .action-analyze:disabled { opacity:.4; cursor:not-allowed; }
     .action-accept { background:rgba(61,220,132,.15); color:#3ddc84; }
     .action-accept:hover { opacity:.8; }
     .action-reject { background:var(--red-glow); color:var(--red); }

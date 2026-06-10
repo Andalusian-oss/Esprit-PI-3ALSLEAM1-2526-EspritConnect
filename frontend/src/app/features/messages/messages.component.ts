@@ -1250,18 +1250,29 @@ export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.loadGroups();
     this.loadOnlineUsers();
 
-    // Handle deep-link ?userId=
+    // Handle deep-link ?userId= or ?startWith=
     this.route.queryParams.subscribe(p => {
-      if (p['userId']) {
-        const uid = Number(p['userId']);
+      const uidStr = p['userId'] || p['startWith'];
+      if (!uidStr) return;
+      const uid = Number(uidStr);
+      if (!uid) return;
+
+      const openChat = () => {
         const existing = this.conversations.find(c => this.otherParticipantId(c) === uid);
-        if (existing) { this.openConversation(existing); }
-        else {
-          this.authService.getUserById(uid).subscribe({
-            next: u => this.startConversationWith(u),
-            error: () => {}
-          });
-        }
+        if (existing) { this.openConversation(existing); return; }
+        this.authService.getUserById(uid).subscribe({
+          next: u => this.startConversationWith(u),
+          error: () => {}
+        });
+      };
+
+      if (!this.loadingConversations) {
+        openChat();
+      } else {
+        const timer = setInterval(() => {
+          if (!this.loadingConversations) { clearInterval(timer); openChat(); }
+        }, 100);
+        setTimeout(() => clearInterval(timer), 8000);
       }
     });
 
@@ -2050,11 +2061,15 @@ export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.messageService.sendMessage(user.id, '👋').subscribe({
       next: msg => {
         this.sending = false;
-        this.loadConversations();
-        setTimeout(() => {
-          const c = this.conversations.find(x => x.id === msg.conversationId);
-          if (c) this.openConversation(c);
-        }, 600);
+        this.messageService.getConversations().subscribe({
+          next: convs => {
+            this.conversations = convs;
+            this.loadingConversations = false;
+            const c = convs.find(x => x.id === msg.conversationId);
+            if (c) this.openConversation(c);
+          },
+          error: () => {}
+        });
       },
       error: () => { this.sending = false; }
     });

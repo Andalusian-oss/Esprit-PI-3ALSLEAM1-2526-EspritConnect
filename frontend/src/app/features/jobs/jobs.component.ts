@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Application, Job, JobRequest, CvAnalysis } from '../../core/models/models';
 import { JobService } from '../../core/services/job.service';
 import { PostService } from '../../core/services/post.service';
@@ -171,6 +172,9 @@ import { environment } from '../../../environments/environment';
                 </a>
                 <button *ngIf="app.cvUrl" class="btn btn-ghost btn-sm" (click)="analyzeCV(app)" [disabled]="analyzingAppId === app.id">
                   <span class="icon icon-search"></span>{{ analyzingAppId === app.id ? lang.t('jobs.analyzingCv') : lang.t('jobs.analyzeCv') }}
+                </button>
+                <button class="btn btn-ghost btn-sm" title="Message applicant" (click)="contactApplicant(app.applicantUserId)">
+                  <span class="icon icon-message"></span>
                 </button>
                 <button class="btn btn-sm btn-success" (click)="setApplicationStatus(app, 'ACCEPTED')">
                   <span class="icon icon-check"></span>
@@ -379,6 +383,7 @@ import { environment } from '../../../environments/environment';
     .icon-external { mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14 3h7v7h-2V6.41l-9.3 9.3-1.41-1.41L17.59 5H14V3ZM3 5h8v2H5v12h12v-6h2v8H3V5Z'/%3E%3C/svg%3E"); -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14 3h7v7h-2V6.41l-9.3 9.3-1.41-1.41L17.59 5H14V3ZM3 5h8v2H5v12h12v-6h2v8H3V5Z'/%3E%3C/svg%3E"); }
     .icon-location { mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2C8.69 2 6 4.69 6 8c0 5 6 13 6 13s6-8 6-13c0-3.31-2.69-6-6-6Zm0 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z'/%3E%3C/svg%3E"); -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2C8.69 2 6 4.69 6 8c0 5 6 13 6 13s6-8 6-13c0-3.31-2.69-6-6-6Zm0 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z'/%3E%3C/svg%3E"); }
     .icon-upload { mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z'/%3E%3C/svg%3E"); -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z'/%3E%3C/svg%3E"); }
+    .icon-message { mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2Z'/%3E%3C/svg%3E"); -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2Z'/%3E%3C/svg%3E"); }
     .my-app-cv-prompt {
       display: flex; align-items: center; gap: 10px; margin-top: 12px;
       padding: 10px 14px; border-radius: 10px;
@@ -647,6 +652,7 @@ export class JobsComponent implements OnInit {
     private authService: AuthService,
     private chatbotService: ChatbotService,
     private http: HttpClient,
+    private router: Router,
     public lang: LanguageService
   ) {}
 
@@ -760,6 +766,10 @@ export class JobsComponent implements OnInit {
       next: () => { this.notifications.success('Application updated'); this.loadApplications(app.jobId); },
       error: () => this.fail('Unable to update application')
     });
+  }
+
+  contactApplicant(userId: number): void {
+    this.router.navigate(['/messages'], { queryParams: { userId } });
   }
 
   analyzeCV(app: Application): void {

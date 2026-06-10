@@ -31,7 +31,8 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
             "/api/auth/verify-email",
             "/api/chatbot/",
             "/api/cv-analyzer/",
-            "/api/posts/uploads/"
+            "/api/posts/uploads/",
+            "/api/jobs/uploads/"
     );
 
     @Value("${jwt.secret}")
