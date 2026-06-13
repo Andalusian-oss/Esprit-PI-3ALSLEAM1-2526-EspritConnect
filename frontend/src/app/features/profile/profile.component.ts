@@ -15,7 +15,16 @@ import { environment } from '../../../environments/environment';
     <div class="page">
       <!-- ── Profile header ── -->
       <div class="profile-header">
-        <div class="profile-avatar-lg">{{ initials }}</div>
+        <div class="profile-avatar-lg avatar-editable"
+             [class.has-img]="user?.avatarUrl"
+             (click)="headerAvatarInput.click()"
+             [title]="lang.t('profile.uploadAvatar')">
+          <img *ngIf="user?.avatarUrl" [src]="user?.avatarUrl" alt="avatar" />
+          <span *ngIf="!user?.avatarUrl">{{ initials }}</span>
+          <span class="avatar-cam" *ngIf="!uploadingAvatar">📷</span>
+          <span class="avatar-uploading" *ngIf="uploadingAvatar"></span>
+          <input type="file" accept="image/*" #headerAvatarInput hidden (change)="onAvatarSelected($event)" />
+        </div>
         <div class="profile-info">
           <h2>{{ user?.prenom }} {{ user?.nom }}</h2>
           <p>{{ user?.email }}</p>
@@ -324,6 +333,31 @@ import { environment } from '../../../environments/environment';
     </div>
   `,
   styles: [`
+    /* ── Editable header avatar ── */
+    .avatar-editable { position: relative; cursor: pointer; overflow: hidden; }
+    .avatar-editable.has-img { background: transparent !important; }
+    .avatar-editable img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .avatar-editable .avatar-cam {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.55); color: #fff;
+      font-size: 14px; line-height: 1; padding: 5px 0; text-align: center;
+      opacity: 0; transition: opacity .15s; z-index: 2;
+    }
+    .avatar-editable:hover .avatar-cam { opacity: 1; }
+    .avatar-editable .avatar-uploading {
+      position: absolute; inset: 0; z-index: 3;
+      background: rgba(0,0,0,0.45);
+      border-radius: 50%;
+      display: block;
+    }
+    .avatar-editable .avatar-uploading::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 24px; height: 24px; margin: -12px 0 0 -12px;
+      border: 3px solid rgba(255,255,255,0.35); border-top-color: #fff;
+      border-radius: 50%; animation: avatarSpin .7s linear infinite;
+    }
+    @keyframes avatarSpin { to { transform: rotate(360deg); } }
+
     .detail-label {
       font-size: 11px; text-transform: uppercase;
       letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 4px;

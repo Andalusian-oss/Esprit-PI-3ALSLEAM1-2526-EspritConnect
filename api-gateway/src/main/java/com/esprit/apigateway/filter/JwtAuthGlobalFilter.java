@@ -29,6 +29,10 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
             "/api/auth/verify-email",
+            // Public file serving — <img>/<a> requests carry no Authorization header
+            "/api/auth/uploads/",
+            // Company verification document upload happens before the account exists
+            "/api/auth/upload-company-doc",
             "/api/chatbot/",
             "/api/cv-analyzer/",
             "/api/posts/uploads/",

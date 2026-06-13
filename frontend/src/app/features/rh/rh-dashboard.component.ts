@@ -283,6 +283,22 @@ interface ApplicantWithUser extends Application {
                 <p class="page-sub">{{ applicants.length }} {{ lang.t('rh.candidates') }} · {{ lang.t('rh.rankedByMatch') }}</p>
               </div>
               <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+                <div class="threshold-box" [title]="lang.t('rh.passScoreHint')"
+                     (click)="$event.stopPropagation()">
+                  <span class="threshold-lbl">{{ lang.t('rh.passScore') }}</span>
+                  <button type="button" class="threshold-step" (click)="acceptThreshold = clampScore(acceptThreshold - 5)">−</button>
+                  <input type="range" min="0" max="100" step="5" class="threshold-range"
+                         [(ngModel)]="acceptThreshold" [ngModelOptions]="{standalone: true}" />
+                  <button type="button" class="threshold-step" (click)="acceptThreshold = clampScore(acceptThreshold + 5)">+</button>
+                  <span class="threshold-val">{{ acceptThreshold }}%</span>
+                </div>
+                <button class="btn-ghost-rh auto-decide-btn"
+                        style="padding:8px 12px;font-size:13px;display:flex;align-items:center;gap:6px"
+                        [disabled]="loadingApplicants || !hasScoredPending"
+                        (click)="autoDecideByScore()"
+                        [title]="lang.t('rh.autoDecideHint')">
+                  {{ lang.t('rh.autoDecide') }}
+                </button>
                 <button class="btn-ghost-rh" style="padding:8px 12px;font-size:13px;display:flex;align-items:center;gap:6px"
                         [disabled]="loadingApplicants"
                         (click)="loadApplicants(selectedJob!.id)"
@@ -345,6 +361,11 @@ interface ApplicantWithUser extends Application {
                 </div>
                 <div class="app-status-col">
                   <span class="status-chip" [class]="'chip-' + app.statut.toLowerCase()">{{ app.statut }}</span>
+                  <span *ngIf="app.statut === 'PENDING' && recommendation(app) as rec"
+                        class="reco-chip" [class.reco-accept]="rec === 'ACCEPTED'" [class.reco-reject]="rec === 'REJECTED'"
+                        [title]="lang.t('rh.cvScore') + ' ' + app.matchScore + '% / ' + lang.t('rh.passScore') + ' ' + acceptThreshold + '%'">
+                    {{ rec === 'ACCEPTED' ? lang.t('rh.suggestAccept') : lang.t('rh.suggestReject') }}
+                  </span>
                 </div>
                 <div class="app-actions" (click)="$event.stopPropagation()">
                   <button class="action-accept" [title]="lang.t('rh.acceptBtn')"
@@ -509,6 +530,12 @@ interface ApplicantWithUser extends Application {
           </div>
         </ng-template>
 
+        <div class="drawer-reco" *ngIf="recommendation(drawerApp) as rec"
+             [class.reco-accept]="rec === 'ACCEPTED'" [class.reco-reject]="rec === 'REJECTED'">
+          {{ lang.t('rh.aiSuggestion') }}: {{ lang.t('rh.cvScore') }} {{ drawerApp.matchScore }}% —
+          <strong>{{ rec === 'ACCEPTED' ? lang.t('rh.accepted') : lang.t('rh.rejected') }}</strong>
+          ({{ lang.t('rh.passScore') }} {{ acceptThreshold }}%)
+        </div>
         <div class="drawer-footer">
           <button class="btn-ghost-rh" (click)="closeDrawer()">{{ lang.t('common.close') }}</button>
           <button class="action-accept full" (click)="updateStatus(drawerApp!, 'ACCEPTED'); closeDrawer()"
@@ -687,6 +714,17 @@ interface ApplicantWithUser extends Application {
     .chip-pending { background:rgba(255,152,0,.15); color:#ff9800; }
     .chip-accepted { background:rgba(61,220,132,.15); color:#3ddc84; }
     .chip-rejected { background:var(--red-glow); color:var(--red); }
+    .reco-chip { display:inline-block; margin-top:5px; font-size:10px; font-weight:600; padding:2px 7px; border-radius:10px; white-space:nowrap; }
+    .reco-accept { background:rgba(61,220,132,.12); color:#3ddc84; border:1px solid rgba(61,220,132,.3); }
+    .reco-reject { background:var(--red-glow); color:var(--red); border:1px solid rgba(227,30,36,.3); }
+    .threshold-box { display:flex; align-items:center; gap:4px; background:var(--surface-2,rgba(255,255,255,.04)); border:1px solid var(--border); border-radius:8px; padding:5px 9px; }
+    .threshold-lbl { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; }
+    .threshold-range { width:90px; accent-color:#38d6c7; cursor:pointer; }
+    .threshold-step { width:22px; height:22px; border:1px solid var(--border); background:transparent; color:var(--text); border-radius:6px; cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; padding:0; }
+    .threshold-step:hover { border-color:#38d6c7; color:#38d6c7; }
+    .threshold-val { font-size:14px; font-weight:800; color:#38d6c7; min-width:42px; text-align:right; }
+    .auto-decide-btn:not(:disabled) { border-color:rgba(56,214,199,.4); color:#38d6c7; }
+    .drawer-reco { margin:0 20px 10px; padding:8px 12px; border-radius:8px; font-size:12px; text-align:center; }
 
     .app-actions { display:flex; gap:6px; align-items:center; }
     .action-accept, .action-reject, .action-msg, .action-cv, .action-analyze { border:none; border-radius:6px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; transition:opacity .15s; text-decoration:none; }
@@ -765,6 +803,8 @@ export class RhDashboardComponent implements OnInit {
   showForm = false;
   editingJob: Job | null = null;
   requiredSkills: string[] = [];
+  /** Minimum average CV score (moyenne) required to accept a candidate. */
+  acceptThreshold = 60;
   jobForm: FormGroup;
   currentUser = this.authService.getCurrentUser();
 
@@ -948,6 +988,55 @@ export class RhDashboardComponent implements OnInit {
         this.notifications.error(backendMessage || this.lang.t('rh.updateStatusError'));
       }
     });
+  }
+
+  /** Clamp a raw input value into the 0–100 range for the pass-score field. */
+  clampScore(value: string | number): number {
+    const n = Math.round(Number(value));
+    if (isNaN(n)) return 0;
+    return Math.min(100, Math.max(0, n));
+  }
+
+  /**
+   * Recommendation based on the candidate's average CV score (moyenne):
+   * ACCEPTED if score ≥ pass score, REJECTED if below. Null while no score yet.
+   */
+  recommendation(app: ApplicantWithUser): Application['statut'] | null {
+    const score = app.matchScore;
+    if (score == null) return null;
+    return score >= this.acceptThreshold ? 'ACCEPTED' : 'REJECTED';
+  }
+
+  /** True when at least one pending applicant has a CV score to decide on. */
+  get hasScoredPending(): boolean {
+    return this.applicants.some(a => a.statut === 'PENDING' && a.matchScore != null);
+  }
+
+  /**
+   * Auto-accept every pending applicant whose average CV score ≥ pass score,
+   * and reject the rest. Drives the accept/reject decision from the score.
+   */
+  autoDecideByScore(): void {
+    const targets = this.applicants.filter(a => a.statut === 'PENDING' && a.matchScore != null);
+    if (!targets.length) {
+      this.notifications.error(this.lang.t('rh.noScoredPending'));
+      return;
+    }
+    let accepted = 0, rejected = 0;
+    targets.forEach(app => {
+      const decision = this.recommendation(app);
+      if (!decision) return;
+      decision === 'ACCEPTED' ? accepted++ : rejected++;
+      // Update silently (single summary toast below instead of one per candidate).
+      this.jobService.updateApplicationStatus(app.id, decision).subscribe({
+        next: () => { app.statut = decision; },
+        error: () => {}
+      });
+    });
+    this.notifications.success(
+      `${this.lang.t('rh.autoDecideDone')} ${targets.length} — ${accepted} ${this.lang.t('rh.accepted')}, ` +
+      `${rejected} ${this.lang.t('rh.rejected')} (${this.lang.t('rh.passScore')} ${this.acceptThreshold}%).`
+    );
   }
 
   messageApplicant(userId: number): void {

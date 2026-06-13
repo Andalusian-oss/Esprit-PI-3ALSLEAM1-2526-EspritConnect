@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: api-gateway
+  codec:
+    # Allow large multipart bodies (avatar photos / CVs) through the gateway.
+    # Default is 256KB, which silently fails uploads of most real photos.
+    max-in-memory-size: 15MB
   cloud:
     gateway:
       discovery:

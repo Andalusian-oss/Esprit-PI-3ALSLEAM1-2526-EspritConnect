@@ -191,6 +191,11 @@ export interface Translations {
   'jobs.cdi': string;
   'jobs.cdd': string;
   'jobs.postJob': string;
+  'jobs.statAccepted': string;
+  'jobs.statPending': string;
+  'jobs.statRejected': string;
+  'jobs.statMyApps': string;
+  'jobs.liveUpdates': string;
   'jobs.sectionOffers': string;
   'jobs.searchJobs': string;
   'jobs.allTypes': string;
@@ -400,6 +405,16 @@ export interface Translations {
   'rh.accepted': string;
   'rh.pending': string;
   'rh.rejected': string;
+  'rh.passScore': string;
+  'rh.passScoreHint': string;
+  'rh.autoDecide': string;
+  'rh.autoDecideHint': string;
+  'rh.suggestAccept': string;
+  'rh.suggestReject': string;
+  'rh.cvScore': string;
+  'rh.aiSuggestion': string;
+  'rh.noScoredPending': string;
+  'rh.autoDecideDone': string;
   'rh.scoreDist': string;
   'rh.jobOffers': string;
   'rh.jobOffersDesc': string;
@@ -676,6 +691,11 @@ const en: Translations = {
   'jobs.cdi': 'CDI — Permanent',
   'jobs.cdd': 'CDD — Fixed-term',
   'jobs.postJob': 'Post Job',
+  'jobs.statAccepted': 'Accepted',
+  'jobs.statPending': 'Pending',
+  'jobs.statRejected': 'Rejected',
+  'jobs.statMyApps': 'My Applications',
+  'jobs.liveUpdates': 'Live — updates automatically',
   'jobs.sectionOffers': 'Job Offers',
   'jobs.searchJobs': 'Search jobs...',
   'jobs.allTypes': 'All types',
@@ -885,6 +905,16 @@ const en: Translations = {
   'rh.accepted': 'Accepted',
   'rh.pending': 'Pending',
   'rh.rejected': 'Rejected',
+  'rh.passScore': 'Pass score',
+  'rh.passScoreHint': 'Minimum average CV score required to accept a candidate',
+  'rh.autoDecide': '⚖️ Auto-decide by score',
+  'rh.autoDecideHint': 'Accept applicants whose CV score ≥ pass score, reject the rest',
+  'rh.suggestAccept': '↑ Suggest accept',
+  'rh.suggestReject': '↓ Suggest reject',
+  'rh.cvScore': 'CV score',
+  'rh.aiSuggestion': 'AI suggestion',
+  'rh.noScoredPending': 'No scored pending applicants. Analyze CVs first.',
+  'rh.autoDecideDone': 'Auto-decided',
   'rh.scoreDist': 'Score Distribution',
   'rh.jobOffers': 'Job Offers',
   'rh.jobOffersDesc': 'Create and manage your job postings',
@@ -1161,6 +1191,11 @@ const fr: Translations = {
   'jobs.cdi': 'CDI — Permanent',
   'jobs.cdd': 'CDD — Durée déterminée',
   'jobs.postJob': 'Publier l\'offre',
+  'jobs.statAccepted': 'Acceptées',
+  'jobs.statPending': 'En attente',
+  'jobs.statRejected': 'Rejetées',
+  'jobs.statMyApps': 'Mes candidatures',
+  'jobs.liveUpdates': 'En direct — mise à jour automatique',
   'jobs.sectionOffers': 'Offres d\'emploi',
   'jobs.searchJobs': 'Rechercher des emplois...',
   'jobs.allTypes': 'Tous types',
@@ -1370,6 +1405,16 @@ const fr: Translations = {
   'rh.accepted': 'Accepté',
   'rh.pending': 'En attente',
   'rh.rejected': 'Rejeté',
+  'rh.passScore': 'Score d\'acceptation',
+  'rh.passScoreHint': 'Score CV moyen minimum requis pour accepter un candidat',
+  'rh.autoDecide': '⚖️ Décider auto. par score',
+  'rh.autoDecideHint': 'Accepter les candidats dont le score CV ≥ score d\'acceptation, rejeter les autres',
+  'rh.suggestAccept': '↑ Suggérer accepter',
+  'rh.suggestReject': '↓ Suggérer rejeter',
+  'rh.cvScore': 'Score CV',
+  'rh.aiSuggestion': 'Suggestion IA',
+  'rh.noScoredPending': 'Aucun candidat en attente avec score. Analysez d\'abord les CV.',
+  'rh.autoDecideDone': 'Décision auto. appliquée à',
   'rh.scoreDist': 'Distribution des scores',
   'rh.jobOffers': 'Offres d\'emploi',
   'rh.jobOffersDesc': 'Créez et gérez vos offres d\'emploi',

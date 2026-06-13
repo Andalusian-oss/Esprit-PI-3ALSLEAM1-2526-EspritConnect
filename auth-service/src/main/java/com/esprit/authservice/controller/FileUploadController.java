@@ -29,12 +29,35 @@ public class FileUploadController {
     @PostMapping("/upload")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Empty file"));
+        }
+        // Accept any kind of image (png, jpg, jpeg, gif, webp, svg, heic, avif, bmp, …)
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", "Only image files are accepted for avatars."));
+        }
+        // Prefer the original extension; fall back to one derived from the content type.
         String ext = getExtension(file.getOriginalFilename());
+        if (".bin".equals(ext)) {
+            ext = extensionFromContentType(contentType);
+        }
         String filename = UUID.randomUUID() + ext;
         Path dir = Paths.get(uploadDir, "avatars");
         Files.createDirectories(dir);
         Files.copy(file.getInputStream(), dir.resolve(filename));
         return ResponseEntity.ok(Map.of("url", "/api/auth/uploads/avatars/" + filename));
+    }
+
+    private String extensionFromContentType(String contentType) {
+        String subtype = contentType.toLowerCase().substring("image/".length());
+        switch (subtype) {
+            case "jpeg":      return ".jpg";
+            case "svg+xml":   return ".svg";
+            case "x-icon":    return ".ico";
+            default:          return "." + subtype.replaceAll("[^a-z0-9]", "");
+        }
     }
 
     /**

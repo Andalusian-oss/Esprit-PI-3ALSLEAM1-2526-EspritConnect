@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -30,18 +30,24 @@ import { environment } from '../../../environments/environment';
           <div class="jobs-kpi-sep"></div>
           <div class="jobs-kpi">
             <span class="jobs-kpi-value jobs-kpi-green">{{ totalAccepted }}</span>
-            <span class="jobs-kpi-label">Accepted</span>
+            <span class="jobs-kpi-label">{{ lang.t('jobs.statAccepted') }}</span>
           </div>
           <div class="jobs-kpi-sep"></div>
           <div class="jobs-kpi">
             <span class="jobs-kpi-value jobs-kpi-cyan">{{ pendingCount }}</span>
-            <span class="jobs-kpi-label">Pending</span>
+            <span class="jobs-kpi-label">{{ lang.t('jobs.statPending') }}</span>
+          </div>
+          <div class="jobs-kpi-sep"></div>
+          <div class="jobs-kpi">
+            <span class="jobs-kpi-value jobs-kpi-red">{{ rejectedCount }}</span>
+            <span class="jobs-kpi-label">{{ lang.t('jobs.statRejected') }}</span>
           </div>
           <div class="jobs-kpi-sep"></div>
           <div class="jobs-kpi">
             <span class="jobs-kpi-value jobs-kpi-yellow">{{ myApplications.length }}</span>
-            <span class="jobs-kpi-label">My Applications</span>
+            <span class="jobs-kpi-label">{{ lang.t('jobs.statMyApps') }}</span>
           </div>
+          <span class="jobs-live-dot" [title]="lang.t('jobs.liveUpdates')"></span>
         </div>
       </div>
 
@@ -414,6 +420,9 @@ import { environment } from '../../../environments/environment';
     .jobs-kpi-green { color:#3ddc84; }
     .jobs-kpi-cyan { color:#38d6c7; }
     .jobs-kpi-yellow { color:#ffbd59; }
+    .jobs-kpi-red { color:#e31e24; }
+    .jobs-live-dot { width:8px; height:8px; border-radius:50%; background:#3ddc84; align-self:flex-start; margin-left:4px; box-shadow:0 0 0 0 rgba(61,220,132,.6); animation:jobsLivePulse 1.8s infinite; }
+    @keyframes jobsLivePulse { 0%{ box-shadow:0 0 0 0 rgba(61,220,132,.6);} 70%{ box-shadow:0 0 0 7px rgba(61,220,132,0);} 100%{ box-shadow:0 0 0 0 rgba(61,220,132,0);} }
 
     /* ── Job type breakdown bar ── */
     .jobs-type-bar { display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
@@ -612,7 +621,7 @@ import { environment } from '../../../environments/environment';
     :host-context(.light-theme) .modal-box { background: #ffffff; }
   `]
 })
-export class JobsComponent implements OnInit {
+export class JobsComponent implements OnInit, OnDestroy {
   jobs: Job[] = [];
   applications: Application[] = [];
   myApplications: Application[] = [];
@@ -626,6 +635,7 @@ export class JobsComponent implements OnInit {
   loading = true;
   saving = false;
   error = '';
+  private statsPoll?: ReturnType<typeof setInterval>;
 
   applyModal: Job | null = null;
   cvUrl: string | null = null;
@@ -686,10 +696,23 @@ export class JobsComponent implements OnInit {
     return this.myApplications.filter(a => a.statut === 'PENDING').length;
   }
 
+  get rejectedCount(): number {
+    return this.myApplications.filter(a => a.statut === 'REJECTED').length;
+  }
+
   countType(type: string): number { return this.jobs.filter(j => j.type === type).length; }
   pct(type: string): number { return this.jobs.length ? Math.round(this.countType(type) / this.jobs.length * 100) : 0; }
 
-  ngOnInit(): void { this.loadAll(); }
+  ngOnInit(): void {
+    this.loadAll();
+    // Real-time application stats: poll every 15s so PENDING → ACCEPTED/REJECTED
+    // transitions made by recruiters show up without a manual refresh.
+    this.statsPoll = setInterval(() => this.refreshApplications(), 15000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.statsPoll) clearInterval(this.statsPoll);
+  }
 
   loadAll(): void {
     this.loading = true;
@@ -697,6 +720,11 @@ export class JobsComponent implements OnInit {
       next: (jobs: Job[]) => { this.jobs = jobs; this.loading = false; },
       error: () => this.fail('Unable to load jobs')
     });
+    this.refreshApplications();
+  }
+
+  /** Lightweight refresh of just the application list — used by the live poll. */
+  refreshApplications(): void {
     this.jobService.getMyApplications().subscribe({
       next: (apps: Application[]) => { this.myApplications = apps; },
       error: () => undefined
