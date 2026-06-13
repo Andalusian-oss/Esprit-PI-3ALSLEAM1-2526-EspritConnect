@@ -106,6 +106,13 @@ public class ResourceServiceImpl implements ResourceService {
         return toDTO(resourceRepository.save(r), null);
     }
 
+    @Override @Transactional
+    public ResourceResponseDTO incrementView(Long id) {
+        Resource r = find(id);
+        r.setViewCount(r.getViewCount() + 1);
+        return toDTO(resourceRepository.save(r), null);
+    }
+
     private Resource find(Long id) {
         return resourceRepository.findById(id)
                 .orElseThrow(() -> new com.esprit.resourceservice.exception.ResourceNotFoundException("Resource not found: " + id));
@@ -118,7 +125,7 @@ public class ResourceServiceImpl implements ResourceService {
                 .type(r.getType()).categorie(r.getCategorie())
                 .fileUrl(r.getFileUrl()).lien(r.getLien()).tags(r.getTags())
                 .uploadedByUserId(r.getUploadedByUserId())
-                .likeCount(r.getLikeCount()).downloadCount(r.getDownloadCount())
+                .likeCount(r.getLikeCount()).viewCount(r.getViewCount()).downloadCount(r.getDownloadCount())
                 .likedByMe(likedByMe).createdAt(r.getCreatedAt())
                 .build();
     }

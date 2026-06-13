@@ -42,6 +42,9 @@ public class Resource {
     private int likeCount = 0;
 
     @Builder.Default
+    private int viewCount = 0;
+
+    @Builder.Default
     private int downloadCount = 0;
 
     @CreationTimestamp

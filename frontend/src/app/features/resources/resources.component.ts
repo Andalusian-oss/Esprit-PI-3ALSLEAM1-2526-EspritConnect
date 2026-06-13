@@ -76,7 +76,9 @@ import { LanguageService } from '../../core/services/language.service';
                 {{ uploadingFile ? lang.t('common.uploading') : lang.t('res.chooseFile') }}
                 <input type="file" accept=".pdf" (change)="onFileSelected($event)" style="display:none" />
               </label>
-              <p class="res-upload-done" *ngIf="form.value.fileUrl">{{ lang.t('res.fileUploaded') }}</p>
+              <p class="res-upload-done" *ngIf="form.value.fileUrl">
+                {{ lang.t('res.fileUploaded') }}<span *ngIf="selectedFileName"> — {{ selectedFileName }}</span>
+              </p>
             </div>
 
             <div class="res-form-actions">
@@ -166,11 +168,15 @@ import { LanguageService } from '../../core/services/language.service';
           <!-- Footer -->
           <div class="res-card-footer">
             <div class="res-stats">
-              <span class="res-stat">
+              <span class="res-stat" title="Likes">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.4 10.55 20.1C5.4 15.36 2 12.27 2 8.5 2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.41 22 8.5c0 3.77-3.4 6.86-8.55 11.6L12 21.4Z"/></svg>
                 {{ r.likeCount }}
               </span>
-              <span class="res-stat">
+              <span class="res-stat" title="Views">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 11a4 4 0 110-8 4 4 0 010 8zm0-2a2 2 0 100-4 2 2 0 000 4z"/></svg>
+                {{ r.viewCount }}
+              </span>
+              <span class="res-stat" title="Downloads">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-5-5 1.4-1.4 2.6 2.6V4h2v8.2l2.6-2.6L17 11l-5 5Zm-7 4v-2h14v2H5Z"/></svg>
                 {{ r.downloadCount }}
               </span>
@@ -179,8 +185,16 @@ import { LanguageService } from '../../core/services/language.service';
               <button class="res-action-like" [class.liked]="r.likedByMe" (click)="toggleLike(r); $event.stopPropagation()">
                 {{ r.likedByMe ? lang.t('res.liked') : lang.t('res.like') }}
               </button>
-              <button class="res-action-open" *ngIf="r.lien || r.fileUrl" (click)="open(r)">
-                {{ lang.t('res.open') }}
+              <!-- External link (URL / video / article) — view only, no download -->
+              <button class="res-action-open" *ngIf="r.lien" (click)="openLink(r)">
+                {{ lang.t('res.view') }}
+              </button>
+              <!-- Uploaded file (PDF…) — fetched with auth so it actually opens -->
+              <button class="res-action-open" *ngIf="r.fileUrl" (click)="view(r)" [disabled]="busyId === r.id">
+                {{ lang.t('res.view') }}
+              </button>
+              <button class="res-action-dl" *ngIf="r.fileUrl" (click)="download(r)" [disabled]="busyId === r.id">
+                {{ lang.t('res.download') }}
               </button>
               <ng-container *ngIf="canEdit(r)">
                 <button class="res-action-edit" (click)="edit(r)">{{ lang.t('common.edit') }}</button>
@@ -320,10 +334,13 @@ import { LanguageService } from '../../core/services/language.service';
     /* action buttons */
     .res-action-like,
     .res-action-open,
+    .res-action-dl,
     .res-action-edit,
     .res-action-del { border:none; border-radius:7px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; transition:var(--transition); }
     .res-action-like { background:var(--dark3); color:var(--text-muted); &:hover { color:#e31e24; } &.liked { background:rgba(225,29,46,.12); color:var(--red); } }
     .res-action-open { background:rgba(56,214,199,.1); color:var(--accent-cyan); &:hover { background:rgba(56,214,199,.18); } }
+    .res-action-dl   { background:rgba(61,220,132,.1); color:#3ddc84; &:hover { background:rgba(61,220,132,.18); } &:disabled { opacity:.5; cursor:not-allowed; } }
+    .res-action-open:disabled { opacity:.5; cursor:not-allowed; }
     .res-action-edit { background:var(--dark3); color:var(--text-muted); &:hover { color:var(--text); } }
     .res-action-del  { background:rgba(225,29,46,.08); color:var(--red); &:hover { background:rgba(225,29,46,.16); } }
 
@@ -360,6 +377,8 @@ export class ResourcesComponent implements OnInit {
   loading = true;
   saving = false;
   uploadingFile = false;
+  busyId: number | null = null;
+  selectedFileName = '';
 
   form: FormGroup = this.fb.group({
     titre:       ['', Validators.required],
@@ -437,12 +456,13 @@ export class ResourcesComponent implements OnInit {
 
   edit(r: Resource): void {
     this.editingId = r.id;
+    this.selectedFileName = '';
     this.form.patchValue(r);
     this.showForm = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  cancelForm(): void { this.editingId = null; this.showForm = false; this.form.reset({ type: 'ARTICLE', categorie: 'ACADEMIC' }); }
+  cancelForm(): void { this.editingId = null; this.showForm = false; this.selectedFileName = ''; this.form.reset({ type: 'ARTICLE', categorie: 'ACADEMIC' }); }
 
   remove(id: number): void {
     if (!this.notifications.confirm('Delete this resource?')) return;
@@ -459,11 +479,77 @@ export class ResourcesComponent implements OnInit {
     });
   }
 
-  open(r: Resource): void {
-    const url = r.lien || r.fileUrl;
-    if (!url) return;
-    this.resourceService.incrementDownload(r.id).subscribe();
-    window.open(url, '_blank');
+  /** Open an external link (URL / video / article) — counts as a view. */
+  openLink(r: Resource): void {
+    if (!r.lien) return;
+    window.open(r.lien, '_blank', 'noopener');
+    this.countView(r.id);
+  }
+
+  /** Consult an uploaded file (PDF…) inline in a new tab — counts as a view. */
+  view(r: Resource): void {
+    if (!r.fileUrl) return;
+    this.busyId = r.id;
+    this.resourceService.fetchFile(r.fileUrl).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        // Revoke later so the new tab has time to load the content.
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        this.busyId = null;
+        this.countView(r.id);
+      },
+      error: () => { this.busyId = null; this.notifications.error('Unable to open file'); }
+    });
+  }
+
+  /** Download an uploaded file (PDF…) to disk — counts as a download. */
+  download(r: Resource): void {
+    if (!r.fileUrl) return;
+    this.busyId = r.id;
+    this.resourceService.fetchFile(r.fileUrl).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.fileName(r);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        this.busyId = null;
+        this.countDownload(r.id);
+      },
+      error: () => { this.busyId = null; this.notifications.error('Unable to download file'); }
+    });
+  }
+
+  private fileName(r: Resource): string {
+    const base = (r.titre || 'resource').trim().replace(/[^\w.-]+/g, '_');
+    const ext = r.fileUrl?.split('.').pop()?.toLowerCase();
+    return ext && ext.length <= 5 && !base.toLowerCase().endsWith('.' + ext) ? `${base}.${ext}` : base;
+  }
+
+  /** Bump the view counter without clobbering likedByMe in the UI. */
+  private countView(id: number): void {
+    this.resourceService.incrementView(id).subscribe({
+      next: () => {
+        const idx = this.resources.findIndex(x => x.id === id);
+        if (idx >= 0) this.resources[idx] = { ...this.resources[idx], viewCount: this.resources[idx].viewCount + 1 };
+      },
+      error: () => undefined
+    });
+  }
+
+  /** Bump the download counter without clobbering likedByMe in the UI. */
+  private countDownload(id: number): void {
+    this.resourceService.incrementDownload(id).subscribe({
+      next: () => {
+        const idx = this.resources.findIndex(x => x.id === id);
+        if (idx >= 0) this.resources[idx] = { ...this.resources[idx], downloadCount: this.resources[idx].downloadCount + 1 };
+      },
+      error: () => undefined
+    });
   }
 
   onFileSelected(event: Event): void {
@@ -471,7 +557,12 @@ export class ResourcesComponent implements OnInit {
     if (!file) return;
     this.uploadingFile = true;
     this.resourceService.uploadFile(file).subscribe({
-      next: ({ url }: { url: string }) => { this.form.patchValue({ fileUrl: url }); this.uploadingFile = false; },
+      next: ({ url }: { url: string }) => {
+        this.form.patchValue({ fileUrl: url });
+        this.form.markAsDirty();
+        this.selectedFileName = file.name;
+        this.uploadingFile = false;
+      },
       error: () => { this.notifications.error('File upload failed'); this.uploadingFile = false; }
     });
   }

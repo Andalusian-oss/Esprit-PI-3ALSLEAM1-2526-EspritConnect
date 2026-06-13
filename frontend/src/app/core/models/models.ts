@@ -239,6 +239,7 @@ export interface Resource {
   tags?: string;
   uploadedByUserId: number;
   likeCount: number;
+  viewCount: number;
   downloadCount: number;
   likedByMe: boolean;
   createdAt: string;

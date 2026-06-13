@@ -23,9 +23,18 @@ export class ResourceService {
   delete(id: number): Observable<void> { return this.http.delete<void>(`${this.url}/${id}`); }
   toggleLike(id: number): Observable<Resource> { return this.http.post<Resource>(`${this.url}/${id}/like`, {}); }
   incrementDownload(id: number): Observable<Resource> { return this.http.post<Resource>(`${this.url}/${id}/download`, {}); }
+  incrementView(id: number): Observable<Resource> { return this.http.post<Resource>(`${this.url}/${id}/view`, {}); }
   uploadFile(file: File): Observable<{ url: string }> {
     const form = new FormData();
     form.append('file', file);
     return this.http.post<{ url: string }>(`${this.url}/upload`, form);
+  }
+  /**
+   * Fetch an uploaded file (e.g. PDF) as a Blob through HttpClient so the JWT
+   * interceptor attaches the Authorization header. A plain window.open() on the
+   * file URL would navigate without the token and the secured endpoint returns 401.
+   */
+  fetchFile(fileUrl: string): Observable<Blob> {
+    return this.http.get(fileUrl, { responseType: 'blob' });
   }
 }

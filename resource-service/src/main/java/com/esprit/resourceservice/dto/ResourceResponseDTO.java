@@ -18,6 +18,7 @@ public class ResourceResponseDTO {
     private String tags;
     private Long uploadedByUserId;
     private int likeCount;
+    private int viewCount;
     private int downloadCount;
     private boolean likedByMe;
     private LocalDateTime createdAt;

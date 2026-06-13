@@ -17,4 +17,5 @@ public interface ResourceService {
     void delete(Long id, Long userId);
     ResourceResponseDTO toggleLike(Long id, Long userId);
     ResourceResponseDTO incrementDownload(Long id);
+    ResourceResponseDTO incrementView(Long id);
 }

@@ -75,6 +75,11 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.incrementDownload(id));
     }
 
+    @PostMapping("/{id}/view")
+    public ResponseEntity<ResourceResponseDTO> view(@PathVariable Long id) {
+        return ResponseEntity.ok(resourceService.incrementView(id));
+    }
+
     private Long userId(HttpServletRequest req) {
         String auth = req.getHeader("Authorization");
         if (auth != null && auth.startsWith("Bearer ")) return jwtUtil.extractUserId(auth.substring(7));

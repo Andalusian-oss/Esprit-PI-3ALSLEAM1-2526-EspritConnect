@@ -303,6 +303,8 @@ export interface Translations {
   'res.liked': string;
   'res.like': string;
   'res.open': string;
+  'res.view': string;
+  'res.download': string;
   'res.prevBtn': string;
   'res.nextBtn': string;
   // ── Profile ──
@@ -812,6 +814,8 @@ const en: Translations = {
   'res.liked': '♥ Liked',
   'res.like': '♡ Like',
   'res.open': 'Open ↗',
+  'res.view': '👁 View',
+  'res.download': '⬇ Download',
   'res.prevBtn': '← Prev',
   'res.nextBtn': 'Next →',
   // ── Profile ──
@@ -1321,6 +1325,8 @@ const fr: Translations = {
   'res.liked': '♥ Aimé',
   'res.like': '♡ J\'aime',
   'res.open': 'Ouvrir ↗',
+  'res.view': '👁 Consulter',
+  'res.download': '⬇ Télécharger',
   'res.prevBtn': '← Précédent',
   'res.nextBtn': 'Suivant →',
   // ── Profile ──
