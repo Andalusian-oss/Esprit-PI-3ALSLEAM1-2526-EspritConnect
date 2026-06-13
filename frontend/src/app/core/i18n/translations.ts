@@ -367,6 +367,64 @@ export interface Translations {
   'admin.subtitle': string;
   'admin.navOverview': string;
   'admin.navPosts': string;
+  'admin.statsTitle': string;
+  'stats.subtitle': string;
+  'stats.back': string;
+  'stats.refresh': string;
+  'stats.range7d': string;
+  'stats.range30d': string;
+  'stats.range90d': string;
+  'stats.range1y': string;
+  'stats.rangeAll': string;
+  'stats.userGrowth': string;
+  'stats.demographics': string;
+  'stats.realtime': string;
+  'stats.contentOverview': string;
+  'stats.engagement': string;
+  'stats.events': string;
+  'stats.jobs': string;
+  'stats.topContent': string;
+  'stats.resources': string;
+  'stats.mentoring': string;
+  'stats.heatmap': string;
+  'stats.performance': string;
+  'stats.distribution': string;
+  'stats.funnel': string;
+  'stats.impact': string;
+  'stats.predictions': string;
+  'stats.studyTerm': string;
+  'stats.summerBreak': string;
+  'stats.holiday': string;
+  'stats.activeNow': string;
+  'stats.thisWeek': string;
+  'stats.avg': string;
+  'stats.activeJobs': string;
+  'stats.applications': string;
+  'stats.acceptanceRate': string;
+  'stats.avgMatchScore': string;
+  'stats.tabPosts': string;
+  'stats.tabEvents': string;
+  'stats.tabJobs': string;
+  'stats.downloadRate': string;
+  'stats.totalResources': string;
+  'stats.totalDownloads': string;
+  'stats.avgRating': string;
+  'stats.topCategory': string;
+  'stats.activeMentors': string;
+  'stats.totalSessions': string;
+  'stats.completed': string;
+  'stats.less': string;
+  'stats.more': string;
+  'stats.conversion': string;
+  'stats.confidence': string;
+  'stats.activities': string;
+  'stats.mon': string;
+  'stats.tue': string;
+  'stats.wed': string;
+  'stats.thu': string;
+  'stats.fri': string;
+  'stats.sat': string;
+  'stats.sun': string;
   'admin.users': string;
   'admin.online': string;
   'admin.noAccess': string;
@@ -880,6 +938,64 @@ const en: Translations = {
   'admin.subtitle': 'Platform overview and user management',
   'admin.navOverview': 'Overview',
   'admin.navPosts': 'Post Moderation',
+  'admin.statsTitle': 'Platform Analytics & Statistics',
+  'stats.subtitle': 'Comprehensive insights and metrics across EspritConnect',
+  'stats.back': 'Back to Admin',
+  'stats.refresh': 'Refresh',
+  'stats.range7d': 'Last 7 Days',
+  'stats.range30d': 'Last 30 Days',
+  'stats.range90d': 'Last 90 Days',
+  'stats.range1y': 'Last Year',
+  'stats.rangeAll': 'All Time',
+  'stats.userGrowth': 'User Growth Over Time',
+  'stats.demographics': 'User Demographics',
+  'stats.realtime': 'Real-time Activity',
+  'stats.contentOverview': 'Content Overview',
+  'stats.engagement': 'Engagement Metrics',
+  'stats.events': 'Events Analytics',
+  'stats.jobs': 'Jobs & Recruitment',
+  'stats.topContent': 'Trending & Top Content',
+  'stats.resources': 'Resources & Learning',
+  'stats.mentoring': 'Mentoring Program',
+  'stats.heatmap': 'Activity Heatmap (Last 30 Days)',
+  'stats.performance': 'System Performance',
+  'stats.distribution': 'User Distribution',
+  'stats.funnel': 'User Journey Funnel',
+  'stats.impact': 'Platform Impact',
+  'stats.predictions': 'Predictions & Forecasts',
+  'stats.studyTerm': 'Study Term',
+  'stats.summerBreak': 'Summer Break',
+  'stats.holiday': 'Holiday',
+  'stats.activeNow': 'Active Now',
+  'stats.thisWeek': 'this week',
+  'stats.avg': 'Avg',
+  'stats.activeJobs': 'Active Jobs',
+  'stats.applications': 'Applications',
+  'stats.acceptanceRate': 'Acceptance Rate',
+  'stats.avgMatchScore': 'Avg Match Score',
+  'stats.tabPosts': 'Posts',
+  'stats.tabEvents': 'Events',
+  'stats.tabJobs': 'Jobs',
+  'stats.downloadRate': 'Download Rate',
+  'stats.totalResources': 'Total Resources',
+  'stats.totalDownloads': 'Total Downloads',
+  'stats.avgRating': 'Avg Rating',
+  'stats.topCategory': 'Most Popular Category',
+  'stats.activeMentors': 'Active Mentors',
+  'stats.totalSessions': 'Total Sessions',
+  'stats.completed': 'Completed',
+  'stats.less': 'Less',
+  'stats.more': 'More',
+  'stats.conversion': 'conversion',
+  'stats.confidence': 'Confidence',
+  'stats.activities': 'activities',
+  'stats.mon': 'Mon',
+  'stats.tue': 'Tue',
+  'stats.wed': 'Wed',
+  'stats.thu': 'Thu',
+  'stats.fri': 'Fri',
+  'stats.sat': 'Sat',
+  'stats.sun': 'Sun',
   'admin.users': 'users',
   'admin.online': 'online',
   'admin.noAccess': 'Access reserved for administrators.',
@@ -1393,6 +1509,64 @@ const fr: Translations = {
   'admin.subtitle': 'Vue d\'ensemble de la plateforme et gestion des utilisateurs',
   'admin.navOverview': 'Vue d\'ensemble',
   'admin.navPosts': 'Modération des publications',
+  'admin.statsTitle': 'Analyses et statistiques de la plateforme',
+  'stats.subtitle': 'Analyses complètes et indicateurs sur EspritConnect',
+  'stats.back': 'Retour à l\'admin',
+  'stats.refresh': 'Actualiser',
+  'stats.range7d': '7 derniers jours',
+  'stats.range30d': '30 derniers jours',
+  'stats.range90d': '90 derniers jours',
+  'stats.range1y': 'Année dernière',
+  'stats.rangeAll': 'Tout le temps',
+  'stats.userGrowth': 'Croissance des utilisateurs',
+  'stats.demographics': 'Démographie des utilisateurs',
+  'stats.realtime': 'Activité en temps réel',
+  'stats.contentOverview': 'Aperçu du contenu',
+  'stats.engagement': 'Indicateurs d\'engagement',
+  'stats.events': 'Analyses des événements',
+  'stats.jobs': 'Emplois et recrutement',
+  'stats.topContent': 'Tendances et contenu populaire',
+  'stats.resources': 'Ressources et apprentissage',
+  'stats.mentoring': 'Programme de mentorat',
+  'stats.heatmap': 'Carte d\'activité (30 derniers jours)',
+  'stats.performance': 'Performance du système',
+  'stats.distribution': 'Répartition des utilisateurs',
+  'stats.funnel': 'Entonnoir du parcours utilisateur',
+  'stats.impact': 'Impact de la plateforme',
+  'stats.predictions': 'Prédictions et prévisions',
+  'stats.studyTerm': 'Période d\'études',
+  'stats.summerBreak': 'Vacances d\'été',
+  'stats.holiday': 'Vacances',
+  'stats.activeNow': 'Actifs maintenant',
+  'stats.thisWeek': 'cette semaine',
+  'stats.avg': 'Moy.',
+  'stats.activeJobs': 'Offres actives',
+  'stats.applications': 'Candidatures',
+  'stats.acceptanceRate': 'Taux d\'acceptation',
+  'stats.avgMatchScore': 'Score de correspondance moyen',
+  'stats.tabPosts': 'Publications',
+  'stats.tabEvents': 'Événements',
+  'stats.tabJobs': 'Emplois',
+  'stats.downloadRate': 'Taux de téléchargement',
+  'stats.totalResources': 'Ressources totales',
+  'stats.totalDownloads': 'Téléchargements totaux',
+  'stats.avgRating': 'Note moyenne',
+  'stats.topCategory': 'Catégorie la plus populaire',
+  'stats.activeMentors': 'Mentors actifs',
+  'stats.totalSessions': 'Sessions totales',
+  'stats.completed': 'Terminées',
+  'stats.less': 'Moins',
+  'stats.more': 'Plus',
+  'stats.conversion': 'conversion',
+  'stats.confidence': 'Confiance',
+  'stats.activities': 'activités',
+  'stats.mon': 'Lun',
+  'stats.tue': 'Mar',
+  'stats.wed': 'Mer',
+  'stats.thu': 'Jeu',
+  'stats.fri': 'Ven',
+  'stats.sat': 'Sam',
+  'stats.sun': 'Dim',
   'admin.users': 'utilisateurs',
   'admin.online': 'en ligne',
   'admin.noAccess': 'Accès réservé aux administrateurs.',

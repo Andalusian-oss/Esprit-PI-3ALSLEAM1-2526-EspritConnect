@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
+import { Translations } from '../../core/i18n/translations';
 import { JobService } from '../../core/services/job.service';
 import { Mentoring } from '../../core/models/models';
 import { catchError } from 'rxjs/operators';
@@ -21,21 +22,21 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
       <div class="stats-header">
         <div>
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-            <button class="btn-back" (click)="goBack()">← Back to Admin</button>
-            <h1 style="margin: 0;">📊 Platform Analytics & Statistics</h1>
+            <button class="btn-back" (click)="goBack()">← {{ languageService.t('stats.back') }}</button>
+            <h1 style="margin: 0;">📊 {{ languageService.t('admin.statsTitle') }}</h1>
           </div>
-          <p class="stats-subtitle">Comprehensive insights and metrics across EspritConnect</p>
+          <p class="stats-subtitle">{{ languageService.t('stats.subtitle') }}</p>
         </div>
         <div class="stats-header-actions">
           <button class="btn-outline" (click)="refreshData()">
-            <span class="icon">🔄</span> Refresh
+            <span class="icon">🔄</span> {{ languageService.t('stats.refresh') }}
           </button>
           <select class="time-range-select" [(ngModel)]="timeRange" (change)="onTimeRangeChange()">
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-            <option value="1y">Last Year</option>
-            <option value="all">All Time</option>
+            <option value="7d">{{ languageService.t('stats.range7d') }}</option>
+            <option value="30d">{{ languageService.t('stats.range30d') }}</option>
+            <option value="90d">{{ languageService.t('stats.range90d') }}</option>
+            <option value="1y">{{ languageService.t('stats.range1y') }}</option>
+            <option value="all">{{ languageService.t('stats.rangeAll') }}</option>
           </select>
         </div>
       </div>
@@ -60,7 +61,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- User Growth Chart -->
         <div class="stats-panel full-width">
-          <h3>👥 User Growth Over Time</h3>
+          <h3>👥 {{ languageService.t('stats.userGrowth') }}</h3>
           <div class="chart-container">
             <div class="line-chart">
               <div class="chart-y-axis">
@@ -73,10 +74,10 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
               </div>
               <div class="chart-plot">
                 <div class="season-bands" aria-hidden="true">
-                  <div class="season-band season-study" style="left: 0%; width: 41.67%;">Study Term</div>
-                  <div class="season-band season-break" style="left: 41.67%; width: 25%;">Summer Break</div>
-                  <div class="season-band season-study" style="left: 66.67%; width: 25%;">Study Term</div>
-                  <div class="season-band season-break" style="left: 91.67%; width: 8.33%;">Holiday</div>
+                  <div class="season-band season-study" style="left: 0%; width: 41.67%;">{{ languageService.t('stats.studyTerm') }}</div>
+                  <div class="season-band season-break" style="left: 41.67%; width: 25%;">{{ languageService.t('stats.summerBreak') }}</div>
+                  <div class="season-band season-study" style="left: 66.67%; width: 25%;">{{ languageService.t('stats.studyTerm') }}</div>
+                  <div class="season-band season-break" style="left: 91.67%; width: 8.33%;">{{ languageService.t('stats.holiday') }}</div>
                 </div>
                 <div class="chart-frame" aria-hidden="true"></div>
                 <svg class="chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="User growth chart">
@@ -113,7 +114,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- User Demographics -->
         <div class="stats-panel">
-          <h3>👨‍🎓 User Demographics</h3>
+          <h3>👨‍🎓 {{ languageService.t('stats.demographics') }}</h3>
           <div class="demo-stats">
             <div class="demo-item" *ngFor="let demo of demographics">
               <div class="demo-bar-wrap">
@@ -129,12 +130,12 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Active Users Real-time -->
         <div class="stats-panel">
-          <h3>⚡ Real-time Activity</h3>
+          <h3>⚡ {{ languageService.t('stats.realtime') }}</h3>
           <div class="realtime-metrics">
             <div class="realtime-big">
               <span class="pulse-dot"></span>
               <div class="realtime-number">{{ realtimeActive }}</div>
-              <div class="realtime-label">Active Now</div>
+              <div class="realtime-label">{{ languageService.t('stats.activeNow') }}</div>
             </div>
             <div class="realtime-list">
               <div class="realtime-item" *ngFor="let activity of recentActivity">
@@ -148,14 +149,14 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Content Statistics -->
         <div class="stats-panel">
-          <h3>📝 Content Overview</h3>
+          <h3>📝 {{ languageService.t('stats.contentOverview') }}</h3>
           <div class="content-grid">
             <div class="content-stat" *ngFor="let stat of contentStats">
               <div class="content-icon" [style.background]="stat.color">{{ stat.icon }}</div>
               <div class="content-number">{{ stat.count }}</div>
               <div class="content-label">{{ stat.label }}</div>
               <div class="content-trend" [class.up]="stat.trend > 0" [class.down]="stat.trend < 0">
-                {{ stat.trend > 0 ? '+' : '' }}{{ stat.trend }}% this week
+                {{ stat.trend > 0 ? '+' : '' }}{{ stat.trend }}% {{ languageService.t('stats.thisWeek') }}
               </div>
             </div>
           </div>
@@ -163,7 +164,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Engagement Metrics -->
         <div class="stats-panel">
-          <h3>💬 Engagement Metrics</h3>
+          <h3>💬 {{ languageService.t('stats.engagement') }}</h3>
           <div class="engagement-list">
             <div class="engagement-item" *ngFor="let metric of engagementMetrics">
               <div class="engagement-header">
@@ -174,7 +175,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
                 <div class="engagement-fill" [style.width.%]="metric.percentage" [style.background]="metric.color"></div>
               </div>
               <div class="engagement-footer">
-                <span class="engagement-avg">Avg: {{ metric.average }}</span>
+                <span class="engagement-avg">{{ languageService.t('stats.avg') }}: {{ metric.average }}</span>
                 <span class="engagement-change" [class.positive]="metric.change > 0">
                   {{ metric.change > 0 ? '+' : '' }}{{ metric.change }}%
                 </span>
@@ -185,7 +186,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Events Analytics -->
         <div class="stats-panel">
-          <h3>🎉 Events Analytics</h3>
+          <h3>🎉 {{ languageService.t('stats.events') }}</h3>
           <div class="metric-cards">
             <div class="metric-card" *ngFor="let metric of eventMetrics">
               <div class="metric-label">{{ metric.label }}</div>
@@ -209,23 +210,23 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Jobs & Applications -->
         <div class="stats-panel">
-          <h3>💼 Jobs & Recruitment</h3>
+          <h3>💼 {{ languageService.t('stats.jobs') }}</h3>
           <div class="job-stats-grid">
             <div class="job-stat-card">
               <div class="job-stat-number">{{ jobStats.totalJobs }}</div>
-              <div class="job-stat-label">Active Jobs</div>
+              <div class="job-stat-label">{{ languageService.t('stats.activeJobs') }}</div>
             </div>
             <div class="job-stat-card">
               <div class="job-stat-number">{{ jobStats.totalApplications }}</div>
-              <div class="job-stat-label">Applications</div>
+              <div class="job-stat-label">{{ languageService.t('stats.applications') }}</div>
             </div>
             <div class="job-stat-card green">
               <div class="job-stat-number">{{ jobStats.acceptanceRate }}%</div>
-              <div class="job-stat-label">Acceptance Rate</div>
+              <div class="job-stat-label">{{ languageService.t('stats.acceptanceRate') }}</div>
             </div>
             <div class="job-stat-card blue">
               <div class="job-stat-number">{{ jobStats.avgMatchScore }}</div>
-              <div class="job-stat-label">Avg Match Score</div>
+              <div class="job-stat-label">{{ languageService.t('stats.avgMatchScore') }}</div>
             </div>
           </div>
           <div class="job-type-breakdown">
@@ -241,11 +242,11 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Top Content -->
         <div class="stats-panel">
-          <h3>🔥 Trending & Top Content</h3>
+          <h3>🔥 {{ languageService.t('stats.topContent') }}</h3>
           <div class="top-content-tabs">
-            <button [class.active]="topContentTab === 'posts'" (click)="topContentTab = 'posts'">Posts</button>
-            <button [class.active]="topContentTab === 'events'" (click)="topContentTab = 'events'">Events</button>
-            <button [class.active]="topContentTab === 'jobs'" (click)="topContentTab = 'jobs'">Jobs</button>
+            <button [class.active]="topContentTab === 'posts'" (click)="topContentTab = 'posts'">{{ languageService.t('stats.tabPosts') }}</button>
+            <button [class.active]="topContentTab === 'events'" (click)="topContentTab = 'events'">{{ languageService.t('stats.tabEvents') }}</button>
+            <button [class.active]="topContentTab === 'jobs'" (click)="topContentTab = 'jobs'">{{ languageService.t('stats.tabJobs') }}</button>
           </div>
           <div class="top-content-list">
             <div class="top-content-item" *ngFor="let item of getTopContent(); let i = index">
@@ -266,7 +267,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Resources Analytics -->
         <div class="stats-panel">
-          <h3>📚 Resources & Learning</h3>
+          <h3>📚 {{ languageService.t('stats.resources') }}</h3>
           <div class="resource-stats">
             <div class="resource-circle">
               <svg viewBox="0 0 36 36" class="circular-chart">
@@ -274,23 +275,23 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
                 <path class="circle" stroke-dasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 <text x="18" y="20.35" class="percentage">{{ resourceStats.downloadRate }}%</text>
               </svg>
-              <div class="circle-label">Download Rate</div>
+              <div class="circle-label">{{ languageService.t('stats.downloadRate') }}</div>
             </div>
             <div class="resource-details">
               <div class="resource-detail">
-                <span class="resource-detail-label">Total Resources</span>
+                <span class="resource-detail-label">{{ languageService.t('stats.totalResources') }}</span>
                 <span class="resource-detail-value">{{ resourceStats.total }}</span>
               </div>
               <div class="resource-detail">
-                <span class="resource-detail-label">Total Downloads</span>
+                <span class="resource-detail-label">{{ languageService.t('stats.totalDownloads') }}</span>
                 <span class="resource-detail-value">{{ resourceStats.downloads }}</span>
               </div>
               <div class="resource-detail">
-                <span class="resource-detail-label">Avg Rating</span>
+                <span class="resource-detail-label">{{ languageService.t('stats.avgRating') }}</span>
                 <span class="resource-detail-value">⭐ {{ resourceStats.avgRating }}</span>
               </div>
               <div class="resource-detail">
-                <span class="resource-detail-label">Most Popular Category</span>
+                <span class="resource-detail-label">{{ languageService.t('stats.topCategory') }}</span>
                 <span class="resource-detail-value">{{ resourceStats.topCategory }}</span>
               </div>
             </div>
@@ -299,19 +300,19 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Mentoring Analytics -->
         <div class="stats-panel">
-          <h3>🎓 Mentoring Program</h3>
+          <h3>🎓 {{ languageService.t('stats.mentoring') }}</h3>
           <div class="mentoring-overview">
             <div class="mentoring-stat">
               <div class="mentoring-number">{{ mentoringStats.activeMentors }}</div>
-              <div class="mentoring-label">Active Mentors</div>
+              <div class="mentoring-label">{{ languageService.t('stats.activeMentors') }}</div>
             </div>
             <div class="mentoring-stat">
               <div class="mentoring-number">{{ mentoringStats.totalSessions }}</div>
-              <div class="mentoring-label">Total Sessions</div>
+              <div class="mentoring-label">{{ languageService.t('stats.totalSessions') }}</div>
             </div>
             <div class="mentoring-stat">
               <div class="mentoring-number">{{ mentoringStats.completed }}</div>
-              <div class="mentoring-label">Completed</div>
+              <div class="mentoring-label">{{ languageService.t('stats.completed') }}</div>
             </div>
           </div>
           <div class="mentoring-domains" *ngIf="topMentoringDomains.length">
@@ -323,36 +324,36 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Activity Heatmap -->
         <div class="stats-panel full-width">
-          <h3>🔥 Activity Heatmap (Last 30 Days)</h3>
+          <h3>🔥 {{ languageService.t('stats.heatmap') }}</h3>
           <div class="heatmap">
             <div class="heatmap-row" *ngFor="let day of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']">
-              <span class="heatmap-label">{{ day }}</span>
+              <span class="heatmap-label">{{ dayLabel(day) }}</span>
               <div class="heatmap-cells">
-                <div class="heatmap-cell" *ngFor="let cell of getHeatmapData(day)" 
+                <div class="heatmap-cell" *ngFor="let cell of getHeatmapData(day)"
                      [class.intensity-0]="cell === 0"
                      [class.intensity-1]="cell > 0 && cell <= 25"
                      [class.intensity-2]="cell > 25 && cell <= 50"
                      [class.intensity-3]="cell > 50 && cell <= 75"
                      [class.intensity-4]="cell > 75"
-                     [title]="cell + ' activities'">
+                     [title]="cell + ' ' + languageService.t('stats.activities')">
                 </div>
               </div>
             </div>
           </div>
           <div class="heatmap-legend">
-            <span>Less</span>
+            <span>{{ languageService.t('stats.less') }}</span>
             <div class="legend-cell intensity-0"></div>
             <div class="legend-cell intensity-1"></div>
             <div class="legend-cell intensity-2"></div>
             <div class="legend-cell intensity-3"></div>
             <div class="legend-cell intensity-4"></div>
-            <span>More</span>
+            <span>{{ languageService.t('stats.more') }}</span>
           </div>
         </div>
 
         <!-- Performance Metrics -->
         <div class="stats-panel">
-          <h3>⚙️ System Performance</h3>
+          <h3>⚙️ {{ languageService.t('stats.performance') }}</h3>
           <div class="performance-metrics">
             <div class="perf-metric" *ngFor="let perf of performanceMetrics">
               <div class="perf-header">
@@ -372,7 +373,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Geographic Distribution -->
         <div class="stats-panel">
-          <h3>🌍 User Distribution</h3>
+          <h3>🌍 {{ languageService.t('stats.distribution') }}</h3>
           <div class="geo-stats">
             <div class="geo-item" *ngFor="let geo of geographicData">
               <div class="geo-flag">{{ geo.flag }}</div>
@@ -389,20 +390,20 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Conversion Funnels -->
         <div class="stats-panel">
-          <h3>📊 User Journey Funnel</h3>
+          <h3>📊 {{ languageService.t('stats.funnel') }}</h3>
           <div class="funnel">
             <div class="funnel-stage" *ngFor="let stage of conversionFunnel; let i = index" 
                  [style.width.%]="stage.percentage">
               <div class="funnel-label">{{ stage.label }}</div>
               <div class="funnel-value">{{ stage.value }} ({{ stage.percentage }}%)</div>
-              <div class="funnel-conversion" *ngIf="i > 0">{{ stage.conversionRate }}% conversion</div>
+              <div class="funnel-conversion" *ngIf="i > 0">{{ stage.conversionRate }}% {{ languageService.t('stats.conversion') }}</div>
             </div>
           </div>
         </div>
 
         <!-- Revenue/Impact Metrics (if applicable) -->
         <div class="stats-panel">
-          <h3>💰 Platform Impact</h3>
+          <h3>💰 {{ languageService.t('stats.impact') }}</h3>
           <div class="impact-cards">
             <div class="impact-card" *ngFor="let impact of impactMetrics">
               <div class="impact-icon">{{ impact.icon }}</div>
@@ -417,7 +418,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Predictions & Forecasts -->
         <div class="stats-panel full-width">
-          <h3>🔮 Predictions & Forecasts</h3>
+          <h3>🔮 {{ languageService.t('stats.predictions') }}</h3>
           <div class="predictions-grid">
             <div class="prediction-card" *ngFor="let pred of predictions">
               <div class="prediction-title">{{ pred.title }}</div>
@@ -435,7 +436,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
                 </div>
               </div>
               <div class="prediction-confidence">
-                Confidence: <strong>{{ pred.confidence }}%</strong>
+                {{ languageService.t('stats.confidence') }}: <strong>{{ pred.confidence }}%</strong>
               </div>
             </div>
           </div>
@@ -923,7 +924,7 @@ export class StatisticsComponent implements OnInit {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private languageService: LanguageService,
+    public languageService: LanguageService,
     private jobService: JobService
   ) {}
 
@@ -931,6 +932,14 @@ export class StatisticsComponent implements OnInit {
     this.updateUserGrowthPlot();
     this.refreshData();
     this.loadMentoringStats();
+  }
+
+  dayLabel(day: string): string {
+    const keys: Record<string, keyof Translations> = {
+      Mon: 'stats.mon', Tue: 'stats.tue', Wed: 'stats.wed', Thu: 'stats.thu',
+      Fri: 'stats.fri', Sat: 'stats.sat', Sun: 'stats.sun'
+    };
+    return keys[day] ? this.languageService.t(keys[day]) : day;
   }
 
   /** Pull every mentoring relationship and derive the real mentoring KPIs + top domains. */
