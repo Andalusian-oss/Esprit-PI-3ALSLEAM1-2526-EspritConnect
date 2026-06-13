@@ -17,6 +17,8 @@ import time
 from typing import Optional, AsyncGenerator
 from collections import defaultdict
 
+from platform_context import build_platform_context, role_from_auth_header, is_admin
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("chatbot")
 
@@ -80,6 +82,16 @@ Formatting rules:
 - Answer in the same language the user writes in (French or English).
 - Be friendly, helpful, and thorough; match the depth of the answer to the question.
 """
+
+# Privacy contract appended whenever live platform stats are injected.
+PRIVACY_RULES = """
+
+PRIVACY & SECURITY RULES (must always be respected):
+- The "platform statistics" provided below are AGGREGATED numbers only.
+- NEVER reveal or invent any individual's personal data: no names, emails, passwords, user IDs, phone numbers, CIN, ESPRIT IDs, documents, message/conversation contents, or who applied to which job / their CV.
+- If a user asks for any private or personal information about specific people, politely refuse and explain you only have anonymous, aggregated statistics.
+- Detailed admin-level statistics are only available to administrators. If the data below does not contain something, say you don't have access to it rather than guessing.
+- Base any numeric answer ONLY on the statistics provided below; do not fabricate figures."""
 
 # ── Rule-based fallback ────────────────────────────────────────────────────
 RULES = [
@@ -168,10 +180,14 @@ def rule_based_response(message: str) -> str:
             "Type 'help' to see all options.")
 
 
-def build_messages(message: str, history: list, user_role: Optional[str]) -> list:
+def build_messages(message: str, history: list, user_role: Optional[str],
+                   platform_context: str = "") -> list:
     system = SYSTEM_PROMPT
     if user_role:
         system += f"\n\nCurrent user role: {user_role}"
+    if platform_context:
+        system += PRIVACY_RULES
+        system += "\n\nLIVE PLATFORM STATISTICS (use these to answer data/stats questions):\n" + platform_context
     msgs = [{"role": "system", "content": system}]
     for h in (history or [])[-20:]:
         msgs.append({"role": h.role, "content": h.content})
@@ -179,8 +195,8 @@ def build_messages(message: str, history: list, user_role: Optional[str]) -> lis
     return msgs
 
 
-async def openai_chat(message: str, history: list, user_role: Optional[str]) -> str:
-    msgs = build_messages(message, history, user_role)
+async def openai_chat(message: str, history: list, user_role: Optional[str], platform_context: str = "") -> str:
+    msgs = build_messages(message, history, user_role, platform_context)
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             OPENAI_URL,
@@ -192,8 +208,8 @@ async def openai_chat(message: str, history: list, user_role: Optional[str]) -> 
         return resp.json()["choices"][0]["message"]["content"]
 
 
-async def groq_chat(message: str, history: list, user_role: Optional[str]) -> str:
-    msgs = build_messages(message, history, user_role)
+async def groq_chat(message: str, history: list, user_role: Optional[str], platform_context: str = "") -> str:
+    msgs = build_messages(message, history, user_role, platform_context)
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             GROQ_URL,
@@ -257,12 +273,16 @@ async def chat(req: ChatRequest, request: Request):
     history = req.history or []
     engine_used = "rule-based"
 
+    # Role is taken from the *verified* JWT, never from the client-sent field.
+    verified_role = role_from_auth_header(request.headers.get("authorization"))
+    ctx = build_platform_context(verified_role)
+
     # Priority 1: OpenAI
     if OPENAI_API_KEY:
         try:
-            response = await openai_chat(req.message, history, req.user_role)
+            response = await openai_chat(req.message, history, verified_role or req.user_role, ctx)
             engine_used = "openai"
-            logger.info("chat engine=openai ip=%s role=%s", client_ip, req.user_role)
+            logger.info("chat engine=openai ip=%s role=%s admin=%s", client_ip, verified_role, is_admin(verified_role))
             return {"response": response, "engine": engine_used}
         except Exception as exc:
             logger.warning("OpenAI failed, falling back: %s", exc)
@@ -270,9 +290,9 @@ async def chat(req: ChatRequest, request: Request):
     # Priority 2: Groq
     if GROQ_API_KEY:
         try:
-            response = await groq_chat(req.message, history, req.user_role)
+            response = await groq_chat(req.message, history, verified_role or req.user_role, ctx)
             engine_used = "groq"
-            logger.info("chat engine=groq ip=%s role=%s", client_ip, req.user_role)
+            logger.info("chat engine=groq ip=%s role=%s admin=%s", client_ip, verified_role, is_admin(verified_role))
             return {"response": response, "engine": engine_used}
         except Exception as exc:
             logger.warning("Groq failed, falling back: %s", exc)
@@ -292,7 +312,10 @@ async def chat_stream(req: ChatRequest, request: Request):
     client_ip = request.client.host if request.client else "unknown"
     check_rate_limit(client_ip)
 
-    msgs = build_messages(req.message, req.history or [], req.user_role)
+    # Role is taken from the *verified* JWT, never from the client-sent field.
+    verified_role = role_from_auth_header(request.headers.get("authorization"))
+    ctx = build_platform_context(verified_role)
+    msgs = build_messages(req.message, req.history or [], verified_role or req.user_role, ctx)
     engines = []
     if OPENAI_API_KEY:
         engines.append(("openai", OPENAI_URL, OPENAI_API_KEY, OPENAI_MODEL))

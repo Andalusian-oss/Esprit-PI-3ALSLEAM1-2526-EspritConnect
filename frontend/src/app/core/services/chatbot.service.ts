@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChatResponse } from '../models/models';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 export interface ChatPayload {
   message: string;
@@ -20,7 +21,7 @@ export interface ChatStreamEvent {
 export class ChatbotService {
   private url = `${environment.apiUrl}/chatbot`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
   chat(payload: ChatPayload): Observable<ChatResponse> {
     return this.http.post<ChatResponse>(`${this.url}/chat`, payload);
@@ -35,9 +36,13 @@ export class ChatbotService {
     return new Observable<ChatStreamEvent>(observer => {
       const controller = new AbortController();
 
+      const token = this.auth.getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       fetch(`${this.url}/chat/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(payload),
         signal: controller.signal
       }).then(async res => {
