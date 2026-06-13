@@ -365,6 +365,8 @@ export interface Translations {
   // ── Admin ──
   'admin.title': string;
   'admin.subtitle': string;
+  'admin.navOverview': string;
+  'admin.navPosts': string;
   'admin.users': string;
   'admin.online': string;
   'admin.noAccess': string;
@@ -876,6 +878,8 @@ const en: Translations = {
   // ── Admin ──
   'admin.title': 'Admin Dashboard',
   'admin.subtitle': 'Platform overview and user management',
+  'admin.navOverview': 'Overview',
+  'admin.navPosts': 'Post Moderation',
   'admin.users': 'users',
   'admin.online': 'online',
   'admin.noAccess': 'Access reserved for administrators.',
@@ -1387,6 +1391,8 @@ const fr: Translations = {
   // ── Admin ──
   'admin.title': 'Tableau de bord Admin',
   'admin.subtitle': 'Vue d\'ensemble de la plateforme et gestion des utilisateurs',
+  'admin.navOverview': 'Vue d\'ensemble',
+  'admin.navPosts': 'Modération des publications',
   'admin.users': 'utilisateurs',
   'admin.online': 'en ligne',
   'admin.noAccess': 'Accès réservé aux administrateurs.',

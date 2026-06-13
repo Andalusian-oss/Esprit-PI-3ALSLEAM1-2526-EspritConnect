@@ -48,8 +48,24 @@ const ROLE_LABELS: Record<string, string> = {
       </div>
 
       <ng-container *ngIf="isAdmin">
+       <div class="admin-layout">
 
-        <!-- Role Stats -->
+        <!-- ── Sidebar nav ── -->
+        <aside class="admin-sidebar">
+          <button class="admin-nav-item" *ngFor="let item of navItems"
+                  [class.active]="activeSection === item.id"
+                  (click)="activeSection = item.id">
+            <span class="icon" [ngClass]="item.icon"></span>
+            <span class="admin-nav-label">{{ lang.t(item.labelKey) || item.fallback }}</span>
+            <span class="admin-nav-badge" *ngIf="item.badge && item.badge() > 0">{{ item.badge() }}</span>
+          </button>
+        </aside>
+
+        <!-- ── Content panel ── -->
+        <div class="admin-content">
+
+        <!-- Overview -->
+        <ng-container *ngIf="activeSection === 'overview'">
         <div class="stats-grid">
           <div class="stat-card" *ngFor="let s of roleStats">
             <div class="stat-value">{{ s.count }}</div>
@@ -57,8 +73,28 @@ const ROLE_LABELS: Record<string, string> = {
           </div>
         </div>
 
+        <!-- Quick links -->
+        <div class="admin-grid" style="margin-top:28px">
+          <a class="admin-tile" routerLink="/feed">
+            <span class="icon icon-home"></span>
+            <strong>{{ lang.t('admin.feedTile') }}</strong>
+            <small>{{ lang.t('admin.feedDesc') }}</small>
+          </a>
+          <a class="admin-tile" routerLink="/events">
+            <span class="icon icon-calendar"></span>
+            <strong>{{ lang.t('admin.eventsTile') }}</strong>
+            <small>{{ lang.t('admin.eventsDesc') }}</small>
+          </a>
+          <a class="admin-tile" routerLink="/jobs">
+            <span class="icon icon-briefcase"></span>
+            <strong>{{ lang.t('admin.jobsTile') }}</strong>
+            <small>{{ lang.t('admin.jobsDesc') }}</small>
+          </a>
+        </div>
+        </ng-container>
+
         <!-- ── User Directory ── -->
-        <section class="panel" style="margin-top:28px">
+        <section class="panel" *ngIf="activeSection === 'users'">
           <div class="panel-header">
             <h2>{{ lang.t('admin.userDirectory') }}</h2>
             <span class="badge badge-info">{{ filteredUsers.length }} {{ lang.t('admin.results') }}</span>
@@ -129,30 +165,8 @@ const ROLE_LABELS: Record<string, string> = {
           </div>
         </section>
 
-        <!-- ── Admin-only sections ── -->
-        <ng-container>
-
-          <!-- Quick links -->
-          <div class="admin-grid" style="margin-top:28px">
-            <a class="admin-tile" routerLink="/feed">
-              <span class="icon icon-home"></span>
-              <strong>{{ lang.t('admin.feedTile') }}</strong>
-              <small>{{ lang.t('admin.feedDesc') }}</small>
-            </a>
-            <a class="admin-tile" routerLink="/events">
-              <span class="icon icon-calendar"></span>
-              <strong>{{ lang.t('admin.eventsTile') }}</strong>
-              <small>{{ lang.t('admin.eventsDesc') }}</small>
-            </a>
-            <a class="admin-tile" routerLink="/jobs">
-              <span class="icon icon-briefcase"></span>
-              <strong>{{ lang.t('admin.jobsTile') }}</strong>
-              <small>{{ lang.t('admin.jobsDesc') }}</small>
-            </a>
-          </div>
-
           <!-- Pending company approvals -->
-          <section class="panel" style="margin-top:28px">
+          <section class="panel" *ngIf="activeSection === 'approvals'">
             <div class="panel-header">
               <h2>{{ lang.t('admin.pendingApprovals') }}</h2>
               <span class="badge badge-danger" *ngIf="pending.length > 0">{{ pending.length }}</span>
@@ -173,7 +187,7 @@ const ROLE_LABELS: Record<string, string> = {
           </section>
 
           <!-- ── Post Moderation ── -->
-          <section class="panel" style="margin-top:28px">
+          <section class="panel" *ngIf="activeSection === 'posts'">
             <div class="panel-header">
               <h2>Post Moderation</h2>
               <span class="badge badge-danger" *ngIf="pendingPosts.length > 0">{{ pendingPosts.length }} pending</span>
@@ -214,7 +228,7 @@ const ROLE_LABELS: Record<string, string> = {
           </section>
 
           <!-- ── Mentor Management ── -->
-          <section class="panel mentor-admin-panel" style="margin-top:28px">
+          <section class="panel mentor-admin-panel" *ngIf="activeSection === 'mentoring'">
             <div class="panel-header">
               <h2>{{ lang.t('admin.mentorSection') }}</h2>
               <div class="mentor-admin-pills">
@@ -314,7 +328,7 @@ const ROLE_LABELS: Record<string, string> = {
           </section>
 
           <!-- Esprit Reference Table -->
-          <section class="panel" style="margin-top:28px">
+          <section class="panel" *ngIf="activeSection === 'references'">
             <div class="panel-header">
               <h2>{{ lang.t('admin.refTable') }}</h2>
               <small>{{ lang.t('admin.refDesc') }}</small>
@@ -372,11 +386,30 @@ const ROLE_LABELS: Record<string, string> = {
             <div *ngIf="references.length === 0" class="empty"><p>{{ lang.t('admin.noRef') }}</p></div>
           </section>
 
-        </ng-container>
+        </div><!-- /.admin-content -->
+       </div><!-- /.admin-layout -->
       </ng-container>
     </div>
   `,
   styles: [`
+    /* ── Sidebar layout ── */
+    .admin-layout { display:grid; grid-template-columns:230px 1fr; gap:24px; align-items:start }
+    .admin-sidebar { position:sticky; top:96px; display:flex; flex-direction:column; gap:4px; padding:10px; border-radius:14px; background:var(--card-bg); border:1px solid var(--border) }
+    .admin-nav-item { display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border:none; border-radius:10px; background:transparent; color:var(--text-muted); font-size:14px; font-weight:600; cursor:pointer; text-align:left; transition:background .15s, color .15s }
+    .admin-nav-item:hover { background:var(--input-bg); color:var(--text) }
+    .admin-nav-item.active { background:rgba(227,30,36,.12); color:#e31e24 }
+    .admin-nav-item.active .icon { background-color:#e31e24 }
+    .admin-nav-label { flex:1 }
+    .admin-nav-badge { min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:#e31e24; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center }
+    .admin-content { min-width:0 }
+    .admin-content > .panel:first-child, .admin-content > .stats-grid:first-child { margin-top:0 }
+    @media (max-width: 860px) {
+      .admin-layout { grid-template-columns:1fr }
+      .admin-sidebar { position:static; flex-direction:row; flex-wrap:wrap; top:auto }
+      .admin-nav-item { width:auto }
+      .admin-nav-label { display:none }
+    }
+    :host-context(.light-theme) .admin-sidebar { background:#fff; border-color:#e0e0e0 }
     .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-top:16px }
     .stat-card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center }
     .stat-value { font-size:28px; font-weight:700; color:var(--accent) }
@@ -429,6 +462,16 @@ const ROLE_LABELS: Record<string, string> = {
   `]
 })
 export class AdminDashboardComponent implements OnInit {
+  activeSection = 'overview';
+  navItems: { id: string; icon: string; labelKey: keyof Translations; fallback: string; badge?: () => number }[] = [
+    { id: 'overview',   icon: 'icon-home',      labelKey: 'admin.navOverview',      fallback: 'Overview' },
+    { id: 'users',      icon: 'icon-users',     labelKey: 'admin.userDirectory',    fallback: 'Users' },
+    { id: 'approvals',  icon: 'icon-building',  labelKey: 'admin.pendingApprovals', fallback: 'Approvals', badge: () => this.pending.length },
+    { id: 'posts',      icon: 'icon-message',   labelKey: 'admin.navPosts',         fallback: 'Posts',     badge: () => this.pendingPosts.length },
+    { id: 'mentoring',  icon: 'icon-mentoring', labelKey: 'admin.mentorSection',    fallback: 'Mentoring' },
+    { id: 'references', icon: 'icon-shield',    labelKey: 'admin.refTable',         fallback: 'References' },
+  ];
+
   allUsers: User[] = [];
   searchQuery = '';
   roleFilter = '';
