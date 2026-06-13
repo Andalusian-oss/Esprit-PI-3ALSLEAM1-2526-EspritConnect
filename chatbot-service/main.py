@@ -5,13 +5,16 @@ Priority: OpenAI (GPT-4o-mini) → Groq (LLaMA 3) → Rule-based fallback
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import httpx
 import os
 import re
+import json
+import asyncio
 import logging
 import time
-from typing import Optional
+from typing import Optional, AsyncGenerator
 from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -48,29 +51,34 @@ OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_URL     = "https://api.openai.com/v1/chat/completions"
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = "llama3-8b-8192"
+GROQ_MODEL   = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions"
 
-SYSTEM_PROMPT = """You are ESPRIT Connect Assistant, a helpful AI chatbot for the ESPRIT Connect campus platform.
+SYSTEM_PROMPT = """You are ESPRIT Connect Assistant, an advanced AI assistant integrated into the ESPRIT Connect campus platform — think of yourself as a ChatGPT-style general assistant with deep knowledge of the platform.
 
 ESPRIT Connect is a professional social network for ESPRIT university (Tunisia) students, alumni, teachers, and companies.
 
-Platform features you can help with:
+You can help with ANYTHING the user asks — general knowledge, studying, coding, math, writing, career advice, CV improvement, interview prep — not only platform questions. Be as capable and versatile as ChatGPT.
+
+Platform features (guide users here when relevant):
 - **Feed**: Share posts, photos, comments, and connect with the ESPRIT community
 - **Events & Clubs**: Discover academic, cultural, sports and tech events; join or create clubs
 - **Jobs**: Browse internships (STAGE), CDI, and CDD job offers; apply with your CV; track applications
 - **Mentoring**: Connect students with mentors (alumni/teachers) for career guidance
-- **Messages**: Real-time chat with individuals and groups
+- **Messages**: Real-time chat with individuals and groups, voice & video calls
 - **Profile**: Manage your academic profile (promo, speciality, parcours)
 - **Resources**: Access educational materials, articles, PDFs, tutorials, and career resources
+- **PFE Books**: Browse and download final-year project (PFE) books shared by HR
 - **CV Analysis**: Recruiters can analyze candidate CVs with AI to extract skills and get match scores
 - **Admin**: Platform administration for ESPRIT staff
 
 User roles: Student, Teacher (Enseignant), Alumni, Employee, Company, Admin, Mentor
 
-Be friendly, helpful, and concise. Answer in the same language the user writes in (French or English).
-Guide users to the relevant platform section when appropriate.
-Keep responses under 250 words unless a detailed explanation is needed.
+Formatting rules:
+- Use Markdown: **bold** for emphasis, bullet lists, numbered steps, and ``` code blocks with the language tag for any code.
+- Structure longer answers with short paragraphs and lists so they are easy to scan.
+- Answer in the same language the user writes in (French or English).
+- Be friendly, helpful, and thorough; match the depth of the answer to the question.
 """
 
 # ── Rule-based fallback ────────────────────────────────────────────────────
@@ -165,7 +173,7 @@ def build_messages(message: str, history: list, user_role: Optional[str]) -> lis
     if user_role:
         system += f"\n\nCurrent user role: {user_role}"
     msgs = [{"role": "system", "content": system}]
-    for h in (history or [])[-8:]:
+    for h in (history or [])[-20:]:
         msgs.append({"role": h.role, "content": h.content})
     msgs.append({"role": "user", "content": message})
     return msgs
@@ -177,7 +185,7 @@ async def openai_chat(message: str, history: list, user_role: Optional[str]) -> 
         resp = await client.post(
             OPENAI_URL,
             headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
-            json={"model": OPENAI_MODEL, "messages": msgs, "max_tokens": 600, "temperature": 0.7},
+            json={"model": OPENAI_MODEL, "messages": msgs, "max_tokens": 1024, "temperature": 0.7},
         )
         if resp.status_code != 200:
             raise Exception(f"OpenAI API error {resp.status_code}: {resp.text}")
@@ -190,11 +198,41 @@ async def groq_chat(message: str, history: list, user_role: Optional[str]) -> st
         resp = await client.post(
             GROQ_URL,
             headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-            json={"model": GROQ_MODEL, "messages": msgs, "max_tokens": 512, "temperature": 0.7},
+            json={"model": GROQ_MODEL, "messages": msgs, "max_tokens": 1024, "temperature": 0.7},
         )
         if resp.status_code != 200:
             raise Exception(f"Groq API error {resp.status_code}: {resp.text}")
         return resp.json()["choices"][0]["message"]["content"]
+
+
+async def stream_llm_deltas(url: str, api_key: str, model: str, msgs: list) -> AsyncGenerator[str, None]:
+    """Stream content deltas from an OpenAI-compatible chat completions API."""
+    payload = {"model": model, "messages": msgs, "max_tokens": 1024, "temperature": 0.7, "stream": True}
+    async with httpx.AsyncClient(timeout=60) as client:
+        async with client.stream(
+            "POST", url,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=payload,
+        ) as resp:
+            if resp.status_code != 200:
+                body = await resp.aread()
+                raise Exception(f"LLM stream error {resp.status_code}: {body.decode(errors='replace')[:300]}")
+            async for line in resp.aiter_lines():
+                if not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if data == "[DONE]":
+                    return
+                try:
+                    delta = json.loads(data)["choices"][0]["delta"].get("content", "")
+                except (json.JSONDecodeError, KeyError, IndexError):
+                    continue
+                if delta:
+                    yield delta
+
+
+def sse(obj: dict) -> str:
+    return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
 
 
 class ChatMessage(BaseModel):
@@ -243,6 +281,54 @@ async def chat(req: ChatRequest, request: Request):
     response = rule_based_response(req.message)
     logger.info("chat engine=rule-based ip=%s role=%s", client_ip, req.user_role)
     return {"response": response, "engine": "rule-based"}
+
+
+@app.post("/chat/stream")
+async def chat_stream(req: ChatRequest, request: Request):
+    """ChatGPT-style streaming endpoint (Server-Sent Events)."""
+    if not req.message.strip():
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(client_ip)
+
+    msgs = build_messages(req.message, req.history or [], req.user_role)
+    engines = []
+    if OPENAI_API_KEY:
+        engines.append(("openai", OPENAI_URL, OPENAI_API_KEY, OPENAI_MODEL))
+    if GROQ_API_KEY:
+        engines.append(("groq", GROQ_URL, GROQ_API_KEY, GROQ_MODEL))
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        for name, url, key, model in engines:
+            streamed_any = False
+            try:
+                async for delta in stream_llm_deltas(url, key, model, msgs):
+                    streamed_any = True
+                    yield sse({"delta": delta})
+                logger.info("chat-stream engine=%s ip=%s role=%s", name, client_ip, req.user_role)
+                yield sse({"done": True, "engine": name})
+                return
+            except Exception as exc:
+                logger.warning("%s stream failed: %s", name, exc)
+                if streamed_any:
+                    # Partial answer already sent — end the stream rather than mixing engines.
+                    yield sse({"done": True, "engine": name})
+                    return
+
+        # Rule-based fallback, streamed word by word for a typing effect
+        text = rule_based_response(req.message)
+        for word in text.split(" "):
+            yield sse({"delta": word + " "})
+            await asyncio.sleep(0.03)
+        logger.info("chat-stream engine=rule-based ip=%s role=%s", client_ip, req.user_role)
+        yield sse({"done": True, "engine": "rule-based"})
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+    )
 
 
 @app.get("/health")

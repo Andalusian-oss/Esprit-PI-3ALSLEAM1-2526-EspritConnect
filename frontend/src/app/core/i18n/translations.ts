@@ -95,6 +95,22 @@ export interface Translations {
   'chat.chips.resources': string;
   'chat.chips.mentor': string;
   'chat.chips.events': string;
+  'chat.chips.cv': string;
+  'chat.newChat': string;
+  'chat.history': string;
+  'chat.noConvos': string;
+  'chat.emptyTitle': string;
+  'chat.emptySub': string;
+  'chat.disclaimer': string;
+  'chat.stop': string;
+  'chat.send': string;
+  'chat.regenerate': string;
+  'chat.copy': string;
+  'chat.copied': string;
+  'chat.deleteConvo': string;
+  'chat.error': string;
+  'chat.expand': string;
+  'nav.assistant': string;
   // ── Common shared ──
   'common.cancel': string;
   'common.save': string;
@@ -564,6 +580,22 @@ const en: Translations = {
   'chat.chips.resources': 'What are Resources?',
   'chat.chips.mentor': 'How does mentoring work?',
   'chat.chips.events': 'How to find events?',
+  'chat.chips.cv': 'Give me tips to improve my CV',
+  'chat.newChat': 'New chat',
+  'chat.history': 'Conversations',
+  'chat.noConvos': 'No conversations yet. Start a new chat!',
+  'chat.emptyTitle': 'How can I help you today?',
+  'chat.emptySub': 'Ask me anything — studies, career, code, or how to use ESPRIT Connect.',
+  'chat.disclaimer': 'AI assistant can make mistakes. Check important info.',
+  'chat.stop': 'Stop generating',
+  'chat.send': 'Send',
+  'chat.regenerate': 'Regenerate',
+  'chat.copy': 'Copy',
+  'chat.copied': 'Copied!',
+  'chat.deleteConvo': 'Delete conversation',
+  'chat.error': 'Sorry, I\'m temporarily unavailable. Please try again later.',
+  'chat.expand': 'Open full chat',
+  'nav.assistant': 'AI Assistant',
   // ── Common shared ──
   'common.cancel': 'Cancel',
   'common.save': 'Save',
@@ -1033,6 +1065,22 @@ const fr: Translations = {
   'chat.chips.resources': 'C\'est quoi les Ressources ?',
   'chat.chips.mentor': 'Comment fonctionne le mentorat ?',
   'chat.chips.events': 'Comment trouver des événements ?',
+  'chat.chips.cv': 'Donne-moi des conseils pour améliorer mon CV',
+  'chat.newChat': 'Nouvelle discussion',
+  'chat.history': 'Conversations',
+  'chat.noConvos': 'Aucune conversation. Lancez une nouvelle discussion !',
+  'chat.emptyTitle': 'Comment puis-je vous aider ?',
+  'chat.emptySub': 'Posez-moi n\'importe quelle question — études, carrière, code, ou l\'utilisation d\'ESPRIT Connect.',
+  'chat.disclaimer': 'L\'assistant IA peut faire des erreurs. Vérifiez les informations importantes.',
+  'chat.stop': 'Arrêter la génération',
+  'chat.send': 'Envoyer',
+  'chat.regenerate': 'Régénérer',
+  'chat.copy': 'Copier',
+  'chat.copied': 'Copié !',
+  'chat.deleteConvo': 'Supprimer la conversation',
+  'chat.error': 'Désolé, je suis temporairement indisponible. Veuillez réessayer plus tard.',
+  'chat.expand': 'Ouvrir le chat complet',
+  'nav.assistant': 'Assistant IA',
   // ── Common shared ──
   'common.cancel': 'Annuler',
   'common.save': 'Enregistrer',

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { MessageService } from './core/services/message.service';
 import { Router } from '@angular/router';
@@ -6,8 +6,11 @@ import { NotificationService } from './core/services/notification.service';
 import { ChatbotService } from './core/services/chatbot.service';
 import { LanguageService } from './core/services/language.service';
 import { User, UserRole, ChatMessage } from './core/models/models';
+import { renderMarkdown } from './core/utils/markdown';
 import { Subscription, timer, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+
+type WidgetMessage = ChatMessage & { html?: string };
 
 @Component({
   selector: 'app-root',
@@ -193,10 +196,30 @@ import { switchMap } from 'rxjs/operators';
     .bubble {
       padding: 10px 13px;
       font-size: 13px;
-      line-height: 1.5;
-      white-space: pre-wrap;
+      line-height: 1.55;
       word-break: break-word;
     }
+    .bubble .md-p { margin: 0 0 2px; }
+    .bubble .md-gap { height: 6px; }
+    .bubble .md-h { font-weight: 700; margin: 6px 0 2px; }
+    .bubble .md-list { margin: 2px 0 4px; padding-left: 18px; }
+    .bubble .md-list li { margin: 2px 0; }
+    .bubble .md-code {
+      background: rgba(0,0,0,0.25);
+      border-radius: 4px;
+      padding: 0 5px;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 12px;
+    }
+    .bubble .md-pre {
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 8px 10px;
+      overflow-x: auto;
+      margin: 6px 0;
+      code { font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 11.5px; color: #e6edf3; white-space: pre; }
+    }
+    .bubble a { color: var(--accent-cyan); }
     .chat-time { font-size: 10px; color: var(--text-dim); margin-top: 3px; padding: 0 4px; }
 
     .chatbot-typing {
@@ -204,10 +227,18 @@ import { switchMap } from 'rxjs/operators';
       padding: 10px 14px;
       background: var(--dark3);
       border-radius: 4px 16px 16px 16px;
-      font-size: 13px;
-      color: var(--text-muted);
       animation: fadeIn 0.2s ease;
+      display: inline-flex;
+      gap: 4px;
     }
+    .chatbot-typing span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-dim);
+      animation: typingBounce 1.2s infinite ease-in-out;
+    }
+    .chatbot-typing span:nth-child(2) { animation-delay: 0.15s; }
+    .chatbot-typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
 
     .chatbot-input {
       padding: 12px;
@@ -266,9 +297,26 @@ import { switchMap } from 'rxjs/operators';
       &:hover { background: rgba(56,214,199,0.15); }
     }
 
-    @media (max-width: 480px) {
-      .chatbot-panel { width: calc(100vw - 16px); right: 8px; bottom: 80px; }
-      .chatbot-fab { right: 16px; bottom: 16px; }
+    @media (max-width: 640px) {
+      /* Bottom nav bar is ~64px tall: lift the fab and panel above it */
+      .chatbot-fab { right: 12px; bottom: 84px; width: 48px; height: 48px; }
+      .chatbot-panel {
+        width: calc(100vw - 16px);
+        right: 8px;
+        bottom: 142px;
+        max-height: calc(100vh - 158px);
+      }
+
+      /* Notifications: anchored dropdown becomes a sheet above the bottom bar */
+      .notif-bell-wrap { padding: 0; flex-shrink: 0; }
+      .notif-bell-btn { padding: 11px 12px; width: auto; }
+      .notif-dropdown {
+        position: fixed;
+        left: 8px; right: 8px;
+        top: auto;
+        bottom: 76px;
+        width: auto;
+      }
     }
   `],
   template: `
@@ -396,12 +444,13 @@ import { switchMap } from 'rxjs/operators';
       <!-- Chat panel -->
       <div class="chatbot-panel" *ngIf="chatOpen">
         <div class="chatbot-header">
-          <div class="bot-avatar"><span class="icon icon-shield"></span></div>
+          <div class="bot-avatar"><span class="icon icon-robot"></span></div>
           <div>
             <div class="bot-name">{{ lang.t('chat.title') }}</div>
             <div class="bot-status">{{ lang.t('chat.status') }}</div>
           </div>
-          <button class="btn btn-icon" (click)="chatOpen = false"><span class="icon icon-x"></span></button>
+          <button class="btn btn-icon" (click)="openFullChat()" [title]="lang.t('chat.expand')" style="margin-left:auto"><span class="icon icon-external"></span></button>
+          <button class="btn btn-icon" (click)="chatOpen = false" style="margin-left:0"><span class="icon icon-x"></span></button>
         </div>
 
         <div class="chatbot-messages" #chatMessages>
@@ -421,11 +470,11 @@ import { switchMap } from 'rxjs/operators';
           <div *ngFor="let msg of chatHistory"
                class="chat-msg"
                [ngClass]="msg.role === 'user' ? 'chat-msg-user' : 'chat-msg-bot'">
-            <div class="bubble">{{ msg.content }}</div>
+            <div class="bubble" [innerHTML]="msg.html"></div>
             <div class="chat-time">{{ msg.timestamp | date:'HH:mm' }}</div>
           </div>
 
-          <div class="chatbot-typing" *ngIf="botTyping">{{ lang.t('chat.thinking') }}</div>
+          <div class="chatbot-typing" *ngIf="botTyping && !streamStarted"><span></span><span></span><span></span></div>
         </div>
 
         <div class="chatbot-input">
@@ -455,9 +504,14 @@ export class AppComponent implements OnInit, OnDestroy {
   // Chatbot state
   chatOpen = false;
   chatInput = '';
-  chatHistory: ChatMessage[] = [];
+  chatHistory: WidgetMessage[] = [];
   botTyping = false;
+  streamStarted = false;
   quickChips: string[] = [];
+  private chatStreamSub?: Subscription;
+  private userSub?: Subscription;
+  private lastChatUserId: number | null = null;
+  @ViewChild('chatMessages') chatMessagesEl?: ElementRef<HTMLElement>;
 
   navItems: { path: string; labelKey: string; icon: string; roles: UserRole[] | null }[] = [
     { path: '/feed',      labelKey: 'nav.feed',      icon: 'icon-home',      roles: ['STUDENT', 'ENSEIGNANT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR'] },
@@ -467,6 +521,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { path: '/pfe-books', labelKey: 'nav.pfeBooks', icon: 'icon-book',      roles: ['STUDENT', 'ALUMNI', 'ADMIN', 'COMPANY'] },
     { path: '/resources', labelKey: 'nav.resources', icon: 'icon-book',      roles: null },
     { path: '/messages',  labelKey: 'nav.messages',  icon: 'icon-message',   roles: ['STUDENT', 'ENSEIGNANT', 'ALUMNI', 'EMPLOYE', 'ADMIN', 'MENTOR', 'COMPANY'] },
+    { path: '/assistant', labelKey: 'nav.assistant', icon: 'icon-robot',     roles: null },
     { path: '/profile',   labelKey: 'nav.profile',   icon: 'icon-user',      roles: null },
     { path: '/rh',        labelKey: 'nav.rh',        icon: 'icon-users',     roles: ['COMPANY', 'EMPLOYE'] },
     { path: '/admin',     labelKey: 'nav.admin',     icon: 'icon-shield',    roles: ['ADMIN'] },
@@ -497,11 +552,23 @@ export class AppComponent implements OnInit, OnDestroy {
     this.msgSub = this.messageService.newMessage$.subscribe(() => {
       this.unreadCount++;
     });
+
+    // Reset chatbot widget whenever the logged-in user changes (logout or account switch)
+    this.lastChatUserId = this.user?.id ?? null;
+    this.userSub = this.authService.currentUser$.subscribe(u => {
+      const uid = u?.id ?? null;
+      if (uid !== this.lastChatUserId) {
+        this.lastChatUserId = uid;
+        this.resetChatWidget();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.pollSub?.unsubscribe();
     this.msgSub?.unsubscribe();
+    this.chatStreamSub?.unsubscribe();
+    this.userSub?.unsubscribe();
   }
 
   @HostListener('document:click', ['$event'])
@@ -601,32 +668,77 @@ export class AppComponent implements OnInit, OnDestroy {
 
   sendQuick(text: string): void { this.chatInput = text; this.sendMessage(); }
 
+  openFullChat(): void {
+    this.chatOpen = false;
+    this.router.navigate(['/assistant']);
+  }
+
+  private resetChatWidget(): void {
+    this.chatStreamSub?.unsubscribe();
+    this.chatStreamSub = undefined;
+    this.chatHistory = [];
+    this.chatInput = '';
+    this.botTyping = false;
+    this.streamStarted = false;
+    this.chatOpen = false;
+  }
+
   sendMessage(): void {
     const text = this.chatInput.trim();
     if (!text || this.botTyping) return;
 
-    this.chatHistory.push({ role: 'user', content: text, timestamp: new Date() });
+    this.chatHistory.push({ role: 'user', content: text, html: renderMarkdown(text), timestamp: new Date() });
     this.chatInput = '';
     this.botTyping = true;
+    this.streamStarted = false;
+    this.scrollChatToBottom();
 
-    const history = this.chatHistory.slice(-8).map(m => ({ role: m.role, content: m.content }));
-    this.chatbotService.chat({
+    // history sent to the API excludes the message itself (passed separately)
+    const history = this.chatHistory.slice(-21, -1).map(m => ({ role: m.role, content: m.content }));
+    const botMsg: WidgetMessage = { role: 'assistant', content: '', html: '', timestamp: new Date() };
+
+    this.chatStreamSub = this.chatbotService.chatStream({
       message: text,
       history,
       user_role: this.user?.role
     }).subscribe({
-        next: (res: { response: string }) => {
-        this.chatHistory.push({ role: 'assistant', content: res.response, timestamp: new Date() });
+      next: evt => {
+        if (evt.delta) {
+          if (!this.streamStarted) {
+            this.streamStarted = true;
+            this.chatHistory.push(botMsg);
+          }
+          botMsg.content += evt.delta;
+          botMsg.html = renderMarkdown(botMsg.content);
+          this.scrollChatToBottom();
+        }
+        if (evt.done) this.botTyping = false;
+      },
+      error: () => this.sendMessageFallback(text, history),
+      complete: () => { this.botTyping = false; }
+    });
+  }
+
+  /** Non-streaming fallback if the SSE endpoint is unreachable. */
+  private sendMessageFallback(text: string, history: Array<{ role: string; content: string }>): void {
+    this.chatbotService.chat({ message: text, history, user_role: this.user?.role }).subscribe({
+      next: (res: { response: string }) => {
+        this.chatHistory.push({ role: 'assistant', content: res.response, html: renderMarkdown(res.response), timestamp: new Date() });
         this.botTyping = false;
+        this.scrollChatToBottom();
       },
       error: () => {
-        this.chatHistory.push({
-          role: 'assistant',
-          content: 'Sorry, I\'m temporarily unavailable. Please try again later.',
-          timestamp: new Date()
-        });
+        const msg = this.lang.t('chat.error');
+        this.chatHistory.push({ role: 'assistant', content: msg, html: renderMarkdown(msg), timestamp: new Date() });
         this.botTyping = false;
       }
+    });
+  }
+
+  private scrollChatToBottom(): void {
+    setTimeout(() => {
+      const el = this.chatMessagesEl?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
     });
   }
 }

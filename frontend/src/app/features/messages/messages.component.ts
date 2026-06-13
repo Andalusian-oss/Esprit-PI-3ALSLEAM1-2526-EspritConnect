@@ -15,7 +15,7 @@ type Tab = 'direct' | 'groups';
 @Component({
   selector: 'app-messages',
   template: `
-    <div class="ms-root">
+    <div class="ms-root" [class.mobile-chat-open]="activeTab !== null">
 
       <!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════ -->
       <aside class="ms-sidebar">
@@ -155,6 +155,9 @@ type Tab = 'direct' | 'groups';
 
           <!-- Thread header -->
           <div class="ms-thread-header">
+            <button class="ms-icon-btn ms-back-btn" (click)="closeThread()" title="Back">
+              <span class="icon icon-x"></span>
+            </button>
             <div class="ms-av ms-av-sm" [style.background]="avatarColor(otherName(activeConv))">
               {{ otherNameInitials(activeConv) }}
             </div>
@@ -281,6 +284,9 @@ type Tab = 'direct' | 'groups';
 
           <!-- Header -->
           <div class="ms-thread-header">
+            <button class="ms-icon-btn ms-back-btn" (click)="closeThread()" title="Back">
+              <span class="icon icon-x"></span>
+            </button>
             <div class="ms-av ms-av-group" [style.background]="avatarColor(activeGroup.name)">
               {{ activeGroup.name[0].toUpperCase() }}
             </div>
@@ -1134,14 +1140,24 @@ type Tab = 'direct' | 'groups';
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Responsive ── */
+    .ms-back-btn { display: none; }
+
     @media (max-width: 1200px) {
       .ms-root { grid-template-columns: 280px 1fr; }
       .ms-online-panel { display: none; }
       .ms-info-panel { display: none; }
     }
     @media (max-width: 768px) {
+      /* Phone: show the list OR the chat, with a back button to switch */
       .ms-root { grid-template-columns: 1fr; }
-      .ms-sidebar { display: none; }
+      .ms-root .ms-thread { display: none; }
+      .ms-root.mobile-chat-open .ms-thread { display: flex; }
+      .ms-root.mobile-chat-open .ms-sidebar { display: none; }
+      .ms-back-btn { display: inline-flex; flex-shrink: 0; }
+    }
+    @media (max-width: 640px) {
+      /* Account for the fixed bottom nav bar (~64px + page padding) */
+      .ms-root { height: calc(100vh - 100px); }
     }
   `]
 })
@@ -1391,6 +1407,15 @@ export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: () => { this.loadingMessages = false; }
     });
+  }
+
+  /** Mobile back button: return to the conversation list. */
+  closeThread(): void {
+    this.activeTab = null;
+    this.activeConv = null;
+    this.activeConvId = null;
+    this.activeGroup = null;
+    this.activeGroupId = null;
   }
 
   openGroup(g: Group): void {
