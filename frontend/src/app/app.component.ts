@@ -53,6 +53,28 @@ type WidgetMessage = ChatMessage & { html?: string };
       width: 100%;
       &:hover { background: var(--dark3); }
     }
+    .icon-bell.has-unread {
+      color: var(--red);
+      animation: bellRing 1.6s ease-in-out infinite;
+      transform-origin: top center;
+    }
+    /* Messages nav icon turns red when there are unread messages */
+    .nav-item .icon.icon-unread {
+      color: var(--red);
+      animation: iconPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.18); opacity: .75; }
+    }
+    @keyframes bellRing {
+      0%, 70%, 100% { transform: rotate(0); }
+      75% { transform: rotate(12deg); }
+      80% { transform: rotate(-10deg); }
+      85% { transform: rotate(8deg); }
+      90% { transform: rotate(-6deg); }
+      95% { transform: rotate(3deg); }
+    }
     .notif-badge {
       background: var(--red);
       color: #fff;
@@ -349,7 +371,7 @@ type WidgetMessage = ChatMessage & { html?: string };
         <!-- Notifications bell -->
         <div class="notif-bell-wrap" (click)="toggleNotifications()">
           <button class="notif-bell-btn" type="button" aria-label="Notifications">
-            <span class="icon icon-bell"></span>
+            <span class="icon icon-bell" [class.has-unread]="unreadCount > 0"></span>
             <span>{{ lang.t('nav.notifications') }}</span>
             <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
           </button>
@@ -384,7 +406,8 @@ type WidgetMessage = ChatMessage & { html?: string };
                [routerLink]="item.path"
                routerLinkActive="active"
                class="nav-item">
-              <span class="icon {{ item.icon }}"></span>
+              <span class="icon {{ item.icon }}"
+                    [class.icon-unread]="item.path === '/messages' && unreadCount > 0"></span>
               <span>{{ lang.t(item.labelKey) }}</span>
               <span class="nav-badge" *ngIf="item.path === '/messages' && unreadCount > 0">{{ unreadCount }}</span>
             </a>

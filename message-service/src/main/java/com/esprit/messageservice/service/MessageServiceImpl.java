@@ -64,11 +64,12 @@ public class MessageServiceImpl implements MessageService {
         messagingTemplate.convertAndSendToUser(
                 recipientId.toString(), "/queue/messages", responseDTO);
 
-        // Create notification
+        // Create notification — show the sender's name, not their numeric id
+        String senderName = resolveNames(Set.of(senderId)).getOrDefault(senderId, "User #" + senderId);
         Notification notification = Notification.builder()
                 .recipientUserId(recipientId)
                 .type("NEW_MESSAGE")
-                .message("New message from user " + senderId)
+                .message("New message from " + senderName)
                 .build();
         notificationRepository.save(notification);
 
@@ -185,10 +186,26 @@ public class MessageServiceImpl implements MessageService {
         conversationRepository.delete(conv);
     }
 
+    // Matches legacy notification text that embedded a raw user id, e.g. "... user 22"
+    private static final java.util.regex.Pattern USER_ID_PATTERN =
+            java.util.regex.Pattern.compile("\\buser\\s+(\\d+)\\b", java.util.regex.Pattern.CASE_INSENSITIVE);
+
     @Override
     public List<NotificationResponseDTO> getMyNotifications(Long userId) {
-        return notificationRepository.findByRecipientUserIdOrderByCreatedAtDesc(userId)
-                .stream().map(this::toNotificationDTO).collect(Collectors.toList());
+        List<Notification> notifs = notificationRepository.findByRecipientUserIdOrderByCreatedAtDesc(userId);
+
+        // Collect ids embedded in older notifications so we can show names instead of "user <id>"
+        Set<Long> ids = new HashSet<>();
+        for (Notification n : notifs) {
+            if (n.getMessage() == null) continue;
+            java.util.regex.Matcher m = USER_ID_PATTERN.matcher(n.getMessage());
+            while (m.find()) ids.add(Long.parseLong(m.group(1)));
+        }
+        Map<Long, String> nameMap = resolveNames(ids);
+
+        return notifs.stream()
+                .map(n -> toNotificationDTO(n, nameMap))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -234,9 +251,21 @@ public class MessageServiceImpl implements MessageService {
                 .build();
     }
 
-    private NotificationResponseDTO toNotificationDTO(Notification n) {
+    private NotificationResponseDTO toNotificationDTO(Notification n, Map<Long, String> nameMap) {
+        String message = n.getMessage();
+        // Rewrite any legacy "user <id>" with the resolved username when available
+        if (message != null && nameMap != null && !nameMap.isEmpty()) {
+            java.util.regex.Matcher m = USER_ID_PATTERN.matcher(message);
+            StringBuffer sb = new StringBuffer();
+            while (m.find()) {
+                String name = nameMap.get(Long.parseLong(m.group(1)));
+                m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(name != null ? name : m.group(0)));
+            }
+            m.appendTail(sb);
+            message = sb.toString();
+        }
         return NotificationResponseDTO.builder().id(n.getId())
                 .recipientUserId(n.getRecipientUserId()).type(n.getType())
-                .message(n.getMessage()).lu(n.getLu()).createdAt(n.getCreatedAt()).build();
+                .message(message).lu(n.getLu()).createdAt(n.getCreatedAt()).build();
     }
 }
