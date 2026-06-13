@@ -54,8 +54,9 @@ type Tab = 'direct' | 'groups';
               </div>
               <button class="ms-dropdown-item" *ngFor="let u of searchResults"
                 (click)="startConversationWith(u)">
-                <div class="ms-av ms-av-sm" [style.background]="avatarColor(u.prenom + u.nom)">
-                  {{ initials(u) }}
+                <div class="ms-av ms-av-sm" [class.has-img]="u.avatarUrl" [style.background]="avatarColor(u.prenom + u.nom)">
+                  <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" alt="" />
+                  <ng-container *ngIf="!u.avatarUrl">{{ initials(u) }}</ng-container>
                 </div>
                 <div>
                   <div class="ms-dropdown-name">{{ u.prenom }} {{ u.nom }}</div>
@@ -81,8 +82,9 @@ type Tab = 'direct' | 'groups';
               [class.active]="activeTab === 'direct' && activeConvId === conv.id"
               (click)="openConversation(conv)"
               (contextmenu)="openConvMenu($event, conv)">
-              <div class="ms-av" [style.background]="avatarColor(otherName(conv))">
-                {{ otherNameInitials(conv) }}
+              <div class="ms-av" [class.has-img]="otherAvatar(conv)" [style.background]="avatarColor(otherName(conv))">
+                <img *ngIf="otherAvatar(conv) as a" [src]="a" alt="" />
+                <ng-container *ngIf="!otherAvatar(conv)">{{ otherNameInitials(conv) }}</ng-container>
               </div>
               <div class="ms-conv-info">
                 <div class="ms-conv-row1">
@@ -158,8 +160,9 @@ type Tab = 'direct' | 'groups';
             <button class="ms-icon-btn ms-back-btn" (click)="closeThread()" title="Back">
               <span class="icon icon-x"></span>
             </button>
-            <div class="ms-av ms-av-sm" [style.background]="avatarColor(otherName(activeConv))">
-              {{ otherNameInitials(activeConv) }}
+            <div class="ms-av ms-av-sm" [class.has-img]="otherAvatar(activeConv)" [style.background]="avatarColor(otherName(activeConv))">
+              <img *ngIf="otherAvatar(activeConv) as a" [src]="a" alt="" />
+              <ng-container *ngIf="!otherAvatar(activeConv)">{{ otherNameInitials(activeConv) }}</ng-container>
             </div>
             <div class="ms-thread-header-info">
               <div class="ms-thread-name">{{ otherName(activeConv) }}</div>
@@ -428,7 +431,7 @@ type Tab = 'direct' | 'groups';
             <div class="ms-dropdown" *ngIf="addMemberResults.length > 0">
               <button class="ms-dropdown-item" *ngFor="let u of addMemberResults"
                 (click)="addMember(u)">
-                <div class="ms-av ms-av-xs" [style.background]="avatarColor(u.prenom)">{{ initials(u) }}</div>
+                <div class="ms-av ms-av-xs" [class.has-img]="u.avatarUrl" [style.background]="avatarColor(u.prenom)"><img *ngIf="u.avatarUrl" [src]="u.avatarUrl" alt="" /><ng-container *ngIf="!u.avatarUrl">{{ initials(u) }}</ng-container></div>
                 <div>
                   <div class="ms-dropdown-name">{{ u.prenom }} {{ u.nom }}</div>
                 </div>
@@ -450,8 +453,9 @@ type Tab = 'direct' | 'groups';
           <button class="ms-online-item" *ngFor="let u of onlineUsers"
             [hidden]="u.id === currentUserId"
             (click)="startConversationWith(u)">
-            <div class="ms-av ms-av-sm" [style.background]="avatarColor(u.prenom + u.nom)">
-              {{ initials(u) }}
+            <div class="ms-av ms-av-sm" [class.has-img]="u.avatarUrl" [style.background]="avatarColor(u.prenom + u.nom)">
+              <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" alt="" />
+              <ng-container *ngIf="!u.avatarUrl">{{ initials(u) }}</ng-container>
             </div>
             <div class="ms-online-dot"></div>
             <span class="ms-online-name">{{ u.prenom }}</span>
@@ -483,7 +487,7 @@ type Tab = 'direct' | 'groups';
               <div class="ms-dropdown" *ngIf="newGroupMemberResults.length > 0">
                 <button class="ms-dropdown-item" *ngFor="let u of newGroupMemberResults"
                   (click)="toggleNewGroupMember(u)">
-                  <div class="ms-av ms-av-xs" [style.background]="avatarColor(u.prenom)">{{ initials(u) }}</div>
+                  <div class="ms-av ms-av-xs" [class.has-img]="u.avatarUrl" [style.background]="avatarColor(u.prenom)"><img *ngIf="u.avatarUrl" [src]="u.avatarUrl" alt="" /><ng-container *ngIf="!u.avatarUrl">{{ initials(u) }}</ng-container></div>
                   <div class="ms-dropdown-name">{{ u.prenom }} {{ u.nom }}</div>
                   <span class="icon icon-check" style="margin-left:auto;color:var(--red)"
                     *ngIf="isInNewGroup(u)"></span>
@@ -688,7 +692,10 @@ type Tab = 'direct' | 'groups';
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0;
       font-family: 'Syne', sans-serif;
+      overflow: hidden;
     }
+    .ms-av.has-img { background: transparent !important; }
+    .ms-av img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; display: block; }
     .ms-av-sm { width: 36px; height: 36px; font-size: 13px; }
     .ms-av-xs { width: 28px; height: 28px; font-size: 11px; }
     .ms-av-group { border-radius: 12px; }
@@ -1227,6 +1234,7 @@ export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
   private addMemberTimeout: any;
   private newGroupMemberTimeout: any;
   private userCache = new Map<number, string>();
+  private avatarCache = new Map<number, string>();
 
   // ── Voice recording ──────────────────────────────────────────────────────
   isListening = false;  // true while MediaRecorder is recording
@@ -1368,7 +1376,10 @@ export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
         convs.forEach(c => { ids.add(c.participant1UserId); ids.add(c.participant2UserId); });
         if (ids.size) {
           this.authService.getUsersByIds(Array.from(ids)).subscribe({
-            next: users => users.forEach(u => this.userCache.set(u.id, `${u.prenom} ${u.nom}`))
+            next: users => users.forEach(u => {
+              this.userCache.set(u.id, `${u.prenom} ${u.nom}`);
+              if (u.avatarUrl) this.avatarCache.set(u.id, u.avatarUrl);
+            })
           });
         }
       },
@@ -2120,6 +2131,11 @@ export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (n.startsWith('User #')) return 'U';
     const parts = n.split(' ');
     return parts.length >= 2 ? (parts[0][0] || '') + (parts[1][0] || '') : (n[0] || '?');
+  }
+
+  /** Avatar image URL of the other participant in a direct conversation, if any. */
+  otherAvatar(conv: Conversation): string | undefined {
+    return this.avatarCache.get(this.otherParticipantId(conv));
   }
 
   initials(u: User): string { return (u.prenom?.[0] ?? '') + (u.nom?.[0] ?? ''); }
