@@ -418,6 +418,7 @@ export interface Translations {
   'stats.conversion': string;
   'stats.confidence': string;
   'stats.activities': string;
+  'stats.estimated': string;
   'stats.mon': string;
   'stats.tue': string;
   'stats.wed': string;
@@ -989,6 +990,7 @@ const en: Translations = {
   'stats.conversion': 'conversion',
   'stats.confidence': 'Confidence',
   'stats.activities': 'activities',
+  'stats.estimated': 'estimated',
   'stats.mon': 'Mon',
   'stats.tue': 'Tue',
   'stats.wed': 'Wed',
@@ -1560,6 +1562,7 @@ const fr: Translations = {
   'stats.conversion': 'conversion',
   'stats.confidence': 'Confiance',
   'stats.activities': 'activités',
+  'stats.estimated': 'estimé',
   'stats.mon': 'Lun',
   'stats.tue': 'Mar',
   'stats.wed': 'Mer',

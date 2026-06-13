@@ -4,6 +4,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
 import { Translations } from '../../core/i18n/translations';
 import { JobService } from '../../core/services/job.service';
+import { StatsService } from '../../core/services/stats.service';
 import { Mentoring } from '../../core/models/models';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -130,7 +131,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Active Users Real-time -->
         <div class="stats-panel">
-          <h3>⚡ {{ languageService.t('stats.realtime') }}</h3>
+          <h3>⚡ {{ languageService.t('stats.realtime') }} <span class="est-badge">{{ languageService.t('stats.estimated') }}</span></h3>
           <div class="realtime-metrics">
             <div class="realtime-big">
               <span class="pulse-dot"></span>
@@ -353,7 +354,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Performance Metrics -->
         <div class="stats-panel">
-          <h3>⚙️ {{ languageService.t('stats.performance') }}</h3>
+          <h3>⚙️ {{ languageService.t('stats.performance') }} <span class="est-badge">{{ languageService.t('stats.estimated') }}</span></h3>
           <div class="performance-metrics">
             <div class="perf-metric" *ngFor="let perf of performanceMetrics">
               <div class="perf-header">
@@ -373,7 +374,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Geographic Distribution -->
         <div class="stats-panel">
-          <h3>🌍 {{ languageService.t('stats.distribution') }}</h3>
+          <h3>🌍 {{ languageService.t('stats.distribution') }} <span class="est-badge">{{ languageService.t('stats.estimated') }}</span></h3>
           <div class="geo-stats">
             <div class="geo-item" *ngFor="let geo of geographicData">
               <div class="geo-flag">{{ geo.flag }}</div>
@@ -390,7 +391,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Conversion Funnels -->
         <div class="stats-panel">
-          <h3>📊 {{ languageService.t('stats.funnel') }}</h3>
+          <h3>📊 {{ languageService.t('stats.funnel') }} <span class="est-badge">{{ languageService.t('stats.estimated') }}</span></h3>
           <div class="funnel">
             <div class="funnel-stage" *ngFor="let stage of conversionFunnel; let i = index" 
                  [style.width.%]="stage.percentage">
@@ -403,7 +404,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Revenue/Impact Metrics (if applicable) -->
         <div class="stats-panel">
-          <h3>💰 {{ languageService.t('stats.impact') }}</h3>
+          <h3>💰 {{ languageService.t('stats.impact') }} <span class="est-badge">{{ languageService.t('stats.estimated') }}</span></h3>
           <div class="impact-cards">
             <div class="impact-card" *ngFor="let impact of impactMetrics">
               <div class="impact-icon">{{ impact.icon }}</div>
@@ -418,7 +419,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
 
         <!-- Predictions & Forecasts -->
         <div class="stats-panel full-width">
-          <h3>🔮 {{ languageService.t('stats.predictions') }}</h3>
+          <h3>🔮 {{ languageService.t('stats.predictions') }} <span class="est-badge">{{ languageService.t('stats.estimated') }}</span></h3>
           <div class="predictions-grid">
             <div class="prediction-card" *ngFor="let pred of predictions">
               <div class="prediction-title">{{ pred.title }}</div>
@@ -487,6 +488,7 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
     .stats-panel { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
     .stats-panel.full-width { grid-column: 1 / -1; }
     .stats-panel h3 { margin: 0 0 20px; font-size: 16px; font-weight: 600; }
+    .est-badge { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; vertical-align: middle; color: #ffb400; background: rgba(255,180,0,.12); border: 1px solid rgba(255,180,0,.3); }
 
     /* Line Chart */
     .chart-container { height: 280px; overflow: hidden; }
@@ -706,7 +708,7 @@ export class StatisticsComponent implements OnInit {
   topContentTab = 'posts';
 
   // Main KPIs
-  mainKPIs = [
+  mainKPIs: { icon: string; label: string; value: string; change: string; trend: 'up' | 'down' | 'neutral'; color: string }[] = [
     { icon: '👥', label: 'Total Users', value: '2,847', change: '+12.5% from last month', trend: 'up' as const, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
     { icon: '📝', label: 'Total Posts', value: '8,432', change: '+8.3% from last month', trend: 'up' as const, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
     { icon: '💼', label: 'Active Jobs', value: '127', change: '-2.1% from last month', trend: 'down' as const, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
@@ -921,11 +923,16 @@ export class StatisticsComponent implements OnInit {
     { icon: '🌐', label: 'Active Sessions', value: '342' }
   ];
 
+  /** Real per-day post activity (last ~35 days), used to drive the heatmap. */
+  private activityByDay: { date: string; count: number }[] = [];
+  private maxDailyActivity = 0;
+
   constructor(
     private router: Router,
     private authService: AuthService,
     public languageService: LanguageService,
-    private jobService: JobService
+    private jobService: JobService,
+    private statsService: StatsService
   ) {}
 
   ngOnInit(): void {
@@ -974,14 +981,231 @@ export class StatisticsComponent implements OnInit {
   }
 
   refreshData(): void {
-    // Simulate data refresh
-    console.log('Refreshing statistics data for timeRange:', this.timeRange);
-    // In a real app, this would call API endpoints to fetch updated data
-    this.updateUserGrowthPlot();
+    // Pull live, database-backed numbers from every microservice. Panels that
+    // have no backing data source keep their estimated values (see template).
+    this.loadUserStats();
+    this.loadPostStats();
+    this.loadJobStats();
+    this.loadEventStats();
+    this.loadResourceStats();
+
+    const now = new Date();
+    const updated = this.footerStats.find(s => s.label === 'Last Data Update');
+    if (updated) updated.value = now.toLocaleString();
   }
 
   onTimeRangeChange(): void {
     this.refreshData();
+  }
+
+  // ── Role → display metadata for the demographics panel ──
+  private readonly roleMeta: Record<string, { key: keyof Translations; color: string }> = {
+    STUDENT:    { key: 'admin.students',  color: '#667eea' },
+    ALUMNI:     { key: 'admin.alumni',    color: '#764ba2' },
+    ENSEIGNANT: { key: 'admin.teachers',  color: '#f093fb' },
+    COMPANY:    { key: 'admin.companies', color: '#4facfe' },
+    MENTOR:     { key: 'admin.mentors',   color: '#43e97b' },
+    EMPLOYE:    { key: 'admin.employees', color: '#fa709a' },
+    ADMIN:      { key: 'admin.admins',    color: '#e31e24' }
+  };
+
+  private pctChange(current: number, previous: number): { change: string; trend: 'up' | 'down' | 'neutral' } {
+    if (previous === 0) {
+      return current > 0
+        ? { change: '+100% from last month', trend: 'up' }
+        : { change: 'No change', trend: 'neutral' };
+    }
+    const pct = ((current - previous) / previous) * 100;
+    const rounded = Math.round(pct * 10) / 10;
+    return {
+      change: `${rounded >= 0 ? '+' : ''}${rounded}% from last month`,
+      trend: rounded > 0 ? 'up' : rounded < 0 ? 'down' : 'neutral'
+    };
+  }
+
+  private loadUserStats(): void {
+    this.statsService.authStats().pipe(catchError(() => of(null))).subscribe(s => {
+      if (!s) return;
+
+      // KPI: total users with month-over-month trend.
+      const t = this.pctChange(s.newThisMonth, s.newLastMonth);
+      const usersKpi = this.mainKPIs.find(k => k.label === 'Total Users');
+      if (usersKpi) { usersKpi.value = s.totalUsers.toLocaleString(); usersKpi.change = t.change; usersKpi.trend = t.trend; }
+
+      // Demographics from the real per-role counts.
+      this.demographics = Object.entries(s.byRole || {})
+        .filter(([, count]) => count > 0)
+        .map(([role, count]) => {
+          const meta = this.roleMeta[role];
+          return {
+            label: meta ? this.languageService.t(meta.key) : role,
+            value: count,
+            percentage: s.totalUsers ? Math.round((count / s.totalUsers) * 1000) / 10 : 0,
+            color: meta ? meta.color : '#888'
+          };
+        })
+        .sort((a, b) => b.value - a.value);
+
+      // User growth chart from cumulative monthly totals.
+      if (s.growthByMonth?.length) {
+        this.userGrowthData = s.growthByMonth.map(p => ({ label: p.label, value: p.value }));
+        this.updateUserGrowthPlot();
+      }
+
+      // Real online presence.
+      this.realtimeActive = s.onlineNow;
+      const sessions = this.footerStats.find(f => f.label === 'Active Sessions');
+      if (sessions) sessions.value = String(s.onlineNow);
+    });
+  }
+
+  private loadPostStats(): void {
+    this.statsService.postStats().pipe(catchError(() => of(null))).subscribe(s => {
+      if (!s) return;
+
+      const postTrend = this.pctChange(s.newThisMonth, s.newLastMonth);
+      const postsKpi = this.mainKPIs.find(k => k.label === 'Total Posts');
+      if (postsKpi) { postsKpi.value = s.totalPosts.toLocaleString(); postsKpi.change = postTrend.change; postsKpi.trend = postTrend.trend; }
+
+      const engKpi = this.mainKPIs.find(k => k.label === 'Avg Engagement');
+      if (engKpi) {
+        const perPost = s.totalPosts ? (s.totalLikes + s.totalComments) / s.totalPosts : 0;
+        engKpi.value = `${Math.round(perPost * 10) / 10}/post`;
+      }
+
+      // Content overview — posts count is real, with its trend.
+      const postsContent = this.contentStats.find(c => c.label === 'Posts');
+      if (postsContent) {
+        postsContent.count = s.totalPosts;
+        postsContent.trend = Math.round((postTrend.trend === 'neutral' ? 0 :
+          (s.newLastMonth ? ((s.newThisMonth - s.newLastMonth) / s.newLastMonth) * 100 : 100)) * 10) / 10;
+      }
+
+      // Engagement panel — likes & comments are real.
+      const likes = this.engagementMetrics.find(m => m.title === 'Post Likes');
+      if (likes) { likes.value = s.totalLikes.toLocaleString(); likes.average = `${s.totalPosts ? (s.totalLikes / s.totalPosts).toFixed(1) : 0}/post`; }
+      const comments = this.engagementMetrics.find(m => m.title === 'Comments');
+      if (comments) { comments.value = s.totalComments.toLocaleString(); comments.average = `${s.totalPosts ? (s.totalComments / s.totalPosts).toFixed(1) : 0}/post`; }
+
+      // Top posts.
+      if (s.topPosts?.length) {
+        this.topPosts = s.topPosts.map(p => ({
+          title: p.title || '(untitled)',
+          meta: `${p.userName || 'Unknown'} • ${p.likes} likes`,
+          icon: '❤️',
+          score: p.likes
+        }));
+      }
+
+      // Real activity for the heatmap.
+      this.activityByDay = s.activityByDay || [];
+      this.maxDailyActivity = this.activityByDay.reduce((max, d) => Math.max(max, d.count), 0);
+    });
+  }
+
+  private loadJobStats(): void {
+    this.statsService.jobStats().pipe(catchError(() => of(null))).subscribe(s => {
+      if (!s) return;
+
+      const jobsKpi = this.mainKPIs.find(k => k.label === 'Active Jobs');
+      if (jobsKpi) { jobsKpi.value = s.totalJobs.toLocaleString(); jobsKpi.change = `${s.totalApplications} applications`; jobsKpi.trend = 'neutral'; }
+
+      const jobsContent = this.contentStats.find(c => c.label === 'Jobs');
+      if (jobsContent) { jobsContent.count = s.totalJobs; jobsContent.trend = 0; }
+
+      this.jobStats = {
+        totalJobs: s.totalJobs,
+        totalApplications: s.totalApplications,
+        acceptanceRate: s.acceptanceRate,
+        avgMatchScore: s.avgMatchScore
+      };
+
+      const typeLabels: Record<string, string> = { CDI: 'Full-time', CDD: 'Contract', STAGE: 'Internship' };
+      const total = s.totalJobs || 1;
+      this.jobTypeBreakdown = Object.entries(s.byType || {})
+        .map(([type, count]) => ({
+          label: typeLabels[type] || type,
+          count,
+          percentage: Math.round((count / total) * 1000) / 10
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      if (s.topJobs?.length) {
+        this.topJobs = s.topJobs.map(j => ({
+          title: j.titre,
+          meta: `${j.entreprise || ''}${j.entreprise ? ' • ' : ''}${j.applications} applications`,
+          icon: '📄',
+          score: j.applications
+        }));
+      }
+    });
+  }
+
+  private loadEventStats(): void {
+    this.statsService.eventStats().pipe(catchError(() => of(null))).subscribe(s => {
+      if (!s) return;
+
+      const evKpi = this.mainKPIs.find(k => k.label === 'Events This Month');
+      if (evKpi) { evKpi.value = s.upcoming.toLocaleString(); evKpi.change = `${s.totalEvents} total`; evKpi.trend = 'neutral'; }
+
+      const evContent = this.contentStats.find(c => c.label === 'Events');
+      if (evContent) { evContent.count = s.totalEvents; evContent.trend = 0; }
+
+      const avgAttendance = s.totalEvents ? Math.round(s.totalRegistrations / s.totalEvents) : 0;
+      this.eventMetrics = [
+        { label: 'Total Events', value: s.totalEvents, progress: 100 },
+        { label: 'Upcoming', value: s.upcoming, progress: s.totalEvents ? Math.round((s.upcoming / s.totalEvents) * 100) : 0 },
+        { label: 'Completed', value: s.completed, progress: s.totalEvents ? Math.round((s.completed / s.totalEvents) * 100) : 0 },
+        { label: 'Avg Attendance', value: avgAttendance, progress: Math.min(100, avgAttendance) }
+      ];
+
+      const catLabels: Record<string, string> = {
+        TECHNOLOGIQUE: 'Tech', ACADEMIQUE: 'Academic', CULTUREL: 'Culture', SPORTIF: 'Sports', AUTRE: 'Other'
+      };
+      const catColors = ['#667eea', '#4facfe', '#43e97b', '#fa709a', '#f5576c'];
+      const maxCat = Math.max(1, ...Object.values(s.byCategory || {}));
+      this.eventsByCategory = Object.entries(s.byCategory || {})
+        .filter(([, v]) => v > 0)
+        .map(([cat, value], i) => ({
+          label: catLabels[cat] || cat,
+          value,
+          percentage: Math.round((value / maxCat) * 100),
+          color: catColors[i % catColors.length]
+        }));
+
+      const eventsRegs = this.engagementMetrics.find(m => m.title === 'Event Registrations');
+      if (eventsRegs) { eventsRegs.value = s.totalRegistrations.toLocaleString(); eventsRegs.average = `${avgAttendance}/event`; }
+
+      if (s.topEvents?.length) {
+        this.topEvents = s.topEvents.map(e => ({
+          title: e.titre,
+          meta: `${e.registrations} attendees`,
+          icon: '👥',
+          score: e.registrations
+        }));
+      }
+    });
+  }
+
+  private loadResourceStats(): void {
+    this.statsService.resourceStats().pipe(catchError(() => of(null))).subscribe(s => {
+      if (!s) return;
+
+      const resKpi = this.mainKPIs.find(k => k.label === 'Resources Shared');
+      if (resKpi) { resKpi.value = s.total.toLocaleString(); resKpi.change = `${s.totalDownloads} downloads`; resKpi.trend = 'neutral'; }
+
+      const resContent = this.contentStats.find(c => c.label === 'Resources');
+      if (resContent) { resContent.count = s.total; resContent.trend = 0; }
+
+      const pretty = (c: string) => c ? c.charAt(0) + c.slice(1).toLowerCase() : c;
+      this.resourceStats = {
+        ...this.resourceStats,
+        total: s.total,
+        downloads: s.totalDownloads,
+        downloadRate: s.downloadRate,
+        topCategory: pretty(s.topCategory)
+      };
+    });
   }
 
   getTopContent(): any[] {
@@ -994,15 +1218,14 @@ export class StatisticsComponent implements OnInit {
   }
 
   getHeatmapData(day: string): number[] {
-    // Generate mock heatmap data (30 days)
-    const data: number[] = [];
-    for (let i = 0; i < 30; i++) {
-      // Simulate varying activity levels
-      const baseActivity = Math.random() * 100;
-      const dayFactor = ['Sat', 'Sun'].includes(day) ? 0.6 : 1.0;
-      data.push(Math.floor(baseActivity * dayFactor));
-    }
-    return data;
+    // Real activity: post counts per day, grouped by weekday, scaled 0–100
+    // relative to the busiest day so the colour intensities are meaningful.
+    const weekdayIndex: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const target = weekdayIndex[day];
+    const cells = this.activityByDay
+      .filter(d => new Date(d.date).getDay() === target)
+      .map(d => this.maxDailyActivity > 0 ? Math.round((d.count / this.maxDailyActivity) * 100) : 0);
+    return cells.length ? cells : [0];
   }
 
   private updateUserGrowthPlot(): void {
