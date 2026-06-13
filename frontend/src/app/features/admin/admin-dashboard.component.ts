@@ -669,10 +669,8 @@ export class AdminDashboardComponent implements OnInit {
   // ── Mentor Management ──
   loadMentorData(): void {
     this.loadingMentorData = true;
-    // Collect all mentorings from all mentor users by fetching per-user
-    // Since there's no global admin endpoint, we collect from the mentor list once directory loads
-    // We load all users' mentorings by fetching as-mentor for each mentor user (using admin token)
-    this.http.get<Mentoring[]>(`${environment.apiUrl}/jobs/mentoring/as-mentor`)
+    // Global admin view: every mentoring relationship across the platform.
+    this.http.get<Mentoring[]>(`${environment.apiUrl}/jobs/mentoring/all`)
       .pipe(catchError(() => of([])))
       .subscribe(items => {
         this.adminAllMentorings = items;

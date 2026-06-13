@@ -224,6 +224,15 @@ export interface Translations {
   'jobs.addSession': string;
   'jobs.sessionDate': string;
   'jobs.sessionDuration': string;
+  'jobs.startsIn': string;
+  'jobs.endsIn': string;
+  'jobs.ended': string;
+  'jobs.inProgress': string;
+  'jobs.startSession': string;
+  'jobs.endSession': string;
+  'jobs.orSchedule': string;
+  'jobs.sessionStarted': string;
+  'jobs.sessionEnded': string;
   'jobs.noSessions': string;
   'jobs.activeMentorings': string;
   'jobs.plannedSessions': string;
@@ -724,6 +733,15 @@ const en: Translations = {
   'jobs.addSession': 'Add Session',
   'jobs.sessionDate': 'Date & Time',
   'jobs.sessionDuration': 'Duration (min)',
+  'jobs.startsIn': 'Starts in',
+  'jobs.endsIn': 'Ends in',
+  'jobs.ended': 'Ended',
+  'jobs.inProgress': 'In progress',
+  'jobs.startSession': 'Start session',
+  'jobs.endSession': 'End session',
+  'jobs.orSchedule': 'or schedule for later',
+  'jobs.sessionStarted': 'Session started',
+  'jobs.sessionEnded': 'Session ended',
   'jobs.noSessions': 'No sessions yet',
   'jobs.activeMentorings': 'Active',
   'jobs.plannedSessions': 'Planned sessions',
@@ -1224,6 +1242,15 @@ const fr: Translations = {
   'jobs.addSession': 'Ajouter une session',
   'jobs.sessionDate': 'Date & Heure',
   'jobs.sessionDuration': 'Durée (min)',
+  'jobs.startsIn': 'Commence dans',
+  'jobs.endsIn': 'Se termine dans',
+  'jobs.ended': 'Terminée',
+  'jobs.inProgress': 'En cours',
+  'jobs.startSession': 'Démarrer la session',
+  'jobs.endSession': 'Terminer la session',
+  'jobs.orSchedule': 'ou planifier plus tard',
+  'jobs.sessionStarted': 'Session démarrée',
+  'jobs.sessionEnded': 'Session terminée',
   'jobs.noSessions': 'Aucune session',
   'jobs.activeMentorings': 'Actifs',
   'jobs.plannedSessions': 'Sessions planifiées',

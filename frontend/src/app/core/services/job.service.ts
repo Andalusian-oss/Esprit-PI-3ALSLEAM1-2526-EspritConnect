@@ -45,9 +45,16 @@ export class JobService {
   }
   getMentoringAsMentor(): Observable<Mentoring[]> { return this.http.get<Mentoring[]>(`${this.url}/mentoring/as-mentor`); }
   getMentoringAsMentore(): Observable<Mentoring[]> { return this.http.get<Mentoring[]>(`${this.url}/mentoring/as-mentore`); }
+  getAllMentorings(): Observable<Mentoring[]> { return this.http.get<Mentoring[]>(`${this.url}/mentoring/all`); }
   completeMentoring(id: number): Observable<void> { return this.http.patch<void>(`${this.url}/mentoring/${id}/complete`, {}); }
   addSession(mentoringId: number, date: string, dureeMinutes: number): Observable<MentoringSession> {
     return this.http.post<MentoringSession>(`${this.url}/mentoring/${mentoringId}/sessions`, { date, dureeMinutes });
+  }
+  startLiveSession(mentoringId: number): Observable<MentoringSession> {
+    return this.http.post<MentoringSession>(`${this.url}/mentoring/${mentoringId}/sessions/live`, {});
+  }
+  endSession(sessionId: number): Observable<MentoringSession> {
+    return this.http.patch<MentoringSession>(`${this.url}/sessions/${sessionId}/end`, {});
   }
   getSessions(mentoringId: number): Observable<MentoringSession[]> {
     return this.http.get<MentoringSession[]>(`${this.url}/mentoring/${mentoringId}/sessions`);

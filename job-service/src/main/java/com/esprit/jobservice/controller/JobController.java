@@ -112,6 +112,10 @@ public class JobController {
     public ResponseEntity<List<MentoringResponseDTO>> asMentore(HttpServletRequest req) {
         return ResponseEntity.ok(jobService.getMentoringAsMentore(extractUserId(req)));
     }
+    @GetMapping("/mentoring/all")
+    public ResponseEntity<List<MentoringResponseDTO>> allMentorings() {
+        return ResponseEntity.ok(jobService.getAllMentorings());
+    }
     @PatchMapping("/mentoring/{id}/complete")
     public ResponseEntity<Void> completeMentoring(@PathVariable Long id, HttpServletRequest req) {
         jobService.completeMentoring(id, extractUserId(req)); return ResponseEntity.ok().build();
@@ -126,6 +130,14 @@ public class JobController {
     public ResponseEntity<MentoringSessionResponseDTO> addSession(@PathVariable Long mentoringId,
             @Valid @RequestBody MentoringSessionRequestDTO dto, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(jobService.addSession(mentoringId, dto, extractUserId(req)));
+    }
+    @PostMapping("/mentoring/{mentoringId}/sessions/live")
+    public ResponseEntity<MentoringSessionResponseDTO> startLiveSession(@PathVariable Long mentoringId, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(jobService.startLiveSession(mentoringId, extractUserId(req)));
+    }
+    @PatchMapping("/sessions/{sessionId}/end")
+    public ResponseEntity<MentoringSessionResponseDTO> endSession(@PathVariable Long sessionId, HttpServletRequest req) {
+        return ResponseEntity.ok(jobService.endSession(sessionId, extractUserId(req)));
     }
     @GetMapping("/mentoring/{mentoringId}/sessions")
     public ResponseEntity<List<MentoringSessionResponseDTO>> getSessions(@PathVariable Long mentoringId) {

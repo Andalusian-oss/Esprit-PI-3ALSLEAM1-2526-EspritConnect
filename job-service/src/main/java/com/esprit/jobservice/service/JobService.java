@@ -27,11 +27,14 @@ public interface JobService {
     MentoringResponseDTO requestMentoring(MentoringRequestDTO dto, Long mentoreUserId);
     List<MentoringResponseDTO> getMentoringAsMentor(Long userId);
     List<MentoringResponseDTO> getMentoringAsMentore(Long userId);
+    List<MentoringResponseDTO> getAllMentorings();
     void completeMentoring(Long id, Long userId);
     void cancelMentoring(Long id, Long userId);
 
     // Sessions
     MentoringSessionResponseDTO addSession(Long mentoringId, MentoringSessionRequestDTO dto, Long userId);
+    MentoringSessionResponseDTO startLiveSession(Long mentoringId, Long userId);
+    MentoringSessionResponseDTO endSession(Long sessionId, Long userId);
     List<MentoringSessionResponseDTO> getSessionsByMentoring(Long mentoringId);
     MentoringSessionResponseDTO updateSessionStatus(Long sessionId, String status, Long userId);
 }

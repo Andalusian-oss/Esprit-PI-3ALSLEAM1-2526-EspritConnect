@@ -8,9 +8,12 @@ import com.esprit.jobservice.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -158,6 +161,13 @@ public class JobServiceImpl implements JobService {
                 .map(this::toMentoringDTO).collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<MentoringResponseDTO> getAllMentorings() {
+        return mentoringRepository.findAll().stream()
+                .map(this::toMentoringDTO).collect(Collectors.toList());
+    }
+
     @Override @Transactional
     public void completeMentoring(Long id, Long userId) {
         Mentoring m = findMentoring(id);
@@ -187,11 +197,65 @@ public class JobServiceImpl implements JobService {
         return toSessionDTO(sessionRepository.save(session));
     }
 
+    @Override @Transactional
+    public MentoringSessionResponseDTO startLiveSession(Long mentoringId, Long userId) {
+        Mentoring m = findMentoring(mentoringId);
+        if (!m.getMentorUserId().equals(userId)) throw new IllegalArgumentException("Only mentor can start sessions");
+        // Only one live session at a time per mentoring.
+        boolean alreadyLive = sessionRepository.findByMentoringId(mentoringId).stream()
+                .anyMatch(s -> s.getStatut() == MentoringSession.SessionStatus.LIVE);
+        if (alreadyLive) throw new IllegalArgumentException("A live session is already running");
+        MentoringSession session = MentoringSession.builder()
+                .mentoring(m).date(LocalDateTime.now()).dureeMinutes(0)
+                .statut(MentoringSession.SessionStatus.LIVE).build();
+        return toSessionDTO(sessionRepository.save(session));
+    }
+
+    @Override @Transactional
+    public MentoringSessionResponseDTO endSession(Long sessionId, Long userId) {
+        MentoringSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + sessionId));
+        if (!session.getMentoring().getMentorUserId().equals(userId))
+            throw new IllegalArgumentException("Only mentor can end sessions");
+        if (session.getStatut() != MentoringSession.SessionStatus.LIVE)
+            throw new IllegalArgumentException("Session is not live");
+        long minutes = Math.max(1, Duration.between(session.getDate(), LocalDateTime.now()).toMinutes());
+        session.setDureeMinutes((int) minutes);
+        session.setStatut(MentoringSession.SessionStatus.DONE);
+        return toSessionDTO(sessionRepository.save(session));
+    }
+
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<MentoringSessionResponseDTO> getSessionsByMentoring(Long mentoringId) {
-        return sessionRepository.findByMentoringId(mentoringId).stream()
-                .map(this::toSessionDTO).collect(Collectors.toList());
+        List<MentoringSession> sessions = sessionRepository.findByMentoringId(mentoringId);
+        // Lazily flip any sessions whose time is up to DONE so the response is always fresh,
+        // without waiting for the next scheduler tick.
+        markEndedSessionsDone(sessions, LocalDateTime.now());
+        return sessions.stream().map(this::toSessionDTO).collect(Collectors.toList());
+    }
+
+    /**
+     * Every minute, mark PLANNED sessions whose end time (date + dureeMinutes) has passed as DONE.
+     * Runs even when nobody is viewing the mentoring page.
+     */
+    @Scheduled(fixedRate = 60_000)
+    @Transactional
+    public void autoCompleteEndedSessions() {
+        markEndedSessionsDone(sessionRepository.findByStatut(MentoringSession.SessionStatus.PLANNED), LocalDateTime.now());
+    }
+
+    /** Set every still-PLANNED session whose end time is at/after `now` to DONE and persist it. */
+    private void markEndedSessionsDone(List<MentoringSession> sessions, LocalDateTime now) {
+        for (MentoringSession s : sessions) {
+            if (s.getStatut() != MentoringSession.SessionStatus.PLANNED) continue;
+            if (s.getDate() == null || s.getDureeMinutes() == null) continue;
+            LocalDateTime end = s.getDate().plusMinutes(s.getDureeMinutes());
+            if (!now.isBefore(end)) {
+                s.setStatut(MentoringSession.SessionStatus.DONE);
+                sessionRepository.save(s);
+            }
+        }
     }
 
     @Override @Transactional

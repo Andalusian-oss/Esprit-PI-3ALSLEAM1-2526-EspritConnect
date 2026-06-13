@@ -135,6 +135,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public void setPresence(Long userId, boolean online) {
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setOnline(online);
+            userRepository.save(user);
+        });
+    }
+
+    @Override
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));

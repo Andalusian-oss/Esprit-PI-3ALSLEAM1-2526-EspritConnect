@@ -2,6 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
+import { JobService } from '../../core/services/job.service';
+import { Mentoring } from '../../core/models/models';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface Stat { label: string; value: string | number; change?: string; trend?: 'up' | 'down' | 'neutral'; }
 interface ChartBar { label: string; value: number; color?: string; }
@@ -306,11 +310,11 @@ interface Metric { title: string; current: number; previous: number; unit?: stri
               <div class="mentoring-label">Total Sessions</div>
             </div>
             <div class="mentoring-stat">
-              <div class="mentoring-number">{{ mentoringStats.avgRating }}/5</div>
-              <div class="mentoring-label">Avg Rating</div>
+              <div class="mentoring-number">{{ mentoringStats.completed }}</div>
+              <div class="mentoring-label">Completed</div>
             </div>
           </div>
-          <div class="mentoring-domains">
+          <div class="mentoring-domains" *ngIf="topMentoringDomains.length">
             <div class="domain-tag" *ngFor="let domain of topMentoringDomains" [style.font-size.px]="12 + domain.count / 2">
               {{ domain.name }} ({{ domain.count }})
             </div>
@@ -831,21 +835,14 @@ export class StatisticsComponent implements OnInit {
     topCategory: 'Programming'
   };
 
-  // Mentoring Stats
+  // Mentoring Stats — loaded live from the backend (see loadMentoringStats)
   mentoringStats = {
-    activeMentors: 66,
-    totalSessions: 847,
-    avgRating: 4.7
+    activeMentors: 0,
+    totalSessions: 0,
+    completed: 0
   };
 
-  topMentoringDomains = [
-    { name: 'Software Engineering', count: 28 },
-    { name: 'Data Science', count: 18 },
-    { name: 'Business', count: 12 },
-    { name: 'Design', count: 8 },
-    { name: 'Marketing', count: 6 },
-    { name: 'Finance', count: 5 }
-  ];
+  topMentoringDomains: { name: string; count: number }[] = [];
 
   // Performance Metrics
   performanceMetrics = [
@@ -926,12 +923,41 @@ export class StatisticsComponent implements OnInit {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private jobService: JobService
   ) {}
 
   ngOnInit(): void {
     this.updateUserGrowthPlot();
     this.refreshData();
+    this.loadMentoringStats();
+  }
+
+  /** Pull every mentoring relationship and derive the real mentoring KPIs + top domains. */
+  private loadMentoringStats(): void {
+    this.jobService.getAllMentorings()
+      .pipe(catchError(() => of([] as Mentoring[])))
+      .subscribe(mentorings => {
+        const activeMentorIds = new Set(
+          mentorings.filter(m => m.statut === 'ACTIVE').map(m => m.mentorUserId)
+        );
+        this.mentoringStats = {
+          activeMentors: activeMentorIds.size,
+          totalSessions: mentorings.reduce((sum, m) => sum + (m.sessionCount || 0), 0),
+          completed: mentorings.filter(m => m.statut === 'COMPLETED').length
+        };
+
+        // Top domains by relationship count (descending), capped at 6.
+        const counts = new Map<string, number>();
+        mentorings.forEach(m => {
+          const d = (m.domaine || '').trim();
+          if (d) counts.set(d, (counts.get(d) || 0) + 1);
+        });
+        this.topMentoringDomains = [...counts.entries()]
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6);
+      });
   }
 
   goBack(): void {

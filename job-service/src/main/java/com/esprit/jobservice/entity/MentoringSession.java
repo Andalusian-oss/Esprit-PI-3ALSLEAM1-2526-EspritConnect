@@ -29,5 +29,5 @@ public class MentoringSession {
     @Builder.Default
     private SessionStatus statut = SessionStatus.PLANNED;
 
-    public enum SessionStatus { PLANNED, DONE, CANCELLED }
+    public enum SessionStatus { PLANNED, LIVE, DONE, CANCELLED }
 }

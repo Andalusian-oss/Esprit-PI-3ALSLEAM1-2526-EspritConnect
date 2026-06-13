@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -177,7 +177,16 @@ import { of } from 'rxjs';
                 <div class="mentor-session-row" *ngFor="let s of currentSessions">
                   <span class="badge" [ngClass]="sessionBadge(s.statut)" style="font-size:10px">{{ s.statut }}</span>
                   <span>{{ s.date | date:'MMM d, y · HH:mm' }}</span>
-                  <span class="muted">{{ s.dureeMinutes }} min</span>
+                  <span class="muted" *ngIf="s.statut !== 'LIVE'">{{ s.dureeMinutes }} min</span>
+                  <span class="session-countdown" [ngClass]="sessionCountdown(s).cls">
+                    <span class="countdown-dot" *ngIf="sessionCountdown(s).live"></span>
+                    {{ sessionCountdown(s).label }}
+                  </span>
+                  <button class="btn btn-danger btn-sm session-end-btn"
+                    *ngIf="s.statut === 'LIVE' && mentorTab === 'mentor'"
+                    (click)="endLive(s.mentoringId, s.id)" [disabled]="saving">
+                    <span class="icon icon-check"></span>{{ lang.t('jobs.endSession') }}
+                  </button>
                 </div>
               </div>
               <div class="mentor-card-actions" *ngIf="item.statut === 'ACTIVE'">
@@ -236,9 +245,23 @@ import { of } from 'rxjs';
                 <div class="mentor-session-row" *ngFor="let s of currentSessions">
                   <span class="badge" [ngClass]="sessionBadge(s.statut)" style="font-size:10px">{{ s.statut }}</span>
                   <span>{{ s.date | date:'MMM d, y · HH:mm' }}</span>
-                  <span class="muted">{{ s.dureeMinutes }} min</span>
+                  <span class="muted" *ngIf="s.statut !== 'LIVE'">{{ s.dureeMinutes }} min</span>
+                  <span class="session-countdown" [ngClass]="sessionCountdown(s).cls">
+                    <span class="countdown-dot" *ngIf="sessionCountdown(s).live"></span>
+                    {{ sessionCountdown(s).label }}
+                  </span>
+                  <button class="btn btn-danger btn-sm session-end-btn"
+                    *ngIf="s.statut === 'LIVE' && mentorTab === 'mentor'"
+                    (click)="endLive(s.mentoringId, s.id)" [disabled]="saving">
+                    <span class="icon icon-check"></span>{{ lang.t('jobs.endSession') }}
+                  </button>
                 </div>
                 <div class="add-session-form" *ngIf="item.statut === 'ACTIVE'">
+                  <button class="btn btn-sm live-start-btn" (click)="startLive(item.id)"
+                    [disabled]="saving || hasLiveSession()">
+                    ▶ {{ lang.t('jobs.startSession') }}
+                  </button>
+                  <div class="live-or-sep">{{ lang.t('jobs.orSchedule') }}</div>
                   <form [formGroup]="sessionForm" (ngSubmit)="addSession(item.id)" class="add-session-inputs">
                     <input type="datetime-local" formControlName="date" class="input-sm" />
                     <input type="number" formControlName="dureeMinutes" [placeholder]="lang.t('jobs.sessionDuration')" class="input-sm" min="15" style="width:130px" />
@@ -433,6 +456,24 @@ import { of } from 'rxjs';
       border-bottom:1px solid var(--border); font-size:13px;
     }
     .mentor-session-row:last-of-type { border-bottom:none; }
+    .session-countdown {
+      margin-left:auto; display:inline-flex; align-items:center; gap:5px;
+      font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px;
+      font-variant-numeric:tabular-nums; white-space:nowrap;
+    }
+    .countdown-dot {
+      width:7px; height:7px; border-radius:50%; background:currentColor;
+      box-shadow:0 0 0 0 currentColor; animation:countdownPulse 1.4s ease-out infinite;
+    }
+    @keyframes countdownPulse {
+      0% { box-shadow:0 0 0 0 rgba(61,220,132,.5); }
+      70% { box-shadow:0 0 0 6px rgba(61,220,132,0); }
+      100% { box-shadow:0 0 0 0 rgba(61,220,132,0); }
+    }
+    .cd-upcoming { background:rgba(255,189,89,.12); color:#ffbd59; border:1px solid rgba(255,189,89,.25); }
+    .cd-live { background:rgba(61,220,132,.14); color:#3ddc84; border:1px solid rgba(61,220,132,.35); }
+    .cd-ended { background:rgba(148,163,184,.12); color:var(--text-muted); border:1px solid var(--border); }
+    .cd-cancelled { background:rgba(227,30,36,.1); color:#e31e24; border:1px solid rgba(227,30,36,.2); }
     .mentor-loading,.mentor-no-sessions { font-size:13px; color:var(--text-muted); padding:8px 0; text-align:center; }
     .add-session-form { margin-top:12px; padding-top:12px; border-top:1px dashed var(--border); }
     .add-session-inputs { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -453,6 +494,19 @@ import { of } from 'rxjs';
     .badge-cancelled { background:rgba(227,30,36,.1); color:#e31e24; border:1px solid rgba(227,30,36,.2); }
     .badge-planned { background:rgba(255,189,89,.12); color:#ffbd59; border:1px solid rgba(255,189,89,.25); }
     .badge-done { background:rgba(61,220,132,.12); color:#3ddc84; border:1px solid rgba(61,220,132,.25); }
+    .badge-live { background:rgba(227,30,36,.14); color:#e31e24; border:1px solid rgba(227,30,36,.35); }
+
+    /* ── Live session controls ── */
+    .live-start-btn {
+      background:linear-gradient(135deg,#e31e24,#ff5a4d); color:#fff; border:none; font-weight:600;
+    }
+    .live-start-btn:hover:not(:disabled) { filter:brightness(1.08); }
+    .live-start-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .live-or-sep {
+      font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px;
+      margin:10px 0 8px;
+    }
+    .session-end-btn { margin-left:8px; padding:3px 10px; }
 
     /* ── Modal ── */
     .modal-overlay {
@@ -487,7 +541,11 @@ import { of } from 'rxjs';
     :host-context(.light-theme) .input-styled,.input-sm { background:#fff; border-color:#d0d0d0; color:#1a1a1a; }
   `]
 })
-export class MentoringComponent implements OnInit {
+export class MentoringComponent implements OnInit, OnDestroy {
+  /** Live clock (epoch ms) — ticked every second to drive session countdowns. */
+  now = Date.now();
+  private clockTimer?: any;
+
   mentorings: Mentoring[] = [];
   mentoringsAsMentor: Mentoring[] = [];
   mentoringUserMap: Map<number, string> = new Map();
@@ -543,6 +601,53 @@ export class MentoringComponent implements OnInit {
   ngOnInit(): void {
     this.loadMentors();
     this.loadMentorings();
+    // Tick every second so the session countdowns update dynamically in real time.
+    this.clockTimer = setInterval(() => { this.now = Date.now(); }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.clockTimer) clearInterval(this.clockTimer);
+  }
+
+  /**
+   * Dynamic, live time-to-end for a session — computed from start date + duration
+   * against the ticking `now`, instead of a static "60 min" label.
+   * Returns a label plus a status class: upcoming → live (counting down to end) → ended.
+   */
+  sessionCountdown(s: MentoringSession): { label: string; cls: string; live: boolean } {
+    if (s.statut === 'CANCELLED') return { label: this.lang.t('jobs.statusCancelled'), cls: 'cd-cancelled', live: false };
+
+    const start = new Date(s.date).getTime();
+    const now = this.now;
+
+    // Live session: no fixed end — count the elapsed time up until the mentor ends it.
+    if (s.statut === 'LIVE') {
+      return { label: `${this.lang.t('jobs.inProgress')} ${this.humanizeDuration(now - start)}`, cls: 'cd-live', live: true };
+    }
+    if (s.statut === 'DONE') return { label: this.lang.t('jobs.ended'), cls: 'cd-ended', live: false };
+
+    const end = start + (s.dureeMinutes || 0) * 60_000;
+
+    if (now < start) {
+      return { label: `${this.lang.t('jobs.startsIn')} ${this.humanizeDuration(start - now)}`, cls: 'cd-upcoming', live: false };
+    }
+    if (now < end) {
+      // Session is ongoing — live countdown to its end.
+      return { label: `${this.lang.t('jobs.endsIn')} ${this.humanizeDuration(end - now)}`, cls: 'cd-live', live: true };
+    }
+    return { label: this.lang.t('jobs.ended'), cls: 'cd-ended', live: false };
+  }
+
+  /** Format a millisecond span as "2d 3h", "3h 12m", or live "12:05" when under an hour. */
+  private humanizeDuration(ms: number): string {
+    const totalSec = Math.max(0, Math.floor(ms / 1000));
+    const days = Math.floor(totalSec / 86400);
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
   loadMentors(): void {
@@ -667,8 +772,48 @@ export class MentoringComponent implements OnInit {
 
   sessionBadge(statut: string): string {
     if (statut === 'PLANNED') return 'badge-planned';
+    if (statut === 'LIVE') return 'badge-live';
     if (statut === 'DONE') return 'badge-done';
     return 'badge-cancelled';
+  }
+
+  /** Whether this mentoring currently has a running live session (disables the start button). */
+  hasLiveSession(): boolean {
+    return this.currentSessions.some(s => s.statut === 'LIVE');
+  }
+
+  startLive(mentoringId: number): void {
+    this.saving = true;
+    this.jobService.startLiveSession(mentoringId).subscribe({
+      next: () => {
+        this.saving = false;
+        this.notifications.success(this.lang.t('jobs.sessionStarted'));
+        this.reloadSessions(mentoringId);
+        this.loadMentorings();
+      },
+      error: (err) => { this.saving = false; this.notifications.error(err.error?.message || 'Unable to start session'); }
+    });
+  }
+
+  endLive(mentoringId: number, sessionId: number): void {
+    this.saving = true;
+    this.jobService.endSession(sessionId).subscribe({
+      next: () => {
+        this.saving = false;
+        this.notifications.success(this.lang.t('jobs.sessionEnded'));
+        this.reloadSessions(mentoringId);
+        this.loadMentorings();
+      },
+      error: (err) => { this.saving = false; this.notifications.error(err.error?.message || 'Unable to end session'); }
+    });
+  }
+
+  private reloadSessions(mentoringId: number): void {
+    this.loadingSessions = true;
+    this.jobService.getSessions(mentoringId).subscribe({
+      next: s => { this.currentSessions = s; this.loadingSessions = false; },
+      error: () => { this.loadingSessions = false; }
+    });
   }
 
   getDomainSuggestions(specialite: string): string[] {

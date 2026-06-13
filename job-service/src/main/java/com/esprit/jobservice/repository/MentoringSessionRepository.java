@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface MentoringSessionRepository extends JpaRepository<MentoringSession, Long> {
     List<MentoringSession> findByMentoringId(Long mentoringId);
+    List<MentoringSession> findByStatut(MentoringSession.SessionStatus statut);
 }

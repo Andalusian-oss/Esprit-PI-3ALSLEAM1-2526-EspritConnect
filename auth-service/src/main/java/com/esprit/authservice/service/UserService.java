@@ -12,6 +12,7 @@ public interface UserService {
     AuthResponseDTO register(RegisterRequestDTO dto);
     AuthResponseDTO login(LoginRequestDTO dto);
     void logout(String email);
+    void setPresence(Long userId, boolean online);
     UserResponseDTO getUserById(Long id);
     UserResponseDTO getUserByEmail(String email);
     List<UserResponseDTO> getAllUsers();

@@ -158,7 +158,7 @@ export interface MentoringSession {
   mentoringId: number;
   date: string;
   dureeMinutes: number;
-  statut: 'PLANNED' | 'DONE' | 'CANCELLED';
+  statut: 'PLANNED' | 'LIVE' | 'DONE' | 'CANCELLED';
 }
 
 export interface Conversation {
