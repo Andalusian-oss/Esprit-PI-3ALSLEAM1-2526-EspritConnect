@@ -30,7 +30,7 @@ import * as QRCode from 'qrcode';
             <input formControlName="titre" [placeholder]="lang.t('events.titlePh')" />
             <textarea formControlName="description" [placeholder]="lang.t('events.descPh')"></textarea>
             <div class="grid-2">
-              <input formControlName="date" type="datetime-local" />
+              <input formControlName="date" type="datetime-local" [min]="editingEventId ? null : minEventDateTime" />
               <input formControlName="lieu" [placeholder]="lang.t('events.locationPh')" />
             </div>
             <input formControlName="attendeeLimit" type="number" min="1" placeholder="Attendee limit (e.g. 20)" />
@@ -84,7 +84,7 @@ import * as QRCode from 'qrcode';
               <h3>{{ event.titre }}</h3>
               <p>{{ event.date | date:'medium' }}</p>
             </div>
-            <span class="badge badge-red">
+            <span class="badge" [ngClass]="isEventFull(event) ? 'badge-gray' : 'badge-red'">
               {{ event.registrationCount }}<ng-container *ngIf="event.attendeeLimit"> / {{ event.attendeeLimit }}</ng-container>
               {{ lang.t('events.registered') }}
             </span>
@@ -93,11 +93,12 @@ import * as QRCode from 'qrcode';
           <div class="meta-row">
             <span *ngIf="event.lieu">{{ lang.t('events.location') }} {{ event.lieu }}</span>
             <span *ngIf="event.clubNom">{{ lang.t('events.club') }} {{ event.clubNom }}</span>
-            <span *ngIf="event.attendeeLimit">{{ event.remainingSpots ?? 0 }} spots left</span>
+            <span *ngIf="event.attendeeLimit && !isEventFull(event)">{{ event.remainingSpots ?? 0 }} spots left</span>
+            <span *ngIf="isEventFull(event)" class="badge badge-gray">Event full</span>
           </div>
           <div class="card-actions">
-            <button class="btn btn-ghost" (click)="register(event)" [disabled]="loadingInviteEventId === event.id">
-              <span class="icon icon-check"></span>{{ lang.t('common.register') }}
+            <button class="btn btn-ghost" (click)="register(event)" [disabled]="loadingInviteEventId === event.id || isEventFull(event)">
+              <span class="icon icon-check"></span>{{ isEventFull(event) ? 'Full' : lang.t('common.register') }}
             </button>
             <button class="btn btn-ghost" (click)="openMyInvite(event)" [disabled]="loadingInviteEventId === event.id">
               <span class="icon icon-qr-code"></span>My Invite
@@ -175,17 +176,15 @@ import * as QRCode from 'qrcode';
             <thead>
               <tr style="border-bottom:1px solid rgba(255,255,255,0.1)">
                 <th style="text-align:left;padding:8px 6px">#</th>
-                <th style="text-align:left;padding:8px 6px">Invite Code</th>
-                <th style="text-align:left;padding:8px 6px">User ID</th>
+                <th style="text-align:left;padding:8px 6px">Attendee</th>
                 <th style="text-align:left;padding:8px 6px">Registered At</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let r of attendeesModal.registrations; let i = index" style="border-bottom:1px solid rgba(255,255,255,0.05)">
                 <td style="padding:8px 6px;color:var(--text-muted,#aaa)">{{ i + 1 }}</td>
-                <td style="padding:8px 6px;font-family:monospace;font-size:11px">{{ r.inviteCode }}</td>
-                <td style="padding:8px 6px">{{ r.userId }}</td>
-                <td style="padding:8px 6px;color:var(--text-muted,#aaa)">{{ r.createdAt | date:'short' }}</td>
+                <td style="padding:8px 6px">{{ attendeeName(r.userId) }}</td>
+                <td style="padding:8px 6px;color:var(--text-muted,#aaa)">{{ r.createdAt | date:'medium' }}</td>
               </tr>
             </tbody>
           </table>
@@ -211,7 +210,7 @@ export class EventsComponent implements OnInit {
   loadingInviteEventId: number | null = null;
   private registrationsByEventId = new Map<number, EventRegistration>();
   inviteModal: { event: Event; registration: EventRegistration; qrImageUrl: string } | null = null;
-  attendeesModal: { event: Event; registrations: EventRegistration[] } | null = null;
+  attendeesModal: { event: Event; registrations: EventRegistration[]; names: Map<number, string> } | null = null;
 
   eventForm: FormGroup = this.fb.group({
     titre: ['', Validators.required],
@@ -240,6 +239,18 @@ export class EventsComponent implements OnInit {
   get canManageEvents(): boolean {
     const role = this.authService.getCurrentUser()?.role;
     return role === 'ADMIN' || role === 'MENTOR';
+  }
+
+  /** Earliest selectable date when creating an event: now, formatted for datetime-local (YYYY-MM-DDTHH:mm). */
+  get minEventDateTime(): string {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  }
+
+  /** True when the event has a capacity and it has been reached — no new registrations accepted. */
+  isEventFull(event: Event): boolean {
+    return event.attendeeLimit != null && event.registrationCount >= event.attendeeLimit;
   }
 
   get filteredEvents(): Event[] {
@@ -277,9 +288,13 @@ export class EventsComponent implements OnInit {
 
   saveEvent(): void {
     if (this.eventForm.invalid) return;
+    const isCreate = !this.editingEventId;
+    if (isCreate && new Date(this.eventForm.value.date).getTime() < Date.now()) {
+      this.notifications.error('Event date cannot be before today');
+      return;
+    }
     this.saving = true;
     const payload = this.eventForm.value as EventRequest;
-    const isCreate = !this.editingEventId;
     const request = this.editingEventId
       ? this.eventService.updateEvent(this.editingEventId, payload)
       : this.eventService.createEvent(payload);
@@ -389,10 +404,26 @@ export class EventsComponent implements OnInit {
   viewAttendees(event: Event): void {
     this.eventService.getEventRegistrations(event.id).subscribe({
       next: (registrations: EventRegistration[]) => {
-        this.attendeesModal = { event, registrations };
+        this.attendeesModal = { event, registrations, names: new Map<number, string>() };
+        const ids = Array.from(new Set(registrations.map(r => r.userId)));
+        if (ids.length === 0) return;
+        this.authService.getUsersByIds(ids).subscribe({
+          next: (users) => {
+            if (!this.attendeesModal) return;
+            const names = new Map<number, string>();
+            users.forEach(u => names.set(u.id, `${u.prenom} ${u.nom}`.trim()));
+            this.attendeesModal.names = names;
+          },
+          error: () => undefined
+        });
       },
       error: () => this.notifications.error('Unable to load attendee list')
     });
+  }
+
+  /** Display name for an attendee, falling back gracefully while names are still loading. */
+  attendeeName(userId: number): string {
+    return this.attendeesModal?.names.get(userId) || `User #${userId}`;
   }
 
   private afterSave(message: string): void {
