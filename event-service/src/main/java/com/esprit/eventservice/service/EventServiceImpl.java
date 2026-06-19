@@ -100,6 +100,9 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventResponseDTO createEvent(EventRequestDTO dto, Long userId) {
+        if (dto.getDate() != null && dto.getDate().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Event date must be in the future");
+        }
         Event.EventBuilder builder = Event.builder()
                 .titre(dto.getTitre())
                 .description(dto.getDescription())

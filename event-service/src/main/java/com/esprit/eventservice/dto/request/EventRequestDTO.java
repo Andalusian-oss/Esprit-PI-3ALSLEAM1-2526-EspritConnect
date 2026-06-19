@@ -1,7 +1,6 @@
 package com.esprit.eventservice.dto.request;
 
 import com.esprit.eventservice.entity.Event.EventCategory;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,8 +14,9 @@ public class EventRequestDTO {
     private String titre;
     private String description;
 
+    // Future-date constraint is enforced only on creation (see EventServiceImpl.createEvent),
+    // so existing/past events can still be edited.
     @NotNull(message = "Event date is required")
-    @Future(message = "Event date must be in the future")
     private LocalDateTime date;
 
     private String lieu;
