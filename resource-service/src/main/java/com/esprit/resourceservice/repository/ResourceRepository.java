@@ -17,6 +17,11 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     List<Resource> findAllByOrderByCreatedAtDesc();
     Page<Resource> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    // Popularity-first ordering: most-viewed resources surface at the top each day,
+    // with the freshest used as a tiebreaker for equal view counts.
+    List<Resource> findAllByOrderByViewCountDescCreatedAtDesc();
+    Page<Resource> findAllByOrderByViewCountDescCreatedAtDesc(Pageable pageable);
+
     @Modifying
     @Query("UPDATE Resource r SET r.likeCount = r.likeCount + 1 WHERE r.id = :id")
     void incrementLikeCount(@Param("id") Long id);

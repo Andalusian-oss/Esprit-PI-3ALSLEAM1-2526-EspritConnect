@@ -35,14 +35,17 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override @Transactional(readOnly = true)
     public List<ResourceResponseDTO> getAll(Long currentUserId) {
-        return resourceRepository.findAllByOrderByCreatedAtDesc()
+        // Show the most popular (most-viewed) resources first.
+        return resourceRepository.findAllByOrderByViewCountDescCreatedAtDesc()
                 .stream().map(r -> toDTO(r, currentUserId)).collect(Collectors.toList());
     }
 
     @Override @Transactional(readOnly = true)
     public List<ResourceResponseDTO> getAll(Long currentUserId, int page, int size) {
-        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return resourceRepository.findAllByOrderByCreatedAtDesc(pageable)
+        // Most popular (most-viewed) first, freshest as tiebreaker.
+        var pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Direction.DESC, "viewCount").and(Sort.by(Sort.Direction.DESC, "createdAt")));
+        return resourceRepository.findAllByOrderByViewCountDescCreatedAtDesc(pageable)
                 .stream().map(r -> toDTO(r, currentUserId)).collect(Collectors.toList());
     }
 
