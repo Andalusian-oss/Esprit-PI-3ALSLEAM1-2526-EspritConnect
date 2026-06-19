@@ -263,7 +263,7 @@ import { of } from 'rxjs';
                   </button>
                   <div class="live-or-sep">{{ lang.t('jobs.orSchedule') }}</div>
                   <form [formGroup]="sessionForm" (ngSubmit)="addSession(item.id)" class="add-session-inputs">
-                    <input type="datetime-local" formControlName="date" class="input-sm" />
+                    <input type="datetime-local" formControlName="date" class="input-sm" [min]="minSessionDateTime" />
                     <input type="number" formControlName="dureeMinutes" [placeholder]="lang.t('jobs.sessionDuration')" class="input-sm" min="15" style="width:130px" />
                     <button class="btn btn-primary btn-sm" type="submit" [disabled]="sessionForm.invalid || saving">
                       <span class="icon icon-plus"></span>{{ lang.t('jobs.addSession') }}
@@ -577,6 +577,13 @@ export class MentoringComponent implements OnInit, OnDestroy {
     public lang: LanguageService
   ) {}
 
+  /** Earliest selectable session start: now, formatted for the datetime-local input (YYYY-MM-DDTHH:mm). */
+  get minSessionDateTime(): string {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  }
+
   get allMentorings(): Mentoring[] { return [...this.mentorings, ...this.mentoringsAsMentor]; }
   get activeMentoringCount(): number { return this.allMentorings.filter(m => m.statut === 'ACTIVE').length; }
   get completedMentoringCount(): number { return this.allMentorings.filter(m => m.statut === 'COMPLETED').length; }
@@ -719,8 +726,12 @@ export class MentoringComponent implements OnInit, OnDestroy {
 
   addSession(mentoringId: number): void {
     if (this.sessionForm.invalid) return;
-    this.saving = true;
     const { date, dureeMinutes } = this.sessionForm.value;
+    if (new Date(date).getTime() < Date.now()) {
+      this.notifications.error('Session date cannot be in the past');
+      return;
+    }
+    this.saving = true;
     this.jobService.addSession(mentoringId, date, Number(dureeMinutes)).subscribe({
       next: () => {
         this.saving = false;
