@@ -25,7 +25,7 @@ The Angular frontend talks **only** to the API Gateway, which routes requests to
    └─────┴─────┴─────┴─────┴─────┴──────────── MariaDB :3307→3306
 ```
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the detailed service-by-service breakdown, data models, and JWT security flow.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the detailed service-by-service breakdown, data models, and JWT security flow.
 
 ---
 
@@ -191,7 +191,8 @@ Esprit-connect/
 ├── docker-compose.yml      # Orchestrates all services + MariaDB
 ├── start.ps1 / start.sh    # One-command startup scripts
 ├── .env.example            # Environment template
-├── ARCHITECTURE.md         # Detailed architecture & data models
+├── docs/
+│   └── ARCHITECTURE.md     # Detailed architecture & data models
 ├── eureka-server/          # Service discovery
 ├── api-gateway/            # Spring Cloud Gateway
 ├── auth-service/           # Java services (Spring Boot)
