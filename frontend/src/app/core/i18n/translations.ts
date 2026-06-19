@@ -156,6 +156,8 @@ export interface Translations {
   'events.subtitle': string;
   'events.newClub': string;
   'events.closeClubForm': string;
+  'events.newEvent': string;
+  'events.closeEventForm': string;
   'events.createEvent': string;
   'events.updateEvent': string;
   'events.createClub': string;
@@ -166,6 +168,7 @@ export interface Translations {
   'events.noClub': string;
   'events.clubNamePh': string;
   'events.logoUrlPh': string;
+  'events.clubAvatar': string;
   'events.sectionEvents': string;
   'events.searchEvents': string;
   'events.allClubs': string;
@@ -176,6 +179,13 @@ export interface Translations {
   'events.sectionClubs': string;
   'events.searchClubs': string;
   'events.members': string;
+  'events.requests': string;
+  'events.approve': string;
+  'events.reject': string;
+  'events.myClubs': string;
+  'events.noMyClubs': string;
+  'events.member': string;
+  'events.pending': string;
   'events.clubBadge': string;
   // ── Jobs ──
   'jobs.title': string;
@@ -728,6 +738,8 @@ const en: Translations = {
   'events.subtitle': 'Manage campus events and student clubs',
   'events.newClub': 'New club',
   'events.closeClubForm': 'Close club form',
+  'events.newEvent': 'New event',
+  'events.closeEventForm': 'Close event form',
   'events.createEvent': 'Create event',
   'events.updateEvent': 'Update event',
   'events.createClub': 'Create club',
@@ -738,6 +750,7 @@ const en: Translations = {
   'events.noClub': 'No club',
   'events.clubNamePh': 'Club name',
   'events.logoUrlPh': 'Logo URL',
+  'events.clubAvatar': 'Add avatar',
   'events.sectionEvents': 'Events',
   'events.searchEvents': 'Search events...',
   'events.allClubs': 'All clubs',
@@ -748,6 +761,13 @@ const en: Translations = {
   'events.sectionClubs': 'Clubs',
   'events.searchClubs': 'Search clubs...',
   'events.members': 'members',
+  'events.requests': 'Requests',
+  'events.approve': 'Approve',
+  'events.reject': 'Reject',
+  'events.myClubs': 'My clubs',
+  'events.noMyClubs': 'You are not a member of any club yet',
+  'events.member': 'Member',
+  'events.pending': 'Pending',
   'events.clubBadge': 'Club',
   // ── Jobs ──
   'jobs.title': 'Job Board',
@@ -1300,6 +1320,8 @@ const fr: Translations = {
   'events.subtitle': 'Gérer les événements campus et les clubs étudiants',
   'events.newClub': 'Nouveau club',
   'events.closeClubForm': 'Fermer le formulaire',
+  'events.newEvent': 'Nouvel événement',
+  'events.closeEventForm': 'Fermer le formulaire',
   'events.createEvent': 'Créer un événement',
   'events.updateEvent': 'Modifier l\'événement',
   'events.createClub': 'Créer un club',
@@ -1310,6 +1332,7 @@ const fr: Translations = {
   'events.noClub': 'Aucun club',
   'events.clubNamePh': 'Nom du club',
   'events.logoUrlPh': 'URL du logo',
+  'events.clubAvatar': 'Ajouter un avatar',
   'events.sectionEvents': 'Événements',
   'events.searchEvents': 'Rechercher des événements...',
   'events.allClubs': 'Tous les clubs',
@@ -1320,6 +1343,13 @@ const fr: Translations = {
   'events.sectionClubs': 'Clubs',
   'events.searchClubs': 'Rechercher des clubs...',
   'events.members': 'membres',
+  'events.requests': 'Demandes',
+  'events.approve': 'Accepter',
+  'events.reject': 'Refuser',
+  'events.myClubs': 'Mes clubs',
+  'events.noMyClubs': 'Vous n\'êtes membre d\'aucun club pour le moment',
+  'events.member': 'Membre',
+  'events.pending': 'En attente',
   'events.clubBadge': 'Club',
   // ── Jobs ──
   'jobs.title': 'Offres d\'Emploi',

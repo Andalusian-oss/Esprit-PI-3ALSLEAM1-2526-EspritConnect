@@ -12,4 +12,7 @@ public class ClubResponseDTO {
     private String logoUrl;
     private Long creatorUserId;
     private int memberCount;
+    private int pendingCount;
+    // Current user's membership status for this club: NONE | PENDING | APPROVED
+    private String membershipStatus;
 }

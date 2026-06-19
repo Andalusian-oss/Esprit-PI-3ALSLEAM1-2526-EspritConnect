@@ -98,12 +98,22 @@ export interface Club {
   logoUrl?: string;
   creatorUserId: number;
   memberCount: number;
+  pendingCount?: number;
+  membershipStatus?: string; // NONE | PENDING | APPROVED (for the current user)
 }
 
 export interface ClubRequest {
   nom: string;
   description?: string;
   logoUrl?: string;
+}
+
+export interface ClubMember {
+  id: number;
+  clubId: number;
+  userId: number;
+  role: string;
+  status?: string;
 }
 
 export interface Job {

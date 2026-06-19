@@ -24,5 +24,13 @@ public class ClubMembership {
     @Column(nullable = false)
     private MemberRole role;
 
+    // SQL default 'APPROVED' so the ddl-auto ALTER backfills existing rows and the
+    // data.sql seed inserts (which omit status) remain valid. New join requests set PENDING explicitly.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) not null default 'APPROVED'")
+    @Builder.Default
+    private MembershipStatus status = MembershipStatus.APPROVED;
+
     public enum MemberRole { MEMBER, ADMIN }
+    public enum MembershipStatus { PENDING, APPROVED }
 }

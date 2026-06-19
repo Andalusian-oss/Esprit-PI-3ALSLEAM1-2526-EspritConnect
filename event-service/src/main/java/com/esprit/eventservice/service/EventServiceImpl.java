@@ -2,6 +2,7 @@ package com.esprit.eventservice.service;
 
 import com.esprit.eventservice.dto.request.ClubRequestDTO;
 import com.esprit.eventservice.dto.request.EventRequestDTO;
+import com.esprit.eventservice.dto.response.ClubMemberResponseDTO;
 import com.esprit.eventservice.dto.response.ClubResponseDTO;
 import com.esprit.eventservice.dto.response.EventRegistrationResponseDTO;
 import com.esprit.eventservice.dto.response.EventResponseDTO;
@@ -41,50 +42,60 @@ public class EventServiceImpl implements EventService {
         // Creator automatically becomes ADMIN member
         ClubMembership membership = ClubMembership.builder()
                 .club(saved).userId(userId)
-                .role(ClubMembership.MemberRole.ADMIN).build();
+                .role(ClubMembership.MemberRole.ADMIN)
+                .status(ClubMembership.MembershipStatus.APPROVED).build();
         membershipRepository.save(membership);
-        return toClubDTO(saved);
+        return toClubDTO(saved, userId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClubResponseDTO> getAllClubs() {
-        return clubRepository.findAll().stream().map(this::toClubDTO).collect(Collectors.toList());
+    public List<ClubResponseDTO> getAllClubs(Long currentUserId) {
+        return clubRepository.findAll().stream()
+                .map(c -> toClubDTO(c, currentUserId)).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ClubResponseDTO getClubById(Long id) {
-        return toClubDTO(findClub(id));
+    public ClubResponseDTO getClubById(Long id, Long currentUserId) {
+        return toClubDTO(findClub(id), currentUserId);
     }
 
     @Override
     @Transactional
-    public ClubResponseDTO updateClub(Long id, ClubRequestDTO dto, Long userId) {
+    public ClubResponseDTO updateClub(Long id, ClubRequestDTO dto, Long userId, String role) {
         Club club = findClub(id);
-        if (!club.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        boolean isAdmin = "ADMIN".equals(role);
+        if (!isAdmin && !club.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
         club.setNom(dto.getNom());
         if (dto.getDescription() != null) club.setDescription(dto.getDescription());
         if (dto.getLogoUrl() != null) club.setLogoUrl(dto.getLogoUrl());
-        return toClubDTO(clubRepository.save(club));
+        return toClubDTO(clubRepository.save(club), userId);
     }
 
     @Override
     @Transactional
-    public void deleteClub(Long id, Long userId) {
+    public void deleteClub(Long id, Long userId, String role) {
         Club club = findClub(id);
-        if (!club.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
+        boolean isAdmin = "ADMIN".equals(role);
+        if (!isAdmin && !club.getCreatorUserId().equals(userId)) throw new IllegalArgumentException("Not authorized");
         clubRepository.delete(club);
     }
 
     @Override
     @Transactional
     public void joinClub(Long clubId, Long userId) {
-        if (membershipRepository.existsByClubIdAndUserId(clubId, userId))
+        membershipRepository.findByClubIdAndUserId(clubId, userId).ifPresent(m -> {
+            if (m.getStatus() == ClubMembership.MembershipStatus.PENDING)
+                throw new IllegalArgumentException("Your join request is already pending approval");
             throw new IllegalArgumentException("Already a member");
+        });
         Club club = findClub(clubId);
+        // Join is now a request that a club admin must approve.
         membershipRepository.save(ClubMembership.builder()
-                .club(club).userId(userId).role(ClubMembership.MemberRole.MEMBER).build());
+                .club(club).userId(userId)
+                .role(ClubMembership.MemberRole.MEMBER)
+                .status(ClubMembership.MembershipStatus.PENDING).build());
     }
 
     @Override
@@ -93,6 +104,66 @@ public class EventServiceImpl implements EventService {
         ClubMembership membership = membershipRepository.findByClubIdAndUserId(clubId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
         membershipRepository.delete(membership);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClubMemberResponseDTO> getClubMembers(Long clubId) {
+        findClub(clubId); // ensure the club exists (throws 404 otherwise)
+        return membershipRepository
+                .findAllByClubIdAndStatusOrderByRoleDescIdAsc(clubId, ClubMembership.MembershipStatus.APPROVED)
+                .stream().map(this::toMemberDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClubMemberResponseDTO> getClubJoinRequests(Long clubId, Long requesterId) {
+        Club club = findClub(clubId);
+        requireClubAdmin(club, requesterId);
+        return membershipRepository
+                .findAllByClubIdAndStatusOrderByIdAsc(clubId, ClubMembership.MembershipStatus.PENDING)
+                .stream().map(this::toMemberDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void approveJoinRequest(Long clubId, Long userId, Long requesterId) {
+        Club club = findClub(clubId);
+        requireClubAdmin(club, requesterId);
+        ClubMembership membership = membershipRepository.findByClubIdAndUserId(clubId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Join request not found"));
+        membership.setStatus(ClubMembership.MembershipStatus.APPROVED);
+        membershipRepository.save(membership);
+    }
+
+    @Override
+    @Transactional
+    public void rejectJoinRequest(Long clubId, Long userId, Long requesterId) {
+        Club club = findClub(clubId);
+        requireClubAdmin(club, requesterId);
+        ClubMembership membership = membershipRepository.findByClubIdAndUserId(clubId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Join request not found"));
+        membershipRepository.delete(membership);
+    }
+
+    /** A club admin is the creator or any APPROVED member with the ADMIN role. */
+    private void requireClubAdmin(Club club, Long userId) {
+        boolean isCreator = club.getCreatorUserId().equals(userId);
+        boolean isAdminMember = membershipRepository.findByClubIdAndUserId(club.getId(), userId)
+                .map(m -> m.getStatus() == ClubMembership.MembershipStatus.APPROVED
+                        && m.getRole() == ClubMembership.MemberRole.ADMIN)
+                .orElse(false);
+        if (!isCreator && !isAdminMember) throw new IllegalArgumentException("Not authorized");
+    }
+
+    private ClubMemberResponseDTO toMemberDTO(ClubMembership m) {
+        return ClubMemberResponseDTO.builder()
+                .id(m.getId())
+                .clubId(m.getClub().getId())
+                .userId(m.getUserId())
+                .role(m.getRole() != null ? m.getRole().name() : null)
+                .status(m.getStatus() != null ? m.getStatus().name() : null)
+                .build();
     }
 
     // ─── Event ─────────────────────────────────────────────────────────────────
@@ -230,11 +301,22 @@ public class EventServiceImpl implements EventService {
         return UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
 
-    private ClubResponseDTO toClubDTO(Club club) {
+    private ClubResponseDTO toClubDTO(Club club, Long currentUserId) {
+        int approved = (int) membershipRepository.countByClubIdAndStatus(
+                club.getId(), ClubMembership.MembershipStatus.APPROVED);
+        int pending = (int) membershipRepository.countByClubIdAndStatus(
+                club.getId(), ClubMembership.MembershipStatus.PENDING);
+        String membershipStatus = "NONE";
+        if (currentUserId != null) {
+            membershipStatus = membershipRepository.findByClubIdAndUserId(club.getId(), currentUserId)
+                    .map(m -> m.getStatus() != null ? m.getStatus().name() : "NONE")
+                    .orElse("NONE");
+        }
         return ClubResponseDTO.builder()
                 .id(club.getId()).nom(club.getNom()).description(club.getDescription())
                 .logoUrl(club.getLogoUrl()).creatorUserId(club.getCreatorUserId())
-                .memberCount(club.getMemberships().size()).build();
+                .memberCount(approved).pendingCount(pending)
+                .membershipStatus(membershipStatus).build();
     }
 
     private EventResponseDTO toEventDTO(Event event) {

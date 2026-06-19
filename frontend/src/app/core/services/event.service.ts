@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Club, ClubRequest, Event, EventRequest, EventRegistration } from '../models/models';
+import { Club, ClubMember, ClubRequest, Event, EventRequest, EventRegistration } from '../models/models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +24,10 @@ export class EventService {
   createClub(data: ClubRequest): Observable<Club> { return this.http.post<Club>(this.clubsUrl, data); }
   updateClub(id: number, data: ClubRequest): Observable<Club> { return this.http.put<Club>(`${this.clubsUrl}/${id}`, data); }
   deleteClub(id: number): Observable<void> { return this.http.delete<void>(`${this.clubsUrl}/${id}`); }
+  getClubMembers(clubId: number): Observable<ClubMember[]> { return this.http.get<ClubMember[]>(`${this.clubsUrl}/${clubId}/members`); }
+  getClubRequests(clubId: number): Observable<ClubMember[]> { return this.http.get<ClubMember[]>(`${this.clubsUrl}/${clubId}/requests`); }
+  approveRequest(clubId: number, userId: number): Observable<void> { return this.http.post<void>(`${this.clubsUrl}/${clubId}/requests/${userId}/approve`, {}); }
+  rejectRequest(clubId: number, userId: number): Observable<void> { return this.http.delete<void>(`${this.clubsUrl}/${clubId}/requests/${userId}`); }
   joinClub(clubId: number): Observable<void> { return this.http.post<void>(`${this.clubsUrl}/${clubId}/join`, {}); }
   leaveClub(clubId: number): Observable<void> { return this.http.delete<void>(`${this.clubsUrl}/${clubId}/leave`); }
 }
