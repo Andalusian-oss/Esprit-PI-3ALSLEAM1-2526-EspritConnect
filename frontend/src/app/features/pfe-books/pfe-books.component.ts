@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PfeBook, User } from '../../core/models/models';
 import { PfeBookService } from '../../core/services/pfe-book.service';
+import { PfeStorageService } from '../../core/services/pfe-storage.service';
 import { PostService } from '../../core/services/post.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -24,11 +25,14 @@ import { LanguageService } from '../../core/services/language.service';
         </div>
 
         <div *ngIf="adminTab === 'all'" class="all-books-section">
-          <div *ngIf="displayedBooks.length === 0" class="empty-state">{{ lang.t('pfe.noBooks') }}</div>
-          <div *ngFor="let book of displayedBooks" class="all-books-card">
+          <div *ngIf="allBooks.length === 0" class="empty-state">{{ lang.t('pfe.noBooks') }}</div>
+          <div *ngFor="let book of allBooks" class="all-books-card">
             <h4>{{ book.titre }}</h4>
             <p>{{ book.description | slice:0:100 }}...</p>
-            <p class="status-badge" [ngClass]="'status-' + book.status">{{ book.status }}</p>
+            <div class="card-foot">
+              <span class="status-badge" [ngClass]="'status-' + book.status">{{ statusLabel(book.status) }}</span>
+              <button class="btn btn-danger btn-sm" (click)="deleteBook(book)">🗑 {{ lang.t('pfe.delete') }}</button>
+            </div>
           </div>
         </div>
 
@@ -40,6 +44,7 @@ import { LanguageService } from '../../core/services/language.service';
             <div style="display: flex; gap: 8px; margin-top: 12px;">
               <button class="btn btn-success" (click)="approveBook(book)">{{ lang.t('pfe.approve') }}</button>
               <button class="btn btn-danger" (click)="rejectBook(book)">{{ lang.t('pfe.reject') }}</button>
+              <button class="btn btn-danger" (click)="deleteBook(book)">🗑 {{ lang.t('pfe.delete') }}</button>
             </div>
           </div>
         </div>
@@ -75,8 +80,30 @@ import { LanguageService } from '../../core/services/language.service';
               <option value="MOBILE">MOBILE - Mobile Dev</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">{{ lang.t('pfe.submitApproval') }}</button>
+          <div class="form-group">
+            <label>{{ lang.t('pfe.formLabelFile') }}</label>
+            <input type="file" accept="application/pdf,.pdf" (change)="onFileSelected($event)" />
+            <span *ngIf="selectedFile" class="file-name">📄 {{ selectedFile.name }} · {{ formatFileSize(selectedFile.size) }}</span>
+          </div>
+          <button type="submit" class="btn btn-primary" [disabled]="uploadForm.invalid || !selectedFile" style="width: 100%; margin-top: 12px;">{{ lang.t('pfe.submitApproval') }}</button>
         </form>
+      </div>
+
+      <!-- Company: My Submissions -->
+      <div *ngIf="userRole === 'COMPANY' && myBooks.length > 0" class="my-books-section">
+        <h3>{{ lang.t('pfe.mySubmissions') }}</h3>
+        <div *ngFor="let book of myBooks" class="all-books-card">
+          <h4>{{ book.titre }}</h4>
+          <p>{{ book.description | slice:0:100 }}...</p>
+          <div class="card-foot">
+            <span class="status-badge" [ngClass]="'status-' + book.status">{{ statusLabel(book.status) }}</span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-ghost btn-sm" (click)="viewBook(book)">{{ lang.t('pfe.viewBtn') }}</button>
+              <button class="btn btn-primary btn-sm" (click)="downloadBook(book)">{{ lang.t('pfe.downloadBtn') }}</button>
+              <button class="btn btn-danger btn-sm" (click)="deleteBook(book)">🗑</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Search -->
@@ -96,14 +123,17 @@ import { LanguageService } from '../../core/services/language.service';
         <div class="stat-card">
           <span class="stat-icon">📚</span>
           <div class="stat-number">{{ displayedBooks.length }}</div>
+          <div class="stat-label">{{ lang.t('pfe.statBooks') }}</div>
         </div>
         <div class="stat-card">
           <span class="stat-icon">⬇️</span>
           <div class="stat-number">{{ getTotalDownloads() }}</div>
+          <div class="stat-label">{{ lang.t('pfe.statDownloads') }}</div>
         </div>
         <div class="stat-card">
           <span class="stat-icon">👁️</span>
           <div class="stat-number">{{ getTotalViews() }}</div>
+          <div class="stat-label">{{ lang.t('pfe.statViews') }}</div>
         </div>
       </div>
 
@@ -122,6 +152,7 @@ import { LanguageService } from '../../core/services/language.service';
             <button class="btn btn-ghost" (click)="viewBook(book)">{{ lang.t('pfe.viewBtn') }}</button>
             <button *ngIf="userRole === 'STUDENT'" class="btn btn-primary" (click)="downloadBook(book)">{{ lang.t('pfe.downloadBtn') }}</button>
             <button *ngIf="userRole === 'ALUMNI'" class="btn btn-primary" (click)="downloadBook(book)">{{ lang.t('pfe.downloadBtn') }}</button>
+            <button *ngIf="isAdmin" class="btn btn-danger" (click)="deleteBook(book)">🗑 {{ lang.t('pfe.delete') }}</button>
           </div>
         </div>
       </div>
@@ -163,6 +194,7 @@ import { LanguageService } from '../../core/services/language.service';
           </div>
           <div class="modal-footer">
             <button class="btn btn-primary" (click)="downloadBook(viewerModal)">{{ lang.t('pfe.downloadPdf') }}</button>
+            <button *ngIf="isAdmin" class="btn btn-danger" (click)="deleteBook(viewerModal)">🗑 {{ lang.t('pfe.delete') }}</button>
             <button class="btn btn-ghost" (click)="closeViewer()">{{ lang.t('common.close') }}</button>
           </div>
         </div>
@@ -191,6 +223,12 @@ import { LanguageService } from '../../core/services/language.service';
     .status-APPROVED { background: rgba(61,220,132,0.15); color: #3ddc84; }
     .status-PENDING { background: rgba(255,189,89,0.12); color: #ffbd59; }
     .status-REJECTED { background: rgba(225,29,46,0.12); color: var(--red); }
+    .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .btn-sm { padding: 6px 10px; font-size: 11px; width: auto; }
+
+    /* ══ Company: My Submissions ══ */
+    .my-books-section { background: var(--dark2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+    .my-books-section h3 { margin: 0 0 14px 0; font-size: 16px; font-weight: 700; }
 
     .pending-section { margin-top: 16px; }
     .pending-card { background: var(--dark3); border: 1px solid var(--border); border-left: 3px solid #3ddc84; padding: 12px; margin-bottom: 12px; border-radius: 8px; }
@@ -207,6 +245,8 @@ import { LanguageService } from '../../core/services/language.service';
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--dark3); color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 3px rgba(56,214,199,0.12); }
     .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group input[type="file"] { padding: 8px; cursor: pointer; }
+    .file-name { display: block; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--accent-cyan); word-break: break-all; }
 
     /* ══ Search & Filters ══ */
     .search-filters { display: flex; gap: 12px; margin: 20px 0; background: var(--dark2); padding: 16px; border: 1px solid var(--border); border-radius: 12px; flex-wrap: wrap; align-items: center; }
@@ -220,6 +260,7 @@ import { LanguageService } from '../../core/services/language.service';
     .stat-card:hover { border-color: var(--accent-cyan); transform: translateY(-2px); }
     .stat-icon { font-size: 28px; margin-bottom: 8px; }
     .stat-number { font-size: 22px; font-weight: 700; color: var(--text); }
+    .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
 
     /* ══ Books Grid ══ */
     .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin: 24px 0; }
@@ -279,6 +320,7 @@ export class PfeBooksComponent implements OnInit {
   displayedBooks: PfeBook[] = [];
   allBooks: PfeBook[] = [];
   pendingBooks: PfeBook[] = [];
+  myBooks: PfeBook[] = [];
   pagedBooks: PfeBook[] = [];
   filteredBooks: PfeBook[] = [];
   viewerModal: PfeBook | null = null;
@@ -288,6 +330,7 @@ export class PfeBooksComponent implements OnInit {
   userRole = '';
   adminTab: 'all' | 'pending' = 'all';
   showUploadForm = false;
+  selectedFile: File | null = null;
 
   uploadForm: FormGroup;
   searchQuery = '';
@@ -298,6 +341,7 @@ export class PfeBooksComponent implements OnInit {
 
   constructor(
     private pfeService: PfeBookService,
+    private storage: PfeStorageService,
     private notif: NotificationService,
     private postService: PostService,
     private authService: AuthService,
@@ -316,15 +360,15 @@ export class PfeBooksComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.currentUser = this.authService.getCurrentUser() || undefined;
     this.isAdmin = this.currentUser?.role === 'ADMIN';
     this.userRole = this.currentUser?.role || '';
-    this.loadBooks();
+    await this.loadBooks();
   }
 
-  loadBooks(): void {
-    const mockBooks: PfeBook[] = [
+  async loadBooks(): Promise<void> {
+    const seedBooks: PfeBook[] = [
       { id: 1, titre: 'TechVision Tunisia - E-Commerce Solutions', description: 'Developed an advanced e-commerce platform for Tunisian artisanal products with AI recommendations and secure payment processing', auteur: 'TechVision Tunisia', annee: 2024, filiere: 'GL', departement: 'GL', documentUrl: 'data:application/pdf;base64,JVBERi0xLjQK', fileType: 'PDF', fileSize: 2845000, downloadCount: 234, viewCount: 892, uploadedAt: '2024-05-15', keywords: ['ecommerce'], likeCount: 87, likedByMe: false, status: 'APPROVED', uploaderId: 1, uploaderName: 'TechVision Tunisia', uploaderRole: 'COMPANY' },
       { id: 2, titre: 'DataDrive Solutions - AI & HR Analytics', description: 'Predictive HR analytics system using Machine Learning for employee retention and career development recommendations', auteur: 'DataDrive Solutions', annee: 2024, filiere: 'IA', departement: 'IA', documentUrl: 'data:application/pdf;base64,JVBERi0xLjQK', fileType: 'PDF', fileSize: 3456000, downloadCount: 189, viewCount: 567, uploadedAt: '2024-05-10', keywords: ['ml'], likeCount: 92, likedByMe: false, status: 'APPROVED', uploaderId: 2, uploaderName: 'DataDrive Solutions', uploaderRole: 'COMPANY' },
       { id: 3, titre: 'SecureNet Systems - Cybersecurity Platform', description: 'Advanced intrusion detection system powered by machine learning with real-time threat analysis and network monitoring', auteur: 'SecureNet Systems', annee: 2024, filiere: 'SECURITE', departement: 'Security', documentUrl: 'data:application/pdf;base64,JVBERi0xLjQK', fileType: 'PDF', fileSize: 2134000, downloadCount: 156, viewCount: 432, uploadedAt: '2024-05-05', keywords: ['security'], likeCount: 78, likedByMe: false, status: 'PENDING', uploaderId: 3, uploaderName: 'SecureNet Systems', uploaderRole: 'COMPANY' },
@@ -339,9 +383,26 @@ export class PfeBooksComponent implements OnInit {
       { id: 12, titre: 'StreamPro Media - Video Platform', description: 'Adaptive video streaming platform with HLS, CDN distribution, and ML-based content recommendations', auteur: 'StreamPro Media', annee: 2024, filiere: 'GL', departement: 'GL', documentUrl: 'data:application/pdf;base64,JVBERi0xLjQK', fileType: 'PDF', fileSize: 4567000, downloadCount: 245, viewCount: 823, uploadedAt: '2024-03-20', keywords: ['video'], likeCount: 98, likedByMe: false, status: 'APPROVED', uploaderId: 12, uploaderName: 'StreamPro Media', uploaderRole: 'COMPANY' }
     ];
 
-    this.allBooks = mockBooks;
-    this.displayedBooks = mockBooks.filter(b => b.status === 'APPROVED');
-    this.pendingBooks = mockBooks.filter(b => b.status === 'PENDING');
+    // Load persisted books; seed the store with sample data on first run only.
+    let books: PfeBook[] = [];
+    try {
+      books = await this.storage.getAll();
+    } catch {
+      books = [];
+    }
+    if (!books.length) {
+      books = seedBooks;
+      try { await this.storage.putAll(seedBooks); } catch { /* storage unavailable — fall back to in-memory */ }
+    }
+    this.allBooks = books;
+    this.refresh();
+  }
+
+  /** Recompute the role-specific views from the single source of truth (allBooks). */
+  private refresh(): void {
+    this.displayedBooks = this.allBooks.filter(b => b.status === 'APPROVED');
+    this.pendingBooks = this.allBooks.filter(b => b.status === 'PENDING');
+    this.myBooks = this.allBooks.filter(b => !!this.currentUser && b.uploaderId === this.currentUser.id);
     this.onFilterChange();
   }
 
@@ -369,13 +430,17 @@ export class PfeBooksComponent implements OnInit {
     link.href = book.documentUrl;
     link.download = book.titre + '.pdf';
     link.click();
+    book.downloadCount++;
+    this.storage.put(book).catch(() => undefined);
+    this.pfeService.incrementDownload(book.id).subscribe({ error: () => undefined });
     this.notif.success(this.lang.t('pfe.downloadedSuccess') + book.titre);
   }
 
   viewBook(book: PfeBook): void {
     this.viewerModal = book;
     book.viewCount++;
-    this.pfeService.incrementView(book.id).subscribe();
+    this.storage.put(book).catch(() => undefined);
+    this.pfeService.incrementView(book.id).subscribe({ error: () => undefined });
   }
 
   closeViewer(): void {
@@ -390,25 +455,92 @@ export class PfeBooksComponent implements OnInit {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
-  submitBook(): void {
-    if (this.uploadForm.invalid) return;
-    const title = this.uploadForm.value.titre as string;
-    this.postService.createPost({ contenu: `New PFE book uploaded: ${title}`, autoApprove: true }).subscribe({ error: () => undefined });
-    this.notif.success(this.lang.t('pfe.uploadSuccess'));
-    this.uploadForm.reset();
-    this.showUploadForm = false;
-    this.adminTab = 'all';
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (!file) { this.selectedFile = null; return; }
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      this.notif.error(this.lang.t('pfe.fileMustBePdf'));
+      input.value = '';
+      this.selectedFile = null;
+      return;
+    }
+    this.selectedFile = file;
   }
 
-  approveBook(book: PfeBook): void {
+  submitBook(): void {
+    if (this.uploadForm.invalid || !this.selectedFile) return;
+    const file = this.selectedFile;
+    const v = this.uploadForm.value;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const newBook: PfeBook = {
+        id: Date.now(),
+        titre: v.titre,
+        description: v.description,
+        auteur: v.titre,
+        annee: new Date().getFullYear(),
+        filiere: v.filiere,
+        departement: v.filiere,
+        documentUrl: reader.result as string,
+        fileType: 'PDF',
+        fileSize: file.size,
+        downloadCount: 0,
+        viewCount: 0,
+        uploadedAt: new Date().toISOString().slice(0, 10),
+        keywords: [],
+        likeCount: 0,
+        likedByMe: false,
+        status: 'PENDING',
+        uploaderId: this.currentUser?.id || 0,
+        uploaderName: v.titre || `${this.currentUser?.prenom || ''} ${this.currentUser?.nom || ''}`.trim(),
+        uploaderRole: 'COMPANY'
+      };
+      try {
+        await this.storage.put(newBook);
+      } catch {
+        this.notif.error(this.lang.t('pfe.saveError'));
+        return;
+      }
+      this.allBooks.unshift(newBook);
+      this.refresh();
+      this.postService.createPost({ contenu: `New PFE book uploaded: ${newBook.titre}`, autoApprove: true }).subscribe({ error: () => undefined });
+      this.notif.success(this.lang.t('pfe.uploadSuccess'));
+      this.uploadForm.reset({ filiere: 'GL', annee: new Date().getFullYear(), fileType: 'PDF' });
+      this.selectedFile = null;
+      this.showUploadForm = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async approveBook(book: PfeBook): Promise<void> {
     book.status = 'APPROVED';
-    this.pendingBooks = this.pendingBooks.filter(b => b.id !== book.id);
+    await this.storage.put(book).catch(() => undefined);
+    this.refresh();
     this.notif.success(this.lang.t('pfe.approvedSuccess'));
   }
 
-  rejectBook(book: PfeBook): void {
-    this.pendingBooks = this.pendingBooks.filter(b => b.id !== book.id);
+  async rejectBook(book: PfeBook): Promise<void> {
+    book.status = 'REJECTED';
+    await this.storage.put(book).catch(() => undefined);
+    this.refresh();
     this.notif.success(this.lang.t('pfe.rejectedSuccess'));
+  }
+
+  async deleteBook(book: PfeBook): Promise<void> {
+    if (!confirm(this.lang.t('pfe.deleteConfirm'))) return;
+    this.allBooks = this.allBooks.filter(b => b.id !== book.id);
+    await this.storage.remove(book.id).catch(() => undefined);
+    if (this.viewerModal?.id === book.id) this.closeViewer();
+    this.refresh();
+    this.notif.success(this.lang.t('pfe.deletedSuccess'));
+  }
+
+  statusLabel(status: string): string {
+    if (status === 'APPROVED') return this.lang.t('pfe.statusApproved');
+    if (status === 'PENDING') return this.lang.t('pfe.statusPending');
+    if (status === 'REJECTED') return this.lang.t('pfe.statusRejected');
+    return status;
   }
 
   getTotalDownloads(): number {

@@ -580,6 +580,19 @@ export interface Translations {
   'pfe.approvedSuccess': string;
   'pfe.rejectedSuccess': string;
   'pfe.downloadedSuccess': string;
+  'pfe.formLabelFile': string;
+  'pfe.fileMustBePdf': string;
+  'pfe.statBooks': string;
+  'pfe.statDownloads': string;
+  'pfe.statViews': string;
+  'pfe.delete': string;
+  'pfe.deleteConfirm': string;
+  'pfe.deletedSuccess': string;
+  'pfe.mySubmissions': string;
+  'pfe.saveError': string;
+  'pfe.statusPending': string;
+  'pfe.statusApproved': string;
+  'pfe.statusRejected': string;
 }
 
 const en: Translations = {
@@ -1162,6 +1175,19 @@ const en: Translations = {
   'pfe.approvedSuccess': 'Book approved!',
   'pfe.rejectedSuccess': 'Book rejected',
   'pfe.downloadedSuccess': 'Downloaded: ',
+  'pfe.formLabelFile': 'PFE Book (PDF) *',
+  'pfe.fileMustBePdf': 'Please select a PDF file',
+  'pfe.statBooks': 'Books',
+  'pfe.statDownloads': 'Downloads',
+  'pfe.statViews': 'Views',
+  'pfe.delete': 'Delete',
+  'pfe.deleteConfirm': 'Delete this PFE book? This cannot be undone.',
+  'pfe.deletedSuccess': 'Book deleted',
+  'pfe.mySubmissions': '📤 My Submissions',
+  'pfe.saveError': 'Could not save the book. The PDF may be too large.',
+  'pfe.statusPending': '⏳ Pending approval',
+  'pfe.statusApproved': '✓ Published',
+  'pfe.statusRejected': '✕ Rejected',
 };
 
 const fr: Translations = {
@@ -1744,6 +1770,19 @@ const fr: Translations = {
   'pfe.approvedSuccess': 'Livre approuvé !',
   'pfe.rejectedSuccess': 'Livre rejeté',
   'pfe.downloadedSuccess': 'Téléchargé : ',
+  'pfe.formLabelFile': 'Rapport PFE (PDF) *',
+  'pfe.fileMustBePdf': 'Veuillez sélectionner un fichier PDF',
+  'pfe.statBooks': 'Livres',
+  'pfe.statDownloads': 'Téléchargements',
+  'pfe.statViews': 'Vues',
+  'pfe.delete': 'Supprimer',
+  'pfe.deleteConfirm': 'Supprimer ce rapport PFE ? Cette action est irréversible.',
+  'pfe.deletedSuccess': 'Livre supprimé',
+  'pfe.mySubmissions': '📤 Mes soumissions',
+  'pfe.saveError': 'Impossible d\'enregistrer le livre. Le PDF est peut-être trop volumineux.',
+  'pfe.statusPending': '⏳ En attente d\'approbation',
+  'pfe.statusApproved': '✓ Publié',
+  'pfe.statusRejected': '✕ Rejeté',
 };
 
 export const TRANSLATIONS: Record<Lang, Translations> = { en, fr };
